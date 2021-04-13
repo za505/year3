@@ -38,7 +38,7 @@ else
 curdir=cd;
 cd(dirname);
 directory=dir('*.tif');
-T=3; %length(directory);
+T=1; %length(directory);
 
 cd(curdir);
 path(dirname,path)
@@ -91,27 +91,23 @@ for t=1:T
     tiledlayout(5,1)
     nexttile
     imshow(im)
-    
-    
+
     %De-speckle image
     im=medfilt2(im);
-    nexttile
-    imshow(im)
-    
+     
     %Normalize images
     ppix=0.5;
     im=norm16bit(im,ppix);
     nexttile
     imshow(im)
-    
-    
+
     %Enhance contrast
     imc=imcomplement(im);
     nexttile
     imshow(imc)
     
     if checkhist==1 
-        figure,imhist(imc), pause;
+        figure,imhist(imc);
     end
     
     if thresh==0;
@@ -124,9 +120,15 @@ for t=1:T
     end
     thresh1
     imc=imadjust(imc,[thresh1/65535 1],[]);
-     
+    
     nexttile
     imshow(imc)
+    
+    [~,imcBins]=imhist(imc);
+    %bSum=sum(bins);
+    nBins=height(imcBins);
+    binx=round(nBins*(0.03))
+    IntThresh=imcBins(binx)
     
     %Find edges
     [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
@@ -134,14 +136,15 @@ for t=1:T
     
    
     
-%     %Clean image
-%     cc=bwconncomp(ed2,8);
-%     stats=regionprops(cc,imc,'Area','MeanIntensity');
-%     idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>IntThresh);
-%     ed2=ismember(labelmatrix(cc),idx);
-%     
-%     %imshow(ed2)
-%     %pause
+    %Clean image
+    cc=bwconncomp(ed2,8);
+    stats=regionprops(cc,imc,'Area','MeanIntensity');
+    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>IntThresh);
+    ed2=ismember(labelmatrix(cc),idx);
+    
+    nexttile
+    imshow(ed2)
+    
 %     
 %     %Close gaps in edges
 %     despurred=bwmorph(ed2,'spur');

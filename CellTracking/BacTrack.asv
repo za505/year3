@@ -65,10 +65,10 @@ tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
 basename='03082021_Exp3_colony3';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase'];%Directory to save the output .mat file to.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_647/'  basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_647'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
-channel='phase';
+channel='647';
 lscale=0.08;%%Microns per pixel.
 tscale=10;%Frame rate.
 thresh=0;%For default, enter zero.
@@ -171,10 +171,10 @@ for t=1:T
     imc=imadjust(imc,[thresh1/65535 1],[]);   
      
     %Calculate IntThresh for this frame
-    [~,imcBins]=imhist(imc); %store the bins from your contrasted image
-    nBins=height(imcBins); %find the number that corresponds to the 3rd percentile of bins
-    binx=round(nBins*(0.03));
-    IntThresh=imcBins(binx) %set that value as your image threshold
+    [~,imcBins]=imhist(imc); %store the bins from y
+    nBins=height(imcBins);
+    binx=round(nBins*(0.03))
+    IntThresh=imcBins(binx)
     
     
     %Find edges
@@ -185,7 +185,10 @@ for t=1:T
     stats=regionprops(cc,imc,'Area','MeanIntensity');
     idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>IntThresh);
     ed2=ismember(labelmatrix(cc),idx);
-
+    
+    %imshow(ed2)
+    %pause
+    
     %Close gaps in edges
     despurred=bwmorph(ed2,'spur');
     spurs=ed2-despurred;
@@ -519,80 +522,80 @@ ew(ew==0)=NaN;
 end
 
 
-% %Plot data
-% cd(savedir);
-% 
-% figure(1), title('Cell Length vs. Time')
-% clf
-% hold on
-% for i=1:ncells  
-%     lcell(i,:)=movingaverage2(lcell(i,:),3);
-%     indx=isnan(lcell(i,:))~=1;
-%     indx=find(indx);
-%     plot(time(indx),lcell(i,indx))
-%     %plot(time(1:end),lcell(i,1:end)) 
-% end
-% xlabel('Time (s)')
-% ylabel('Length (\mum)')
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% fig2pretty
-% saveas(gcf,[basename,'_lTraces.png'])
-%  
-% figure(2), title('Cell Width vs. Time')
-% hold on
-% for i=1:ncells
-%     plot(time,wcell(i,:)) 
-% end
-% plot(time,wav,'-r','LineWidth',2)
-% xlabel('Time (s)')
-% ylabel('Width (/mum)')
-% fig2pretty
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% saveas(gcf, [basename,'_wTraces.png'])
-% 
-% % figure(4), title('Circumferential Strain vs. Time')
-% % hold on
-% % for i=1:ncells
-% %     plot(time,ew(i,:)) 
-% % end
-% % plot(time,ewav,'-r','LineWidth',2)
-% % xlabel('t (s)')
-% % ylabel('\epsilon_w')
-% % fig2pretty
-% % saveas(gcf, [basename,'_cStrain.png'])
-% 
-% tmid=(time(2:end)+time(1:end-1))/2;
-% 
-% figure(5), title('Elongation Rate vs. Time')
+%Plot data
+cd(savedir);
+
+figure(1), title('Cell Length vs. Time')
+clf
+hold on
+for i=1:ncells  
+    lcell(i,:)=movingaverage2(lcell(i,:),3);
+    indx=isnan(lcell(i,:))~=1;
+    indx=find(indx);
+    plot(time(indx),lcell(i,indx))
+    %plot(time(1:end),lcell(i,1:end)) 
+end
+xlabel('Time (s)')
+ylabel('Length (\mum)')
+xline(80, '--k', 'PBS + 5% detergent') %frame 8
+xline(300, '--k', 'PBS + FSS') %frame 30-42
+xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+fig2pretty
+saveas(gcf,[basename,'_lTraces.png'])
+ 
+figure(2), title('Cell Width vs. Time')
+hold on
+for i=1:ncells
+    plot(time,wcell(i,:)) 
+end
+plot(time,wav,'-r','LineWidth',2)
+xlabel('Time (s)')
+ylabel('Width (/mum)')
+fig2pretty
+xline(80, '--k', 'PBS + 5% detergent') %frame 8
+xline(300, '--k', 'PBS + FSS') %frame 30-42
+xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+saveas(gcf, [basename,'_wTraces.png'])
+
+% figure(4), title('Circumferential Strain vs. Time')
 % hold on
 % for i=1:ncells
-%     plot(tmid,v(i,:))
+%     plot(time,ew(i,:)) 
 % end
-% plot(tmid,vav,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation Rate (s^{-1})')
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+% plot(time,ewav,'-r','LineWidth',2)
+% xlabel('t (s)')
+% ylabel('\epsilon_w')
 % fig2pretty
-% saveas(gcf, [basename,'_eTraces.png'])
-% % 
-% figure(6), title('Elongation Rate vs. Time')
-% hold on
-% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-% plot(tmid,vav*3600,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation (hr^{-1})')
-% yline(2, '--b')
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% fig2pretty
-% saveas(gcf, [basename,'_ET.png'])
-% save([basename '_BTphase'])
+% saveas(gcf, [basename,'_cStrain.png'])
+
+tmid=(time(2:end)+time(1:end-1))/2;
+
+figure(5), title('Elongation Rate vs. Time')
+hold on
+for i=1:ncells
+    plot(tmid,v(i,:))
+end
+plot(tmid,vav,'-r')
+xlabel('Time (s)')
+ylabel('Elongation Rate (s^{-1})')
+xline(80, '--k', 'PBS + 5% detergent') %frame 8
+xline(300, '--k', 'PBS + FSS') %frame 30-42
+xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+fig2pretty
+saveas(gcf, [basename,'_eTraces.png'])
+% 
+figure(6), title('Elongation Rate vs. Time')
+hold on
+ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+plot(tmid,vav*3600,'-r')
+xlabel('Time (s)')
+ylabel('Elongation (hr^{-1})')
+yline(2, '--b')
+xline(80, '--k', 'PBS + 5% detergent') %frame 8
+xline(300, '--k', 'PBS + FSS') %frame 30-42
+xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+fig2pretty
+saveas(gcf, [basename,'_ET.png'])
+save([basename '_BTphase'])
 %save([basename '_BTlab'],'labels','labels2','-v7.3')
    
