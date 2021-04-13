@@ -20,8 +20,8 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04012021_Exp1_colony4';
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04012021_analysis/04012021_Exp1/' basename '/'  basename '_phase/'  basename '_erased'];
+basename='03082021_Exp3_colony3';
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase/'  basename '_erased'];
 split=0; %there is a break in the movie
 split1=15; %last frame for segment 1
 %split2=; %last frame for segment 2
