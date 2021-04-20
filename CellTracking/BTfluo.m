@@ -1,5 +1,6 @@
 %BTfluo.m
 %Rico Rojas, updated 1/21/19
+%Zarina Akbary, updated 3/11/21
 %Calculates the average cytoplasmic fluorescence intensity from cell
 %tracked with BacTrack.m.  
 
@@ -21,31 +22,18 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04012021_Exp1_colony4';
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04012021_analysis/04012021_Exp1/' basename];
+basename='04062021_Exp4_colony4';
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_phase/'  basename '_figures'];;
 channel=[filename '/' basename '_FSS/' basename '_aligned'];
-reeval=0; %need to actually re-calculate stuff
 
-if reeval==1
-    
-    %load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'])
-    recrunch=0;
-%     mgRange=[0 6 9 12]; %which concentrations?
-%     mgConc(1, 1:28)=0;
-%     mgConc(1, 29:40)=12;
-%     mgConc(1, 41:52)=15;
-%     mgConc(1, 53:64)=20;
-    
-else
-    midSwitch=0; %0=all the frames before frameAuto have no dye
-    frameInitial=1; %this is the FIRST frame that has no dye
-    frameAuto=30; %this is the LAST frame that has no dye
-    frameBg=32; %this is the frame that you'll pick the background area from
-    mg=0; %is there a Mg gradient?
-    mgRange=[0 6.66 12.33 20]; %which concentrations?
-    %mgConc=[repelem(0,frameAuto+12), repelem(6,13), repelem(9,13), repelem(12,9)]; 
-    recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
-end
+midSwitch=0; %0=all the frames before frameAuto have no dye
+frameInitial=1; %this is the FIRST frame that has no dye
+frameAuto=30; %this is the LAST frame that has no dye
+frameBg=32; %this is the frame that you'll pick the background area from
+recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
+xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca"];
+xswitch=[60 300 430];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0
 
@@ -55,7 +43,7 @@ cd(channel);
 fluo_directory=dir('*.tif');
 
 %load BacTrack data
-load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'T', 'time', 'pixels')
+load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'T', 'time', 'tmid', 'pixels')
 
 %preallocate cells
 cellIntensity=[]; %cellular intensities
@@ -85,7 +73,7 @@ for t=1:T
     bglevel = measureBackground(imagename, p1, p2);
     bgIntensity(t)=bglevel; 
     
-    %calculate autofluorescence
+    %calculate background autofluorescence
     if t <= frameAuto & midSwitch==0
         bgAuto(1, t)=measureBackground(imagename, p1, p2);
     elseif t <= frameAuto & t >= frameInitial & midSwitch==1
@@ -100,7 +88,7 @@ for t=1:T
         %calculate intensity
         cellIntensity(j,t)=mean(im(pixels{j,t}));
         
-        %calculate autofluorescence
+        %calculate cellular autofluorescence
         if t <= frameAuto & midSwitch==0
             cellAuto(j, t)=mean(im(pixels{j,t}));
         elseif (t <= frameAuto & t >= frameInitial) & midSwitch==1
@@ -125,7 +113,7 @@ bgAdj = mean(bgAuto, 'all', 'omitnan');
 
 %now subtract the background autofluorescence from background intensity
 Iout = bgIntensity - bgAdj;
-Iout(Iout<=0)=0;
+Iout(Iout<=0)=0; 
 
 %now subtract the background autofluorescence from background intensity
 Iin = cellIntensity - cellAdj;
@@ -137,40 +125,24 @@ stdIntensity = std(Iin, 'omitnan');
 
 %now, calculate the Iin/Iout ratio
 ratio = Iin ./ Iout;
-ratio(:,frameInitial:frameAuto)=NaN;
+ratio(:,frameInitial:frameAuto)=NaN; %note: 0/0 makes weird things happen
 
-avgRatio = mean(ratio, 'omitnan');
-stdRatio = std(ratio, 'omitnan');
+avgRatio = mean(ratio, 1, 'omitnan');
+stdRatio = std(ratio, 0, 1, 'omitnan');
 
-%now, calculate the Iin/Iout ratio as a function of Mg2+ concentration
-if mg==1 
-
-    avgMg = [];
-    stdMg = [];
-
-    avgMg(:,1) = mean(ratio(:, 19:29), 2, 'omitnan');
-    stdMg(1) = std(avgMg(:, 1), 'omitnan');
-
-    avgMg(:,2) = mean(ratio(:, 30:42), 2, 'omitnan');
-    stdMg(2) = std(avgMg(:, 2), 'omitnan');
-
-    avgMg(:,3) = mean(ratio(:, 43:53), 2, 'omitnan');
-    stdMg(3) = std(avgMg(:, 3), 'omitnan');
-
-    avgMg(:,4) = mean(ratio(:, 54:67), 2, 'omitnan');
-    stdMg(4) = std(avgMg(:, 4), 'omitnan');
-
-    avgMg = mean(avgMg, 'omitnan');
-
-end
+%calculate Intencity Rate
+deltat=time(2:end)-time(1:end-1);
+Irate=(avgRatio(2:end)-avgRatio(1:end-1))./((avgRatio(1:end-1)+avgRatio(2:end))/2);
+Irate=Irate(:)./deltat;
 
 elseif recrunch==1
     load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'])
 end
 
 % %let's change folders to save the plots and variables
-cd([filename '/' basename '_FSS/' basename '_figures'])
-    
+%cd([filename '/' basename '_FSS/' basename '_figures'])
+cd(savename)
+
 %save the variables
 save([basename '_BTfluo'])
 
@@ -183,9 +155,9 @@ end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-xline(70, '--k', 'PBS + 5% detergent') %frame 7
-xline(300, '--k', 'PBS + FSS') %frame 30-42
-xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
 ylim([-3 Inf])
 saveas(gcf, [basename '_intensity.png'])
 
@@ -197,9 +169,9 @@ title('Average Intensity vs Time')
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-xline(70, '--k', 'PBS + 5% detergent') %frame 7
-xline(300, '--k', 'PBS + FSS') %frame 30-42
-xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
 ylim([-3 Inf])
 saveas(gcf, [basename,'_intensityAvg.png'])
 
@@ -210,9 +182,9 @@ plot(time,Iout)
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-xline(70, '--k', 'PBS + 5% detergent') %frame 7
-xline(300, '--k', 'PBS + FSS') %frame 30-42
-xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
 ylim([-3 Inf])
 hold off
 saveas(gcf, [basename,'_background.png'])
@@ -226,28 +198,25 @@ xlabel('Time (s)')
 ylabel('Intensity/Background')
 fig2pretty 
 yline(1, '--k')
-xline(70, '--k', 'PBS + 5% detergent') %frame 7
-xline(300, '--k', 'PBS + FSS') %frame 30-42
-xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
 ylim([0 Inf])
 hold off
 saveas(gcf, [basename,'_ratioTime.png'])
 
-if mg==1
-    %Plot the Iin/Iout ratio over [Mg2+]
-    figure, hold on
-    title('Intensity/Background vs Mg^{2+}')
-    errorbar(mgRange,avgMg,stdMg, 'both', 'o')
-    xlabel('Mg^{2+} concentration (mM)')
-    ylabel('Intensity/Background')
-    yline(1, '--k')
-    xlim([-2 22])
-    ylim([0 Inf])
-    xticks(mgRange)
-    fig2pretty 
-    hold off
-    saveas(gcf, [basename,'_ratioMg.png'])
-end 
+%Plot Intensity Rate
+figure
+plot(tmid,Irate)
+xlabel('Time (s)')
+ylabel('Intensity Rate (s^{-1})')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+ylim([0 Inf])
+hold off
+saveas(gcf, [basename,'_intensityRate.png'])
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
