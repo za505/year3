@@ -64,9 +64,9 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='04062021_Exp4_colony4';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
+basename='04032021_Exp1_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04032021_analysis/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04032021_analysis/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 %channel='647';
 lscale=0.08;%%Microns per pixel.
@@ -84,8 +84,8 @@ dotA_min=8800; %area range of the 'dots' (pillars) in the trap
 dotA_max=8850;
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca"];
-xswitch=[60 300 430];
+xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 10 mM Mg" "PBS + FSS"];
+xswitch=[98 218 338 458];
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
