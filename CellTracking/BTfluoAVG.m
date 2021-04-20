@@ -20,14 +20,11 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename=["04012021_Exp1_colony1", "04012021_Exp1_colony2", "04012021_Exp1_colony3", "04012021_Exp1_colony4"];%Name of the image stack, used to save file.
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04012021_analysis/04012021_Exp1'];
+basename=["04062021_Exp4_colony1", "04062021_Exp4_colony2", "04062021_Exp4_colony3"];%Name of the image stack, used to save file.
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4'];
 channel=['_FSS'];
-recrunch=1;
+recrunch=0;
 B=length(basename);%number of main directories to analyze
-mgGradient=1;
-mgRange=[0 10];
-index=[29 42 70];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0
     
@@ -37,12 +34,14 @@ cd([filename '/' base '/' base channel '/' base '_figures'])
 filelist{1}=dir([base '_BTfluo.mat']);
 T = cell2mat(struct2cell(load([filelist{1}.name],'T')));
 time = cell2mat(struct2cell(load([filelist{1}.name],'time')));
+time = cell2mat(struct2cell(load([filelist{1}.name],'tmid')));
 frameAuto = cell2mat(struct2cell(load([filelist{1}.name],'frameAuto')));
 frameInitial = cell2mat(struct2cell(load([filelist{1}.name],'frameInitial')));
+xlabels = struct2cell(load([filelist{1}.name],'xlabels'));
+xswitch = struct2cell(load([filelist{1}.name],'xswitch'));
 
-if mgGradient==1
-    %mgRange = cell2mat(struct2cell(load([filelist{1}.name],'mgRange')));
-end
+xlabels = xlabels{1,1};
+xswitch = xswitch{1,1};
 
 %pre-allocate matricies
 %there we just want to have in one place to see
@@ -53,6 +52,7 @@ cellIntensity=[];
 ratio=[];
 Iout=zeros(B, T);
 Iin=[];
+Irate=[];
 
 %these are the ones we'll be re-calculating/plotting
 avgIin=zeros(1, T);
@@ -73,6 +73,7 @@ for b=1:B
     temp=struct2cell(load([filelist{b}.name],'cellIntensity'));
     ratio_temp=struct2cell(load([filelist{b}.name],'ratio'));
     Iin_temp=struct2cell(load([filelist{b}.name],'Iin'));
+    Irate_temp=struct2cell(load([filelist{b}.name],'Irate'));
     
     %let's get all the raw intensities, adj intensities, and ratios in one place
     temp=temp{1,1};
@@ -83,6 +84,9 @@ for b=1:B
     
     Iin_temp=Iin_temp{1,1};
     Iin=[Iin; Iin_temp];
+    
+    Irate_temp=Irate_temp{1,1};
+    Irate=[Irate; Irate_temp];
   
 end
     
@@ -101,20 +105,9 @@ ratio(:,frameInitial:frameAuto)=NaN;
 avgRatio = mean(ratio, 'omitnan');
 stdRatio = std(ratio, 'omitnan');
 
-%now, calculate the Iin/Iout ratio as a function of Mg2+ concentration
-if mgGradient==1
-
-    avgMg = [];
-    stdMg = [];
-
-    for i=1:length(mgRange)
-        avgMg(:,i) = mean(ratio(:, index(i)+1:index(i+1)), 2, 'omitnan');
-        stdMg(i) = std(avgMg(:, i), 'omitnan');
-    end
-    
-    avgMg = mean(avgMg, 'omitnan');
-
-end
+%let's calulcate the population average intensity rate 
+avgRate = mean(Irate, 'omitnan');
+stdRate = std(Irate, 'omitnan');
 
 %change directory
 cd(filename);
@@ -126,35 +119,33 @@ else
     load(['BTfluoAVG' channel])
 end
 
-%let's plot the population avereage intensity
-% figure, hold on
-% title('Population Average Intensity vs Time')
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% fig2pretty
-% xline(70, '--k', 'PBS + 5% detergent') %frame 7
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% ylim([-2 Inf])
-% ciplot(avgIin - stdIin, avgIin + stdIin, time, [0.75 0.75 1])
-% plot(time, avgIin, '-r')
-% 
-% saveas(gcf, ['avgIin' channel '.png'])
-% 
-% %let's plot the population avereage intensity
-% figure, hold on
-% title('Average Background Intensity vs Time')
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% fig2pretty
-% xline(70, '--k', 'PBS + 5% detergent') %frame 7
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% ylim([-2 Inf])
-% ciplot(avgIout - stdIout, avgIout + stdIout, time, [0.75 0.75 1])
-% %plot(time, exp_popavg)
-% plot(time, avgIout, '-r')
-% saveas(gcf, ['avgIout' channel '.png'])
+%let's plot the population average intensity
+figure, hold on
+title('Population Average Intensity vs Time')
+xlabel('Time (s)')
+ylabel('Intensity (A.U.)')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+ylim([-2 Inf])
+ciplot(avgIin - stdIin, avgIin + stdIin, time, [0.75 0.75 1])
+plot(time, avgIin, '-r')
+saveas(gcf, ['avgIin' channel '.png'])
+
+%let's plot the population average background intensity
+figure, hold on
+title('Average Background Intensity vs Time')
+xlabel('Time (s)')
+ylabel('Intensity (A.U.)')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+ylim([-2 Inf])
+ciplot(avgIout - stdIout, avgIout + stdIout, time, [0.75 0.75 1])
+plot(time, avgIout, '-r')
+saveas(gcf, ['avgIout' channel '.png'])
 
 %let's plot the average ratio too
 figure, hold on
@@ -164,24 +155,26 @@ ylabel('Intensity/Background')
 ylim([0 Inf])
 fig2pretty
 yline(1, '--k')
-xline(70, '--k', 'PBS + 5% detergent') %frame 7
-xline(300, '--k', 'PBS + FSS') %frame 30-42
-xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
 ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
 plot(time, avgRatio, '-r') 
 saveas(gcf, ['avgRatio' channel '.png'])
 
-% if mgGradient==1
-%     %let's plot the average ratio vs Mg2+ 
-%     figure, hold on
-%     title('Average Intensity/Background vs Mg^{2+} Concentration')
-%     errorbar(mgRange,avgMg,stdMg, 'both', 'o')
-%     xlabel('Mg^{2+} concentration (mM)')
-%     ylabel('Intensity/Background')
-%     yline(1, '--k')
-%     xlim([-2 22])
-%     ylim([0 Inf])
-%     xticks(mgRange)
-%     fig2pretty 
-%     saveas(gcf, ['avgMg' channel '.png'])
-% end 
+%and finally average intensity rate
+figure, hold on
+title('Intensity Rate vs Time')
+xlabel('Time (s)')
+ylabel('Intensity/Background')
+ylim([0 Inf])
+fig2pretty
+yline(1, '--k')
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+ciplot(avgIrate - stdIrate, avgIrate + stdIrate, time, [0.75 0.75 1])
+plot(tmid, avgIrate, '-r') 
+saveas(gcf, ['avgRatio' channel '.png'])
+
+

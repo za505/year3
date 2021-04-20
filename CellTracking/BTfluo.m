@@ -24,7 +24,7 @@ clear, close all
 %USER INPUT
 basename='04062021_Exp4_colony4';
 filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_phase/'  basename '_figures'];;
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_FSS/'  basename '_figures'];;
 channel=[filename '/' basename '_FSS/' basename '_aligned'];
 
 midSwitch=0; %0=all the frames before frameAuto have no dye
@@ -32,10 +32,17 @@ frameInitial=1; %this is the FIRST frame that has no dye
 frameAuto=30; %this is the LAST frame that has no dye
 frameBg=32; %this is the frame that you'll pick the background area from
 recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
-xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca"];
-xswitch=[60 300 430];
+xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca" "PBS + FSS"];
+xswitch=[60 300 410 530];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if recrunch==0
+if recrunch==1
+    
+    load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'])
+    
+    xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca" "PBS + FSS"];
+    xswitch=[60 300 410 530];
+    
+elseif recrunch==0
 
 %load fluorescent images
 curdir=cd;
@@ -132,11 +139,14 @@ stdRatio = std(ratio, 0, 1, 'omitnan');
 
 %calculate Intencity Rate
 deltat=time(2:end)-time(1:end-1);
-Irate=(avgRatio(2:end)-avgRatio(1:end-1))./((avgRatio(1:end-1)+avgRatio(2:end))/2);
-Irate=Irate(:)./deltat;
+Irate=(ratio(:, 2:end)-ratio(:, 1:end-1))./((ratio(:, 1:end-1)+ratio(:, 2:end))/2);
+for i=1:height(Irate)
+    Irate(i, :)=Irate(i, :)./deltat;
+end
 
-elseif recrunch==1
-    load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'])
+avgIrate = mean(Irate, 1, 'omitnan');
+stdIrate = std(Irate, 0, 1, 'omitnan');
+
 end
 
 % %let's change folders to save the plots and variables
@@ -206,15 +216,17 @@ hold off
 saveas(gcf, [basename,'_ratioTime.png'])
 
 %Plot Intensity Rate
-figure
-plot(tmid,Irate)
+figure, hold on
+ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
+plot(tmid,avgIrate)
 xlabel('Time (s)')
 ylabel('Intensity Rate (s^{-1})')
 fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
 ylim([0 Inf])
+xlim([0 Inf])
 hold off
 saveas(gcf, [basename,'_intensityRate.png'])
 
