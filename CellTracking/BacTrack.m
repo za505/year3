@@ -64,11 +64,11 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='03082021_Exp3_colony3';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase'];%Directory to save the output .mat file to.
+basename='04062021_Exp4_colony4';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
-channel='phase';
+%channel='647';
 lscale=0.08;%%Microns per pixel.
 tscale=10;%Frame rate.
 thresh=0;%For default, enter zero.
@@ -84,12 +84,15 @@ dotA_min=8800; %area range of the 'dots' (pillars) in the trap
 dotA_max=8850;
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
+xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca"];
+xswitch=[60 300 430];
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if recrunch==1
-    load([savedir '/' basename '_' channel '_BTphase.mat'])
+    %load([savedir '/' basename '_' channel '_BTphase.mat'])
+    load([savedir '/' basename '_BTphase.mat'])
 else
 
 %Determine number of frames
@@ -168,6 +171,11 @@ for t=1:T
     else
         thresh1=thresh;
     end
+    
+    if thresh1==65535
+        thresh1=bins(end-2);
+    end
+    
     imc=imadjust(imc,[thresh1/65535 1],[]);   
      
     %Calculate IntThresh for this frame
@@ -269,7 +277,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
 
-if vis==1 & t >= T-10 | t <= 6
+if vis==1 %& t >= T-10 | t <= 6
    figure
    imshow(im)
    hold on
@@ -519,80 +527,80 @@ ew(ew==0)=NaN;
 end
 
 
-% %Plot data
-% cd(savedir);
-% 
-% figure(1), title('Cell Length vs. Time')
-% clf
-% hold on
-% for i=1:ncells  
-%     lcell(i,:)=movingaverage2(lcell(i,:),3);
-%     indx=isnan(lcell(i,:))~=1;
-%     indx=find(indx);
-%     plot(time(indx),lcell(i,indx))
-%     %plot(time(1:end),lcell(i,1:end)) 
-% end
-% xlabel('Time (s)')
-% ylabel('Length (\mum)')
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% fig2pretty
-% saveas(gcf,[basename,'_lTraces.png'])
-%  
-% figure(2), title('Cell Width vs. Time')
-% hold on
-% for i=1:ncells
-%     plot(time,wcell(i,:)) 
-% end
-% plot(time,wav,'-r','LineWidth',2)
-% xlabel('Time (s)')
-% ylabel('Width (/mum)')
-% fig2pretty
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% saveas(gcf, [basename,'_wTraces.png'])
-% 
-% % figure(4), title('Circumferential Strain vs. Time')
-% % hold on
-% % for i=1:ncells
-% %     plot(time,ew(i,:)) 
-% % end
-% % plot(time,ewav,'-r','LineWidth',2)
-% % xlabel('t (s)')
-% % ylabel('\epsilon_w')
-% % fig2pretty
-% % saveas(gcf, [basename,'_cStrain.png'])
-% 
-% tmid=(time(2:end)+time(1:end-1))/2;
-% 
-% figure(5), title('Elongation Rate vs. Time')
+%Plot data
+cd(savedir);
+
+figure(1), title('Cell Length vs. Time')
+clf
+hold on
+for i=1:ncells  
+    lcell(i,:)=movingaverage2(lcell(i,:),3);
+    indx=isnan(lcell(i,:))~=1;
+    indx=find(indx);
+    plot(time(indx),lcell(i,indx))
+    %plot(time(1:end),lcell(i,1:end)) 
+end
+xlabel('Time (s)')
+ylabel('Length (\mum)')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf,[basename,'_lTraces.png'])
+ 
+figure(2), title('Cell Width vs. Time')
+hold on
+for i=1:ncells
+    plot(time,wcell(i,:)) 
+end
+plot(time,wav,'-r','LineWidth',2)
+xlabel('Time (s)')
+ylabel('Width (/mum)')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf, [basename,'_wTraces.png'])
+
+% figure(4), title('Circumferential Strain vs. Time')
 % hold on
 % for i=1:ncells
-%     plot(tmid,v(i,:))
+%     plot(time,ew(i,:)) 
 % end
-% plot(tmid,vav,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation Rate (s^{-1})')
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
+% plot(time,ewav,'-r','LineWidth',2)
+% xlabel('t (s)')
+% ylabel('\epsilon_w')
 % fig2pretty
-% saveas(gcf, [basename,'_eTraces.png'])
-% % 
-% figure(6), title('Elongation Rate vs. Time')
-% hold on
-% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-% plot(tmid,vav*3600,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation (hr^{-1})')
-% yline(2, '--b')
-% xline(80, '--k', 'PBS + 5% detergent') %frame 8
-% xline(300, '--k', 'PBS + FSS') %frame 30-42
-% xline(430, '--k', 'PBS + FSS + 10 mM Mg') %frame 43-70
-% fig2pretty
-% saveas(gcf, [basename,'_ET.png'])
-% save([basename '_BTphase'])
+% saveas(gcf, [basename,'_cStrain.png'])
+
+tmid=(time(2:end)+time(1:end-1))/2;
+
+figure(5), title('Elongation Rate vs. Time')
+hold on
+for i=1:ncells
+    plot(tmid,v(i,:))
+end
+plot(tmid,vav,'-r')
+xlabel('Time (s)')
+ylabel('Elongation Rate (s^{-1})')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf, [basename,'_eTraces.png'])
+% 
+figure(6), title('Elongation Rate vs. Time')
+hold on
+ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+plot(tmid,vav*3600,'-r')
+xlabel('Time (s)')
+ylabel('Elongation (hr^{-1})')
+yline(2, '--b')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf, [basename,'_ET.png'])
+save([basename '_BTphase'])
 %save([basename '_BTlab'],'labels','labels2','-v7.3')
    
