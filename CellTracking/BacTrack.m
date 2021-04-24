@@ -64,13 +64,17 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='04032021_Exp1_colony1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04032021_analysis/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04032021_analysis/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
+basename='04222021_Exp1_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 %channel='647';
 lscale=0.08;%%Microns per pixel.
 tscale=10;%Frame rate.
+tscale2=1;
+tpt1=60; %number of seconds passed by first perfusion step
+tpt2=180; %number of seconds passed by second perfusion step
+tpt3=300; %number of seconds passed third perfusion step
 thresh=0;%For default, enter zero.
 %IntThresh=10280;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed %default: 1
@@ -84,9 +88,9 @@ dotA_min=8800; %area range of the 'dots' (pillars) in the trap
 dotA_max=8850;
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 10 mM Mg" "PBS + FSS"];
-xswitch=[98 218 338 458];
-vis=1;%Display cell tracking? 0=No, 1=Yes.
+xlabels=["PBS + FSS + 9 mM Mg^{2+}" "PBS + 5% detergent" "PBS + 9 mM Mg^{2+}"];
+xswitch=[tpt1 tpt2 tpt3];
+vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -277,7 +281,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
 
-if vis==1 %& t >= T-10 | t <= 6
+if vis==1 & t >= T-10 | t <= 6
    figure
    imshow(im)
    hold on
@@ -285,7 +289,7 @@ if vis==1 %& t >= T-10 | t <= 6
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
    end
     
-  pause(0.3)
+  pause%(0.3)
   close all
 end
     toc
@@ -352,7 +356,12 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-    tpoints=[0:T-1]*tscale;
+    tpoint1=[0:tscale:tpt1];
+    tpoint2=[tpt1+tscale2:tscale2:tpt2];
+    tpoint3=[tpt2+tscale:tscale:tpt3];
+    tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
+    tpoint4=[tpoint3(end)+1:tpoint3(end)+(T-tlength)];
+    tpoints=[tpoint1, tpoint2, tpoint3, tpoint4];
 end
 
 time=tpoints(1,:);
@@ -542,10 +551,11 @@ for i=1:ncells
 end
 xlabel('Time (s)')
 ylabel('Length (\mum)')
+%ylim([0 inf])
 fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
 saveas(gcf,[basename,'_lTraces.png'])
  
 figure(2), title('Cell Width vs. Time')
@@ -604,3 +614,19 @@ saveas(gcf, [basename,'_ET.png'])
 save([basename '_BTphase'])
 %save([basename '_BTlab'],'labels','labels2','-v7.3')
    
+
+figure(7), title('Cell Length Average vs. Time')
+clf
+lcellAVG=mean(lcell,1, 'omitnan');
+lcellSTD=std(lcell, 0,1,'omitnan');
+lcellAVG=movingaverage2(lcellAVG,10);
+ciplot((lcellAVG-lcellSTD),(lcellAVG+lcellSTD),time,[0.75 0.75 1])
+plot(time,lcellAVG,'-r')
+xlabel('Time (s)')
+ylabel('Length (\mum)')
+ylim([0 inf])
+fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+saveas(gcf,[basename,'_lTracesAVG.png'])
