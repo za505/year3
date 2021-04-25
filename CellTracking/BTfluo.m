@@ -22,25 +22,25 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04062021_Exp4_colony4';
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04062021_analysis/04062021_Exp4/' basename '/' basename '_FSS/'  basename '_figures'];;
+basename='04222021_Exp1_colony1';
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/'  basename '_figures'];;
 channel=[filename '/' basename '_FSS/' basename '_aligned'];
 
-midSwitch=0; %0=all the frames before frameAuto have no dye
-frameInitial=1; %this is the FIRST frame that has no dye
-frameAuto=30; %this is the LAST frame that has no dye
-frameBg=32; %this is the frame that you'll pick the background area from
+frameSwitch=118; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
+frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
+frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
+frameBg=105; %this is the frame that you'll pick the background area from
 recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
-xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca" "PBS + FSS"];
-xswitch=[60 300 410 530];
+%xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
+%xswitch=[300 360 420];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     
     load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'])
     
-    xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca" "PBS + FSS"];
-    xswitch=[60 300 410 530];
+%     xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca" "PBS + FSS"];
+%     xswitch=[60 300 410 530];
     
 elseif recrunch==0
 
@@ -50,7 +50,7 @@ cd(channel);
 fluo_directory=dir('*.tif');
 
 %load BacTrack data
-load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'T', 'time', 'tmid', 'pixels')
+load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'T', 'time', 'tmid', 'pixels', 'xlabels', 'xswitch')
 
 %preallocate cells
 cellIntensity=[]; %cellular intensities
@@ -59,7 +59,7 @@ stdIntensity=zeros(1,T); %std of population cellular intensity
 
 bgIntensity=zeros(1,T); %background intensity
 cellAuto=zeros(height(pixels),frameAuto-frameInitial); %intensity of cells prior to dye perfusion, aka autofluorescence
-bgAuto=zeros(1,frameAuto-frameInitial); %intensity of background prior to dye perfusion, aka autofluorescence
+bgAuto=zeros(1,frameSwitch-frameAuto-1); %intensity of background prior to dye perfusion, aka autofluorescence
 
 %determine region where you'll measure background intensity
 imagename=fluo_directory(frameBg).name;
@@ -81,11 +81,9 @@ for t=1:T
     bgIntensity(t)=bglevel; 
     
     %calculate background autofluorescence
-    if t <= frameAuto & midSwitch==0
+    if t <= frameSwitch & t > frameAuto
         bgAuto(1, t)=measureBackground(imagename, p1, p2);
-    elseif t <= frameAuto & t >= frameInitial & midSwitch==1
-        bgAuto(1, t)=measureBackground(imagename, p1, p2);
-    elseif t > frameAuto 
+    else 
         bgAuto(1, t)=NaN;
     end
     
@@ -96,11 +94,9 @@ for t=1:T
         cellIntensity(j,t)=mean(im(pixels{j,t}));
         
         %calculate cellular autofluorescence
-        if t <= frameAuto & midSwitch==0
+        if t <= frameAuto & t >= frameInitial
             cellAuto(j, t)=mean(im(pixels{j,t}));
-        elseif (t <= frameAuto & t >= frameInitial) & midSwitch==1
-            cellAuto(j, t)=mean(im(pixels{j,t}));
-        elseif t > frameAuto 
+        else
             cellAuto(j, t)=NaN;
         end
         
@@ -132,7 +128,7 @@ stdIntensity = std(Iin, 'omitnan');
 
 %now, calculate the Iin/Iout ratio
 ratio = Iin ./ Iout;
-ratio(:,frameInitial:frameAuto)=NaN; %note: 0/0 makes weird things happen
+ratio(:,1:frameSwitch-1)=NaN; %note: 0/0 makes weird things happen
 
 avgRatio = mean(ratio, 1, 'omitnan');
 stdRatio = std(ratio, 0, 1, 'omitnan');
@@ -149,8 +145,8 @@ stdIrate = std(Irate, 0, 1, 'omitnan');
 
 end
 
-% %let's change folders to save the plots and variables
-%cd([filename '/' basename '_FSS/' basename '_figures'])
+%let's change folders to save the plots and variables
+cd([filename '/' basename '_FSS/' basename '_figures'])
 cd(savename)
 
 %save the variables
@@ -160,7 +156,7 @@ save([basename '_BTfluo'])
 %Let's plot cellular intensity first
 figure, hold on, title('Intensity vs Time')
 for i=1:height(pixels)
-    plot(time,Iin(i,:))
+    plot(time,cellIntensity(i,:))
 end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
