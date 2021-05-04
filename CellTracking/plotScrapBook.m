@@ -9,8 +9,9 @@ ylabel('Intensity/Background')
 ylim([0 1])
 fig2pretty
 %yline(1, '--k')
-for x=1:length(xswitch)
-   xline(xswitch(x), '--k') 
+for x=1:length(aswitch)
+   xline(aswitch(x), '--k') 
+   xline(bswitch(x), '-k') 
 end
 ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
 plot(time, avgRatio, '-r') 
