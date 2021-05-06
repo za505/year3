@@ -64,20 +64,29 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='04222021_Exp1_colony1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/'  basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='05022021_Exp1_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/'  basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 %channel='647';
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
 tscale=10;%Frame rate.
 tscale2=1;
-tpt1=60; %number of seconds passed by first perfusion step
-tpt2=180; %number of seconds passed by second perfusion step
-tpt3=300; %number of seconds passed third perfusion step
+tpt1=60; %number of seconds passed by first time set
+tpt2=180; %number of seconds passed by second time set
+tpt3=420; %number of seconds passed by third time set
+tpt4=1200; %number of seconds passed by fourth time step
+frame1=14; %FITC-K
+frame2=107; %PBS
+frame3=120; %FITC-K
+frame4=192; %PBS
+frame5=273;%FITC-K
+frame6=355; %PBS
+frame7=435; %FITC-K Mg
+frame8=517; %PBS
 thresh=0;%For default, enter zero.
-%IntThresh=10280;%Threshold used to enhance contrast. Default:35000
+%IntThresh=2000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed %default: 1
 sm=2;%Parameter used in edge detection %default: 2
 minL=2;%Minimum cell length default: 2
@@ -88,9 +97,8 @@ minA=50;%Minimum cell area. default: 50
 dotA_min=8800; %area range of the 'dots' (pillars) in the trap
 dotA_max=8850;
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
-recrunch=1;%Display data from previously crunched data? 0=No, 1=Yes.
-xlabels=["PBS + FSS + 9 mM Mg^{2+}"    "PBS + 5% detergent"    "PBS + 9 mM Mg^{2+}"];
-xswitch=[tpt1 tpt2 tpt3];
+recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
+xlabels=["FITC-K" "PBS" "FITC-K" "PBS" "FITC-K" "PBS" "FITC-K + 9 mM Mg^{2+}" "PBS"];
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -376,9 +384,10 @@ else
      tpoint1=[0:tscale:tpt1];
      tpoint2=[tpt1+tscale2:tscale2:tpt2];
      tpoint3=[tpt2+tscale:tscale:tpt3];
-     tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
-     tpoint4=[tpoint3(end)+1:tpoint3(end)+(T-tlength)];
+     %tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
+     tpoint4=[tpt3+tscale2:tscale2:tpt4];
      tpoints=[tpoint1, tpoint2, tpoint3, tpoint4];
+     tpoints=tpoints(1:T);
     end
 end
 
@@ -555,28 +564,30 @@ end
 
 
 % %Plot data
-% cd(savedir);
-% save([basename '_BTphase'])
-% save([basename '_BTlab'],'labels','labels2','-v7.3')
-% 
-% figure(1), title('Cell Length vs. Time')
-% clf
-% hold on
-% for i=1:ncells  
-%     lcell(i,:)=movingaverage2(lcell(i,:),3);
-%     indx=isnan(lcell(i,:))~=1;
-%     indx=find(indx);
-%     plot(time(indx),lcell(i,indx))
-%     %plot(time(1:end),lcell(i,1:end)) 
-% end
-% xlabel('Time (s)')
-% ylabel('Length (\mum)')
-% %ylim([0 inf])
-% fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% saveas(gcf,[basename,'_lTraces.png'])
+cd(savedir);
+save([basename '_BTphase'])
+save([basename '_BTlab'],'labels','labels2','-v7.3')
+
+xswitch=[tpoints(frame1) tpoints(frame2) tpoints(frame3) tpoints(frame4) tpoints(frame5) tpoints(frame6) tpoints(frame7) tpoints(frame8)]
+
+figure(1), title('Cell Length vs. Time')
+clf
+hold on
+for i=1:ncells  
+    lcell(i,:)=movingaverage2(lcell(i,:),3);
+    indx=isnan(lcell(i,:))~=1;
+    indx=find(indx);
+    plot(time(indx),lcell(i,indx))
+    %plot(time(1:end),lcell(i,1:end)) 
+end
+xlabel('Time (s)')
+ylabel('Length (\mum)')
+%ylim([0 inf])
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf,[basename,'_lTraces.png'])
 %  
 % figure(2), title('Cell Width vs. Time')
 % hold on
@@ -603,48 +614,48 @@ end
 % % fig2pretty
 % % saveas(gcf, [basename,'_cStrain.png'])
 % 
-% tmid=(time(2:end)+time(1:end-1))/2;
+tmid=(time(2:end)+time(1:end-1))/2;
 % 
-% figure(5), title('Elongation Rate vs. Time')
-% hold on
-% for i=1:ncells
-%     plot(tmid,v(i,:))
-% end
-% plot(tmid,vav,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation Rate (s^{-1})')
-% fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% saveas(gcf, [basename,'_eTraces.png'])
+figure(5), title('Elongation Rate vs. Time')
+hold on
+for i=1:ncells
+    plot(tmid,v(i,:))
+end
+plot(tmid,vav,'-r')
+xlabel('Time (s)')
+ylabel('Elongation Rate (s^{-1})')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf, [basename,'_eTraces.png'])
 % 
-% figure(6), title('Elongation Rate vs. Time')
-% hold on
-% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-% plot(tmid,vav*3600,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation (hr^{-1})')
-% yline(2, '--b')
-% fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% saveas(gcf, [basename,'_ET.png'])
-%    
+figure(6), title('Elongation Rate vs. Time')
+hold on
+ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+plot(tmid,vav*3600,'-r')
+xlabel('Time (s)')
+ylabel('Elongation (hr^{-1})')
+yline(2, '--b')
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf, [basename,'_ET.png'])
+   
 % 
-% figure(7), title('Cell Length Average vs. Time')
-% clf
-% lcellAVG=mean(lcell,1, 'omitnan');
-% lcellSTD=std(lcell, 0,1,'omitnan');
-% lcellAVG=movingaverage2(lcellAVG,10);
-% ciplot((lcellAVG-lcellSTD),(lcellAVG+lcellSTD),time,[0.75 0.75 1])
-% plot(time,lcellAVG,'-r')
-% xlabel('Time (s)')
-% ylabel('Length (\mum)')
-% ylim([0 inf])
-% fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% saveas(gcf,[basename,'_lTracesAVG.png'])
+figure(7), title('Cell Length Average vs. Time')
+clf
+lcellAVG=mean(lcell,1, 'omitnan');
+lcellSTD=std(lcell, 0,1,'omitnan');
+lcellAVG=movingaverage2(lcellAVG,10);
+ciplot((lcellAVG-lcellSTD),(lcellAVG+lcellSTD),time,[0.75 0.75 1])
+plot(time,lcellAVG,'-r')
+xlabel('Time (s)')
+ylabel('Length (\mum)')
+ylim([0 inf])
+fig2pretty
+for x=1:length(xlabels)
+    xline(xswitch(x), '--k', xlabels(x)) 
+end
+saveas(gcf,[basename,'_lTracesAVG.png'])
