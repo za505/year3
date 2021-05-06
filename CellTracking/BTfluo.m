@@ -32,6 +32,8 @@ frameInitial=8; %this is the FIRST frame that has dye without lysing the membran
 frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
 frameBg=105; %this is the frame that you'll pick the background area from
 recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
+vis=1;
+outThresh=510; %intensity cutoff; x boundary 
 %xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
 %xswitch=[300 360 420];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -50,16 +52,49 @@ cd(channel);
 fluo_directory=dir('*.tif');
 
 %load BacTrack data
-load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'T', 'time', 'tmid', 'pixels', 'xlabels', 'xswitch')
+load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'time', 'T','directory', 'dirname', 'xlabels', 'xswitch')
+load([filename '/' basename '_phase/' basename '_figures/' basename '_BTlab'],'labels', 'labels2')
 
-%preallocate cells
-cellIntensity=[]; %cellular intensities
+%preallocate variables
+cellnumber=zeros(1, T);
+
+%Let's get the coordinates of the cells for each image
+for t=1:T
+    
+    %Let's calculate the number of cells in each frame
+    cellnumber(t)=max(max(labels(:,:,t)));
+    
+   %now let's get the row and column coordinates of the cells in each frame
+    for n=1:cellnumber(t)
+    
+        [r1,c1] = find(labels(:,:,t)==n);   %Find coordinates of cells in frame T
+
+        r1c1{n,t}=[r1 c1]; % concatenate XY coords frame T 
+        
+    end
+    
+end
+
+%calculate max total cells
+maxcellnumber=max(cellnumber);
+    
+%pre-allocate more variables
+pixelIntensity=cell(maxcellnumber, T); %cellular intensities
 avgIntensity=zeros(1,T); %population average cellular intensity
 stdIntensity=zeros(1,T); %std of population cellular intensity
 
 bgIntensity=zeros(1,T); %background intensity
-cellAuto=zeros(height(pixels),frameAuto-frameInitial); %intensity of cells prior to dye perfusion, aka autofluorescence
 bgAuto=zeros(1,frameSwitch-frameAuto-1); %intensity of background prior to dye perfusion, aka autofluorescence
+
+Cin=nan(maxcellnumber, T);
+Cexp=nan(maxcellnumber, T);
+cellIntensity=nan(maxcellnumber, T);
+intercept=nan(maxcellnumber, 1);
+slope=nan(maxcellnumber, 1);
+Cout=[];
+Cauto=[];
+
+stats=cell(maxcellnumber, 1); %where all the models are stored
 
 %determine region where you'll measure background intensity
 imagename=fluo_directory(frameBg).name;
@@ -80,30 +115,59 @@ for t=1:T
     bglevel = measureBackground(imagename, p1, p2);
     bgIntensity(t)=bglevel; 
     
-    %calculate background autofluorescence
-    if t <= frameSwitch & t > frameAuto
-        bgAuto(1, t)=measureBackground(imagename, p1, p2);
-    else 
-        bgAuto(1, t)=NaN;
-    end
-    
     %measure cellular intensity
-    for j=1:height(pixels)
-         
-        %calculate intensity
-        cellIntensity(j,t)=mean(im(pixels{j,t}));
+    for n=1:cellnumber(t)
         
-        %calculate cellular autofluorescence
-        if t <= frameAuto & t >= frameInitial
-            cellAuto(j, t)=mean(im(pixels{j,t}));
-        else
-            cellAuto(j, t)=NaN;
+        %make a separate variable to store the pixel intensities of 1 cell
+        cellTemp=nan(height(r1c1{n,t}),1);
+        
+        %get the intensity of each pixel
+        for p=1:height(cellTemp)
+         cellTemp(p)=im(r1c1{n,t}(p,1),r1c1{n,t}(p,2));
         end
         
+        %store this in the cellIntensity variable
+        pixelIntensity{n,t}=cellTemp;
+       
+        %take the mean and calculate Cin
+        Cin(n,t)=mean(pixelIntensity{n,t});
+        
+    end
+    
+    %index Cout and Cin
+    if t>=frameInitial & t<=frameAuto & bgIntensity(t)<=outThresh
+        Cout=[Cout bgIntensity(t)];
+        Cauto=[Cauto Cin(:, t)];
+    end
+    
+     %check that the coordinates are correct
+    if vis==1 & (t<=6 | t>=T-6)
+        figure
+        imshow(im)
+        hold on
+        for n=1:cellnumber(t)
+           plot(r1c1{n,t}(:, 2),r1c1{n,t}(:, 1),'-r')
+        end
+        pause
+        close
     end
 
 end
     
+%now let's fit a line to the Cout and Cauto fluorescence data
+for n=1:maxcellnumber
+    stats{n,1}=fitlm(Cout, Cauto(n,:));
+    arrayTemp=table2array(stats{n,1}.Coefficients);
+    intercept(n,1)=arrayTemp(1,1);
+    slope(n,1)=arrayTemp(2,1);
+    
+    for t=1:T
+        Cexp(n,t)=slope(n,1)*bgIntensity(1,t)+intercept(n,1);
+        cellIntensity(n,t)=Cin(n,t)-Cexp(n,t);
+    end
+    
+end
+
 %cellAuto(cellAuto==0)=NaN;
         
 %take the population average of the autofluorescence 
@@ -152,79 +216,99 @@ cd(savename)
 %save the variables
 save([basename '_BTfluo'])
 
-%Plot data
-%Let's plot cellular intensity first
-figure, hold on, title('Intensity vs Time')
-for i=1:height(pixels)
-    plot(time,cellIntensity(i,:))
-end
-xlabel('Time (s)')
-ylabel('Intensity (A.U.)')
-fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
-ylim([-3 Inf])
-saveas(gcf, [basename '_intensity.png'])
-
-%now population average cell intensity
-figure
-ciplot(avgIntensity - stdIntensity, avgIntensity + stdIntensity, time, [0.75 0.75 1])
-plot(time, avgIntensity,'-r')
-title('Average Intensity vs Time')
-xlabel('Time (s)')
-ylabel('Intensity (A.U.)')
-fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
-ylim([-3 Inf])
-saveas(gcf, [basename,'_intensityAvg.png'])
-
-%Plot average background fluorescence
-figure, hold on 
-title('Background Intensity vs Time')
-plot(time,Iout)
-xlabel('Time (s)')
-ylabel('Intensity (A.U.)')
-fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
-ylim([-3 Inf])
-hold off
-saveas(gcf, [basename,'_background.png'])
-
-%Plot the Iin/Iout ratio over time
-figure, hold on
-title('Intensity/Background vs Time')
-ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
-plot(time,avgRatio)
-xlabel('Time (s)')
-ylabel('Intensity/Background')
-fig2pretty 
-yline(1, '--k')
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
-ylim([0 Inf])
-hold off
-saveas(gcf, [basename,'_ratioTime.png'])
-
-%Plot Intensity Rate
-figure, hold on
-ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
-plot(tmid,avgIrate)
-xlabel('Time (s)')
-ylabel('Intensity Rate (s^{-1})')
-fig2pretty
+% %Plot data
+% %Let's plot cellular intensity first
+% figure, hold on, title('Intensity vs Time')
+% for i=1:height(pixels)
+%     plot(time,cellIntensity(i,:))
+% end
+% xlabel('Time (s)')
+% ylabel('Intensity (A.U.)')
+% fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-ylim([0 Inf])
-xlim([0 Inf])
-hold off
-saveas(gcf, [basename,'_intensityRate.png'])
+% ylim([-3 Inf])
+% saveas(gcf, [basename '_intensity.png'])
+% 
+% %now population average cell intensity
+% figure
+% ciplot(avgIntensity - stdIntensity, avgIntensity + stdIntensity, time, [0.75 0.75 1])
+% plot(time, avgIntensity,'-r')
+% title('Average Intensity vs Time')
+% xlabel('Time (s)')
+% ylabel('Intensity (A.U.)')
+% fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+% ylim([-3 Inf])
+% saveas(gcf, [basename,'_intensityAvg.png'])
+% 
+% %Plot average background fluorescence
+% figure, hold on 
+% title('Background Intensity vs Time')
+% plot(time,Iout)
+% xlabel('Time (s)')
+% ylabel('Intensity (A.U.)')
+% fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+% ylim([-3 Inf])
+% hold off
+% saveas(gcf, [basename,'_background.png'])
+% 
+% %Plot the Iin/Iout ratio over time
+% figure, hold on
+% title('Intensity/Background vs Time')
+% ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
+% plot(time,avgRatio)
+% xlabel('Time (s)')
+% ylabel('Intensity/Background')
+% fig2pretty 
+% yline(1, '--k')
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+% ylim([0 Inf])
+% hold off
+% saveas(gcf, [basename,'_ratioTime.png'])
+% 
+% %Plot Intensity Rate
+% figure, hold on
+% ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
+% plot(tmid,avgIrate)
+% xlabel('Time (s)')
+% ylabel('Intensity Rate (s^{-1})')
+% fig2pretty
+% % for x=1:length(xlabels)
+% %     xline(xswitch(x), '--k', xlabels(x)) 
+% % end
+% ylim([0 Inf])
+% xlim([0 Inf])
+% hold off
+% saveas(gcf, [basename,'_intensityRate.png'])
+
+%Plot Cin vs Cout for each cell during dye perfusion prior to lysis
+Cin=zeros(height(cellIntensity), length(frameInitial:frameAuto));
+Cout=zeros(1, length(frameInitial:frameAuto));
+
+for f=frameInitial:frameAuto
+    
+    t=f-frameInitial+1;
+    
+    for n=1:height(cellIntensity)
+        Cin(n,t)=cellIntensity(n,t);
+    end
+    
+    Cout(t)=bgIntensity(t);
+end
+
+figure,hold on
+for n=1:height(cellIntensity)
+    plot(Cout, Cin(n,:))
+end
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
