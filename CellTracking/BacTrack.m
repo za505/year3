@@ -76,9 +76,9 @@ tscale2=1;
 tpt1=60; %number of seconds passed by first time set
 tpt2=180; %number of seconds passed by second time set
 tpt3=420; %number of seconds passed by third time set
-tpt4=1200; %number of seconds passed by fourth time step
+tpt4=1140; %number of seconds passed by fourth time step
 frame1=14; %FITC-K
-frame2=107; %PBS
+frame2=94; %PBS
 frame3=120; %FITC-K
 frame4=192; %PBS
 frame5=273;%FITC-K
@@ -248,7 +248,22 @@ for t=1:T
     idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
     ed4=ismember(labelmatrix(cc),idx);
     
+    %%Let's add a few more rounds of pruning
+    cc=bwconncomp(ed4,4); %new cc structure
+    stats=regionprops(cc,imc,'Area','MeanIntensity');
+    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
+    ed4=ismember(labelmatrix(cc),idx);
     
+    cc=bwconncomp(ed4,4); %new cc structure
+    stats=regionprops(cc,imc,'Area','MeanIntensity');
+    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
+    ed4=ismember(labelmatrix(cc),idx);
+    
+    cc=bwconncomp(ed4,4); %new cc structure
+    stats=regionprops(cc,imc,'Area','MeanIntensity');
+    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
+    ed4=ismember(labelmatrix(cc),idx);
+    %%
     %Find cell areas and centroids
     bw=bwmorph(ed4,'thicken');
     [P,bw]=bwboundaries(bw,4,'noholes'); %P= row x column position, bw = binary with cell #
