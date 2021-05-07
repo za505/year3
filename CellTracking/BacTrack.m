@@ -577,13 +577,12 @@ ew(ew==0)=NaN;
 
 end
 
+xswitch=[tpoints(frame1) tpoints(frame2) tpoints(frame3) tpoints(frame4) tpoints(frame5) tpoints(frame6) tpoints(frame7) tpoints(frame8)]
 
 % %Plot data
 cd(savedir);
 save([basename '_BTphase'])
 save([basename '_BTlab'],'labels','labels2','-v7.3')
-
-xswitch=[tpoints(frame1) tpoints(frame2) tpoints(frame3) tpoints(frame4) tpoints(frame5) tpoints(frame6) tpoints(frame7) tpoints(frame8)]
 
 figure(1), title('Cell Length vs. Time')
 clf
