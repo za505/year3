@@ -22,26 +22,26 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04222021_Exp1_colony1';
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/'  basename '_figures'];;
-channel=[filename '/' basename '_FSS/' basename '_aligned'];
+basename='05022021_Exp1_colony1';
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/'];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/' basename '_FITC/'  basename '_figures'];;
+channel=[filename '/' basename '_FITC/' basename '_aligned'];
 
-frameSwitch=118; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
-frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
-frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
-frameBg=105; %this is the frame that you'll pick the background area from
+frameSwitch=120; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
+frameInitial=14; %this is the FIRST frame that has dye without lysing the membrane
+frameAuto=93; %this is the LAST frame that has dye without lysing the membrane
+frameBg=90; %this is the frame that you'll pick the background area from
 recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
 vis=1;
-outThresh=510; %intensity cutoff; x boundary 
-%xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
+outThresh=18000; %intensity cutoff; x boundary 
+%xlabels=["PBS + FITC" "PBS + FITC + 9 mM Mg" "PBS + FITC"];
 %xswitch=[300 360 420];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     
-    load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'])
+    load ([filename '/' basename '_FITC/' basename '_figures/' basename '_BTfluo'])
     
-%     xlabels=["PBS + 5% detergent" "PBS + FSS" "PBS + FSS + 9 mM Ca" "PBS + FSS"];
+%     xlabels=["PBS + 5% detergent" "PBS + FITC" "PBS + FITC + 9 mM Ca" "PBS + FITC"];
 %     xswitch=[60 300 410 530];
     
 elseif recrunch==0
@@ -137,11 +137,11 @@ for t=1:T
     end
     
     %index Cout and Cin
-    if t>=frameInitial & t<=frameAuto %& bgIntensity(t)<=outThresh
+    if t>=frameInitial & t<=frameAuto & bgIntensity(t)<=outThresh
         Cout=[Cout bgIntensity(t)];
         Cauto=[Cauto Cin(:, t)];
     end
-    
+   
      %check that the coordinates are correct
     if vis==1 & (t<=6 | t>=T-6)
         figure
@@ -194,7 +194,6 @@ stdIrate = std(Irate, 0, 1, 'omitnan');
 end
 
 %let's change folders to save the plots and variables
-cd([filename '/' basename '_FSS/' basename '_figures'])
 cd(savename)
 
 %save the variables
@@ -213,7 +212,7 @@ fig2pretty
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
 ylim([-3 Inf])
-saveas(gcf, [basename '_intensity.png'])
+% saveas(gcf, [basename '_intensity.png'])
 
 %now population average cell intensity
 figure
@@ -227,7 +226,7 @@ fig2pretty
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
 ylim([-3 Inf])
-saveas(gcf, [basename,'_intensityAvg.png'])
+% saveas(gcf, [basename,'_intensityAvg.png'])
 
 %Plot average background fluorescence
 figure, hold on 
@@ -241,7 +240,7 @@ fig2pretty
 % end
 ylim([-3 Inf])
 hold off
-saveas(gcf, [basename,'_background.png'])
+% saveas(gcf, [basename,'_background.png'])
 
 %Plot the Iin/Iout ratio over time
 figure, hold on
@@ -257,7 +256,7 @@ yline(1, '--k')
 % end
 ylim([0 Inf])
 hold off
-saveas(gcf, [basename,'_ratioTime.png'])
+% saveas(gcf, [basename,'_ratioTime.png'])
 
 %Plot Intensity Rate
 figure, hold on
@@ -272,7 +271,7 @@ fig2pretty
 ylim([0 Inf])
 xlim([0 Inf])
 hold off
-saveas(gcf, [basename,'_intensityRate.png'])
+% saveas(gcf, [basename,'_intensityRate.png'])
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
