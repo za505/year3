@@ -55,6 +55,9 @@ fluo_directory=dir('*.tif');
 load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'time', 'T','directory', 'dirname', 'xlabels', 'xswitch')
 load([filename '/' basename '_phase/' basename '_figures/' basename '_BTlab'],'labels', 'labels2')
 
+%calculate tmid
+tmid=(time(2:end)+time(1:end-1))/2;
+
 %preallocate variables
 cellnumber=zeros(1, T);
 
@@ -76,7 +79,7 @@ for t=1:T
 end
 
 %calculate max total cells
-maxcellnumber=max(cellnumber);
+maxcellnumber=mode(cellnumber(frameInitial:frameAuto)); %if we can't correct for it, throw it out
     
 %pre-allocate more variables
 pixelIntensity=cell(maxcellnumber, T); %cellular intensities
@@ -84,14 +87,13 @@ avgIntensity=zeros(1,T); %population average cellular intensity
 stdIntensity=zeros(1,T); %std of population cellular intensity
 
 bgIntensity=zeros(1,T); %background intensity
-bgAuto=zeros(1,frameSwitch-frameAuto-1); %intensity of background prior to dye perfusion, aka autofluorescence
 
 Cin=nan(maxcellnumber, T);
 Cexp=nan(maxcellnumber, T);
 cellIntensity=nan(maxcellnumber, T);
 intercept=nan(maxcellnumber, 1);
 slope=nan(maxcellnumber, 1);
-Cout=[];
+Cout=[]; %background autofluorescence
 Cauto=[];
 
 stats=cell(maxcellnumber, 1); %where all the models are stored
@@ -116,7 +118,7 @@ for t=1:T
     bgIntensity(t)=bglevel; 
     
     %measure cellular intensity
-    for n=1:cellnumber(t)
+    for n=1:maxcellnumber
         
         %make a separate variable to store the pixel intensities of 1 cell
         cellTemp=nan(height(r1c1{n,t}),1);
@@ -135,7 +137,7 @@ for t=1:T
     end
     
     %index Cout and Cin
-    if t>=frameInitial & t<=frameAuto & bgIntensity(t)<=outThresh
+    if t>=frameInitial & t<=frameAuto %& bgIntensity(t)<=outThresh
         Cout=[Cout bgIntensity(t)];
         Cauto=[Cauto Cin(:, t)];
     end
@@ -168,36 +170,18 @@ for n=1:maxcellnumber
     
 end
 
-%cellAuto(cellAuto==0)=NaN;
-        
-%take the population average of the autofluorescence 
-cellAuto=mean(cellAuto, 'omitnan');
-
-%now take the temporal average of the background and cellular
-%autofluorescence
-cellAdj=mean(cellAuto, 'all', 'omitnan');
-bgAdj = mean(bgAuto, 'all', 'omitnan');
-
-%now subtract the background autofluorescence from background intensity
-Iout = bgIntensity - bgAdj;
-Iout(Iout<=0)=0; 
-
-%now subtract the background autofluorescence from background intensity
-Iin = cellIntensity - cellAdj;
-Iin(Iin<=0)=0;
-
 %calculate average intensity and standard deviation
-avgIntensity = mean(Iin, 'omitnan');
-stdIntensity = std(Iin, 'omitnan');
+avgIntensity = mean(cellIntensity, 'omitnan');
+stdIntensity = std(cellIntensity, 'omitnan');
 
 %now, calculate the Iin/Iout ratio
-ratio = Iin ./ Iout;
-ratio(:,1:frameSwitch-1)=NaN; %note: 0/0 makes weird things happen
+ratio(:,frameInitial:frameAuto)=NaN; %note: 0/0 makes weird things happen
+ratio = Cin ./ bgIntensity;
 
 avgRatio = mean(ratio, 1, 'omitnan');
 stdRatio = std(ratio, 0, 1, 'omitnan');
 
-%calculate Intencity Rate
+%calculate Ratio Rate
 deltat=time(2:end)-time(1:end-1);
 Irate=(ratio(:, 2:end)-ratio(:, 1:end-1))./((ratio(:, 1:end-1)+ratio(:, 2:end))/2);
 for i=1:height(Irate)
@@ -216,99 +200,79 @@ cd(savename)
 %save the variables
 save([basename '_BTfluo'])
 
-% %Plot data
-% %Let's plot cellular intensity first
-% figure, hold on, title('Intensity vs Time')
-% for i=1:height(pixels)
-%     plot(time,cellIntensity(i,:))
-% end
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% ylim([-3 Inf])
-% saveas(gcf, [basename '_intensity.png'])
-% 
-% %now population average cell intensity
-% figure
-% ciplot(avgIntensity - stdIntensity, avgIntensity + stdIntensity, time, [0.75 0.75 1])
-% plot(time, avgIntensity,'-r')
-% title('Average Intensity vs Time')
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% ylim([-3 Inf])
-% saveas(gcf, [basename,'_intensityAvg.png'])
-% 
-% %Plot average background fluorescence
-% figure, hold on 
-% title('Background Intensity vs Time')
-% plot(time,Iout)
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% ylim([-3 Inf])
-% hold off
-% saveas(gcf, [basename,'_background.png'])
-% 
-% %Plot the Iin/Iout ratio over time
-% figure, hold on
-% title('Intensity/Background vs Time')
-% ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
-% plot(time,avgRatio)
-% xlabel('Time (s)')
-% ylabel('Intensity/Background')
-% fig2pretty 
-% yline(1, '--k')
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-% ylim([0 Inf])
-% hold off
-% saveas(gcf, [basename,'_ratioTime.png'])
-% 
-% %Plot Intensity Rate
-% figure, hold on
-% ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
-% plot(tmid,avgIrate)
-% xlabel('Time (s)')
-% ylabel('Intensity Rate (s^{-1})')
-% fig2pretty
-% % for x=1:length(xlabels)
-% %     xline(xswitch(x), '--k', xlabels(x)) 
-% % end
-% ylim([0 Inf])
-% xlim([0 Inf])
-% hold off
-% saveas(gcf, [basename,'_intensityRate.png'])
-
-%Plot Cin vs Cout for each cell during dye perfusion prior to lysis
-Cin=zeros(height(cellIntensity), length(frameInitial:frameAuto));
-Cout=zeros(1, length(frameInitial:frameAuto));
-
-for f=frameInitial:frameAuto
-    
-    t=f-frameInitial+1;
-    
-    for n=1:height(cellIntensity)
-        Cin(n,t)=cellIntensity(n,t);
-    end
-    
-    Cout(t)=bgIntensity(t);
+%Plot data
+%Let's plot cellular intensity first
+figure, hold on, title('Intensity vs Time')
+for i=1:maxcellnumber
+    plot(time,cellIntensity(i,:))
 end
+xlabel('Time (s)')
+ylabel('Intensity (A.U.)')
+fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+ylim([-3 Inf])
+saveas(gcf, [basename '_intensity.png'])
 
-figure,hold on
-for n=1:height(cellIntensity)
-    plot(Cout, Cin(n,:))
-end
+%now population average cell intensity
+figure
+ciplot(avgIntensity - stdIntensity, avgIntensity + stdIntensity, time, [0.75 0.75 1])
+plot(time, avgIntensity,'-r')
+title('Average Intensity vs Time')
+xlabel('Time (s)')
+ylabel('Intensity (A.U.)')
+fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+ylim([-3 Inf])
+saveas(gcf, [basename,'_intensityAvg.png'])
+
+%Plot average background fluorescence
+figure, hold on 
+title('Background Intensity vs Time')
+plot(time,bgIntensity)
+xlabel('Time (s)')
+ylabel('Intensity (A.U.)')
+fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+ylim([-3 Inf])
+hold off
+saveas(gcf, [basename,'_background.png'])
+
+%Plot the Iin/Iout ratio over time
+figure, hold on
+title('Intensity/Background vs Time')
+ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
+plot(time,avgRatio)
+xlabel('Time (s)')
+ylabel('Intensity/Background')
+fig2pretty 
+yline(1, '--k')
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+ylim([0 Inf])
+hold off
+saveas(gcf, [basename,'_ratioTime.png'])
+
+%Plot Intensity Rate
+figure, hold on
+ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
+plot(tmid,avgIrate)
+xlabel('Time (s)')
+ylabel('Ratio Rate (s^{-1})')
+fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+ylim([0 Inf])
+xlim([0 Inf])
+hold off
+saveas(gcf, [basename,'_intensityRate.png'])
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
