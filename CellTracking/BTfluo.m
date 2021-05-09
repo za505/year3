@@ -22,19 +22,21 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05022021_Exp1_colony1';
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/'];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/' basename '_FITC/'  basename '_figures'];;
-channel=[filename '/' basename '_FITC/' basename '_aligned'];
+basename='04222021_Exp1_colony1';
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/'  basename '_figures'];
+labelname=[filename '/' basename '_phase/' basename '_figures/' basename '_BTlab'];
+channel=[filename '/' basename '_FSS/' basename '_aligned'];
 
-frameSwitch=120; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
-frameInitial=14; %this is the FIRST frame that has dye without lysing the membrane
-frameAuto=93; %this is the LAST frame that has dye without lysing the membrane
-frameBg=90; %this is the frame that you'll pick the background area from
+frameSwitch=118; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
+frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
+frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
+frameBg=105; %this is the frame that you'll pick the background area from
 recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
-vis=1;
-outThresh=18000; %intensity cutoff; x boundary 
-%xlabels=["PBS + FITC" "PBS + FITC + 9 mM Mg" "PBS + FITC"];
+calibration=0; %this variable is to save time while I troubleshoot the code
+vis=0;
+%outThresh=850; %background intensity cutoff for autofluor. calibration; default 850
+%xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
 %xswitch=[300 360 420];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
@@ -53,7 +55,6 @@ fluo_directory=dir('*.tif');
 
 %load BacTrack data
 load([filename '/' basename '_phase/' basename '_figures/' basename '_BTphase'], 'time', 'T','directory', 'dirname', 'xlabels', 'xswitch')
-load([filename '/' basename '_phase/' basename '_figures/' basename '_BTlab'],'labels', 'labels2')
 
 %calculate tmid
 tmid=(time(2:end)+time(1:end-1))/2;
@@ -61,43 +62,51 @@ tmid=(time(2:end)+time(1:end-1))/2;
 %preallocate variables
 cellnumber=zeros(1, T);
 
-%Let's get the coordinates of the cells for each image
-for t=1:T
-    
-    %Let's calculate the number of cells in each frame
-    cellnumber(t)=max(max(labels(:,:,t)));
-    
-   %now let's get the row and column coordinates of the cells in each frame
-    for n=1:cellnumber(t)
-    
-        [r1,c1] = find(labels(:,:,t)==n);   %Find coordinates of cells in frame T
+%%This code takes a bit of time, so we can make a short cut while
+%%troubleshooting
+if calibration==0
+    load(labelname,'labels')
+        %Let's get the coordinates of the cells for each image
+        for t=1:T
 
-        r1c1{n,t}=[r1 c1]; % concatenate XY coords frame T 
-        
-    end
-    
+            %Let's calculate the number of cells in each frame
+            cellnumber(t)=max(max(labels(:,:,t)));
+
+           %now let's get the row and column coordinates of the cells in each frame
+            for n=1:cellnumber(t)
+
+                [r1,c1] = find(labels(:,:,t)==n);   %Find coordinates of cells in frame T
+
+                r1c1{n,t}=[r1 c1]; % concatenate XY coords frame T 
+
+            end
+
+        end
+else
+        load ([filename '/' basename '_FITC/' basename '_figures/' basename '_BTfluo'], 'cellnumber', 'r1', 'c1', 'r1c1')
 end
 
 %calculate max total cells
 maxcellnumber=mode(cellnumber(frameInitial:frameAuto)); %if we can't correct for it, throw it out
     
 %pre-allocate more variables
-pixelIntensity=cell(maxcellnumber, T); %cellular intensities
+pixelIntensity=cell(maxcellnumber, T); %pixel intensities for each cell in each frame
 avgIntensity=zeros(1,T); %population average cellular intensity
 stdIntensity=zeros(1,T); %std of population cellular intensity
 
-bgIntensity=zeros(1,T); %background intensity
+bgIntensity=zeros(1,T); %background intensity for all the frames
 
-Cin=nan(maxcellnumber, T);
-Cexp=nan(maxcellnumber, T);
-cellIntensity=nan(maxcellnumber, T);
-intercept=nan(maxcellnumber, 1);
+Cin=nan(maxcellnumber, T); %raw pixel intensity means
+Cexp=nan(maxcellnumber, T); %expected pixel intensity values
+cellIntensity=nan(maxcellnumber, T); %adjusted cell intensities for each cell in each frame
+intercept=nan(maxcellnumber, 1); 
 slope=nan(maxcellnumber, 1);
-Cout=[]; %background autofluorescence
-Cauto=[];
+Cout=[]; %background intensity during control perfusion
+Cauto=[]; %cellular intensity during control perfusion
 
 stats=cell(maxcellnumber, 1); %where all the models are stored
 
+%%
 %determine region where you'll measure background intensity
 imagename=fluo_directory(frameBg).name;
 im=imread(imagename);    
@@ -137,18 +146,18 @@ for t=1:T
     end
     
     %index Cout and Cin
-    if t>=frameInitial & t<=frameAuto & bgIntensity(t)<=outThresh
+    if t>=frameInitial & t<=frameAuto %& bgIntensity(t)<=outThresh
         Cout=[Cout bgIntensity(t)];
         Cauto=[Cauto Cin(:, t)];
     end
-   
+    
      %check that the coordinates are correct
     if vis==1 & (t<=6 | t>=T-6)
         figure
         imshow(im)
         hold on
         for n=1:cellnumber(t)
-           plot(r1c1{n,t}(:, 2),r1c1{n,t}(:, 1),'-r')
+           plot(r1c1{n,t}(:, 2),r1c1{n,t}(:, 1),'-r') %x is im 'column', y is im 'row'
         end
         pause
         close
@@ -156,7 +165,53 @@ for t=1:T
 
 end
     
-%now let's fit a line to the Cout and Cauto fluorescence data
+%%
+idx=[];
+%Now, let's get a cutoff. 
+for i=1:length(Cout)
+    di=Cout(i+1)-Cout(i); %we want to make sure the increase is linear
+    if di>=0
+        idx=[idx i];
+    else
+        break
+    end
+end
+
+Cout=Cout(idx);
+Cauto=Cauto(:,idx);
+
+%plot Cauto vs Cout and save
+figure, hold on
+for n=1:maxcellnumber
+    plot(Cout, Cauto(n,:))
+end
+title('Cin vs Cout during control perfusion')
+pause
+cd(savename);
+saveas(gcf, [basename '_control.png'])
+saveas(gcf, [basename '_control.fig'])
+
+%calculate yhat for each cell
+xhat=[min(bgIntensity):1:max(bgIntensity)];
+yhat=nan(maxcellnumber, length(xhat));
+for n=1:maxcellnumber
+    yhat(n,:)=[slope(n).*xhat]+intercept(n);
+end
+
+figure, hold on
+for n=1:maxcellnumber
+    plot(xhat, yhat(n,:))
+end
+title('predicted Cin for a given background intensity value')
+pause
+cd(savename);
+saveas(gcf, [basename '_yhat.png'])
+saveas(gcf, [basename '_yhat.fig'])
+
+%display the information that's useful for the user to know
+fprintf('There are %d values in Cauto and the max value is %d.\n',length(idx), max(Cout));
+
+%use that cutoff to fit a line to the Cout and Cauto fluorescence data
 for n=1:maxcellnumber
     stats{n,1}=fitlm(Cout, Cauto(n,:));
     arrayTemp=table2array(stats{n,1}.Coefficients);
@@ -170,13 +225,14 @@ for n=1:maxcellnumber
     
 end
 
+%%
 %calculate average intensity and standard deviation
 avgIntensity = mean(cellIntensity, 'omitnan');
 stdIntensity = std(cellIntensity, 'omitnan');
 
 %now, calculate the Iin/Iout ratio
+ratio = cellIntensity ./ bgIntensity;
 ratio(:,frameInitial:frameAuto)=NaN; %note: 0/0 makes weird things happen
-ratio = Cin ./ bgIntensity;
 
 avgRatio = mean(ratio, 1, 'omitnan');
 stdRatio = std(ratio, 0, 1, 'omitnan');
@@ -196,7 +252,9 @@ end
 %let's change folders to save the plots and variables
 cd(savename)
 
-%save the variables
+%save the variables (we are going to exclude saving labels, which requires
+%a lot of storage
+clear labels
 save([basename '_BTfluo'])
 
 %Plot data
@@ -211,8 +269,8 @@ fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-ylim([-3 Inf])
-% saveas(gcf, [basename '_intensity.png'])
+ylim([-200 Inf])
+saveas(gcf, [basename '_intensity.png'])
 
 %now population average cell intensity
 figure
@@ -226,7 +284,7 @@ fig2pretty
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
 ylim([-3 Inf])
-% saveas(gcf, [basename,'_intensityAvg.png'])
+saveas(gcf, [basename,'_intensityAvg.png'])
 
 %Plot average background fluorescence
 figure, hold on 
@@ -240,7 +298,7 @@ fig2pretty
 % end
 ylim([-3 Inf])
 hold off
-% saveas(gcf, [basename,'_background.png'])
+saveas(gcf, [basename,'_background.png'])
 
 %Plot the Iin/Iout ratio over time
 figure, hold on
@@ -256,7 +314,7 @@ yline(1, '--k')
 % end
 ylim([0 Inf])
 hold off
-% saveas(gcf, [basename,'_ratioTime.png'])
+saveas(gcf, [basename,'_ratioTime.png'])
 
 %Plot Intensity Rate
 figure, hold on
@@ -271,7 +329,40 @@ fig2pretty
 ylim([0 Inf])
 xlim([0 Inf])
 hold off
-% saveas(gcf, [basename,'_intensityRate.png'])
+saveas(gcf, [basename,'_intensityRate.png'])
+
+%%%Troubleshooting
+blips=[4, 5, 6, 7, 9, 12, 13, 16, 18,19];
+heights=nan(length(blips),T);
+compHeights=nan(length(blips)*2,T);
+for h=1:length(blips)
+    heights(h,:)=cellfun(@height, pixelIntensity(blips(h), :));
+end
+
+newHeights=heights;
+ping=[];
+for n=1:length(blips)
+    for t=1:T-2
+        lowThresh=newHeights(n,t)*0.9;
+        highThresh=newHeights(n,t)*1.1;
+        ind1=find(newHeights(n, t:t+1)<lowThresh | newHeights(n, t:t+1)>highThresh);
+        ind2=find(newHeights(n, t:t+2)<lowThresh | newHeights(n, t:t+2)>highThresh);
+        if length(ind1)==1 & length(ind2)==1
+            ping=[ping t+1];
+            newHeights(n,t+1)=newHeights(n,t);
+        end
+    end
+end
+
+flag=1;
+for h=(1:length(blips)*2)
+    if mod(h,2)~=0
+        compHeights(h,:)=heights(flag,:);
+    else
+        compHeights(h,:)=newHeights(flag,:);
+        flag=flag+1;
+    end
+end
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
