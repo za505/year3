@@ -32,16 +32,16 @@ frameSwitch=118; %this is the initial frame for the switch (after which we pulse
 frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
 frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
 frameBg=105; %this is the frame that you'll pick the background area from
-recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
+recrunch=1; %recrunch=1, just redo the plots, don't recalculate any values
 calibration=0; %this variable is to save time while I troubleshoot the code
-vis=0;
+vis=1;
 %outThresh=850; %background intensity cutoff for autofluor. calibration; default 850
 %xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
 %xswitch=[300 360 420];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     
-    load ([filename '/' basename '_FITC/' basename '_figures/' basename '_BTfluo'])
+    load ([savename '/' basename '_BTfluo'])
     
 %     xlabels=["PBS + 5% detergent" "PBS + FITC" "PBS + FITC + 9 mM Ca" "PBS + FITC"];
 %     xswitch=[60 300 410 530];
@@ -113,6 +113,41 @@ im=imread(imagename);
 [p1, p2]=getBackground(imagename);
 close all
 
+ %prevent blips in cellular intensity
+  %this smooths the data for a given cell at a given time point 
+ for n=1:maxcellnumber
+    
+     %get the number of pixels in each time point for a given cell
+     heightTemp=cellfun(@height, r1c1(n,1:T));
+
+    %this smooths the data for a given cell at a given time point
+    ping=[];
+    for t=1:T-2
+        lowThresh=heightTemp(1,t)*0.9;
+        highThresh=heightTemp(1,t)*1.1;
+        ind1=find(heightTemp(1, t:t+1)<lowThresh | heightTemp(1, t:t+1)>highThresh);
+        ind2=find(heightTemp(1, t:t+2)<lowThresh | heightTemp(1, t:t+2)>highThresh);
+        if length(ind1)==1 & length(ind2)==1
+            ping=[ping t+1];
+            r1c1{n,t+1}=r1c1{n,t};
+        end
+    end
+    
+    ping
+ end
+ 
+ %make sure each cell is unique and not double counted
+  for n=flip(2:maxcellnumber)
+    for t=2:T
+        match=setdiff(r1c1{n,t}, r1c1{n-1,t});
+        if isempty(match)==1
+            r1c1{n,t}=r1c1{n,t-1};
+        end
+    end
+ 
+  end
+ 
+
 %now let's track intensity over time
 for t=1:T
 
@@ -154,7 +189,7 @@ for t=1:T
      %check that the coordinates are correct
     if vis==1 & (t<=6 | t>=T-6)
         figure
-        imshow(im)
+        imshow(im, [])
         hold on
         for n=1:cellnumber(t)
            plot(r1c1{n,t}(:, 2),r1c1{n,t}(:, 1),'-r') %x is im 'column', y is im 'row'
@@ -190,23 +225,7 @@ pause
 cd(savename);
 saveas(gcf, [basename '_control.png'])
 saveas(gcf, [basename '_control.fig'])
-
-%calculate yhat for each cell
-xhat=[min(bgIntensity):1:max(bgIntensity)];
-yhat=nan(maxcellnumber, length(xhat));
-for n=1:maxcellnumber
-    yhat(n,:)=[slope(n).*xhat]+intercept(n);
-end
-
-figure, hold on
-for n=1:maxcellnumber
-    plot(xhat, yhat(n,:))
-end
-title('predicted Cin for a given background intensity value')
-pause
-cd(savename);
-saveas(gcf, [basename '_yhat.png'])
-saveas(gcf, [basename '_yhat.fig'])
+close
 
 %display the information that's useful for the user to know
 fprintf('There are %d values in Cauto and the max value is %d.\n',length(idx), max(Cout));
@@ -224,6 +243,24 @@ for n=1:maxcellnumber
     end
     
 end
+
+%calculate yhat for each cell
+xhat=[min(bgIntensity):1:max(bgIntensity)];
+yhat=nan(maxcellnumber, length(xhat));
+for n=1:maxcellnumber
+    yhat(n,:)=[slope(n).*xhat]+intercept(n);
+end
+
+figure, hold on
+for n=1:maxcellnumber
+    plot(xhat, yhat(n,:))
+end
+title('predicted Cin for a given background intensity value')
+pause
+cd(savename);
+saveas(gcf, [basename '_yhat.png'])
+saveas(gcf, [basename '_yhat.fig'])
+close 
 
 %%
 %calculate average intensity and standard deviation
@@ -308,7 +345,6 @@ plot(time,avgRatio)
 xlabel('Time (s)')
 ylabel('Intensity/Background')
 fig2pretty 
-yline(1, '--k')
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
@@ -330,39 +366,6 @@ ylim([0 Inf])
 xlim([0 Inf])
 hold off
 saveas(gcf, [basename,'_intensityRate.png'])
-
-%%%Troubleshooting
-blips=[4, 5, 6, 7, 9, 12, 13, 16, 18,19];
-heights=nan(length(blips),T);
-compHeights=nan(length(blips)*2,T);
-for h=1:length(blips)
-    heights(h,:)=cellfun(@height, pixelIntensity(blips(h), :));
-end
-
-newHeights=heights;
-ping=[];
-for n=1:length(blips)
-    for t=1:T-2
-        lowThresh=newHeights(n,t)*0.9;
-        highThresh=newHeights(n,t)*1.1;
-        ind1=find(newHeights(n, t:t+1)<lowThresh | newHeights(n, t:t+1)>highThresh);
-        ind2=find(newHeights(n, t:t+2)<lowThresh | newHeights(n, t:t+2)>highThresh);
-        if length(ind1)==1 & length(ind2)==1
-            ping=[ping t+1];
-            newHeights(n,t+1)=newHeights(n,t);
-        end
-    end
-end
-
-flag=1;
-for h=(1:length(blips)*2)
-    if mod(h,2)~=0
-        compHeights(h,:)=heights(flag,:);
-    else
-        compHeights(h,:)=newHeights(flag,:);
-        flag=flag+1;
-    end
-end
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
