@@ -64,20 +64,19 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='04262021_Exp1_colony1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04262021_analysis/04262021_Exp1/' basename '/plasmolysis_test/'  basename '_TADA'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04262021_analysis/04262021_Exp1/' basename '/plasmolysis_test/'];%Directory to save the output .mat file to.
+basename='05082021_Exp5_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 %channel='647';
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
-tpoints=[0 60 420 720 1080 1220 1260 1300 1340 1380 1420 1440 1480 1520 1560 1600 1640 1680 1720 1760];
-% tscale=60;%Frame rate.
-% tscale2=10;
-% tpt1=1200; %number of seconds passed by first time set
-% tpt2=1920; %number of seconds passed by second time set
-% tpt3=420; %number of seconds passed by third time set
-% tpt4=1140; %number of seconds passed by fourth time step
+tscale=10;%Frame rate.
+tscale2=1;
+tpt1=120; %number of seconds passed by first time set
+tpt2=240; %number of seconds passed by second time set
+tpt3=480; %number of seconds passed by third time set
+tpt4=1320; %number of seconds passed by fourth time step
 % frame1=14; %TADA-K
 % frame2=94; %PBS
 % frame3=120; %TADA-K
@@ -99,7 +98,8 @@ dotA_min=8800; %area range of the 'dots' (pillars) in the trap
 dotA_max=8850;
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-xlabels=["PBS" "PBS + 3 M sorbitol + FSS"];
+xlabels=["FITC-K + 12 mM Mg2+" "PBS + 12 mM Mg2+" "FITC-K + 12 mM Mg2+"];
+xswitch=[tpt3 tpt3+120 tpt3+240];
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -178,8 +178,7 @@ for t=1:T
 %      m=['normalize']
      
     %Enhance contrast
-    %imc=imcomplement(im); %flips the pixel values (cells go from black to white)
-    imc=im;
+    imc=imcomplement(im); %flips the pixel values (cells go from black to white)
 %     imshow(imc)
 %     pause
 %      m=['enhance contrast']
@@ -254,7 +253,7 @@ for t=1:T
     idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
     ed4=ismember(labelmatrix(cc),idx);
     
-    %%
+ 
     %Find cell areas and centroids
     bw=bwmorph(ed4,'thicken');
     [P,bw]=bwboundaries(bw,4,'noholes'); %P= row x column position, bw = binary with cell #
@@ -316,7 +315,6 @@ if vis==1 %& t >= T-10 | t <= 6
    for k=1:nc(t)
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
    end
-    
   pause
   close all
 end
@@ -387,18 +385,19 @@ else
     if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
-%      tpoint1=[0:tscale:tpt1];
-%      tpoint2=[tpt1+tscale2:tscale2:tpt2];
-% %      tpoint3=[tpt2+tscale:tscale:tpt3];
-%      %tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
-% %      tpoint4=[tpt3+tscale2:tscale2:tpt4];
-%      tpoints=[tpoint1, tpoint2];
+     tpoint1=[0:tscale:tpt1];
+     tpoint2=[tpt1+tscale2:tscale2:tpt2];
+     tpoint3=[tpt2+tscale:tscale:tpt3];
+     tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
+     tpoint4=[tpt3+tscale2:tscale2:tpt4];
+     tpoints=[tpoint1, tpoint2, tpoint3, tpoint4];
      tpoints=tpoints(1:T);
     end
 end
 
 time=tpoints(1,:);
 time2=tpoints(end,:);
+tmid=(time(2:end)+time(1:end-1))/2;
 
 %Fix bug where micromanager screws up its timing
 dtime=diff(time);
@@ -568,8 +567,6 @@ ew(ew==0)=NaN;
 
 end
 
-xswitch=[120 1320];
-
 % %Plot data
 cd(savedir);
 save([basename '_BTphase'])
@@ -619,7 +616,6 @@ saveas(gcf,[basename,'_lTraces.png'])
 % % fig2pretty
 % % saveas(gcf, [basename,'_cStrain.png'])
 % 
-tmid=(time(2:end)+time(1:end-1))/2;
 % 
 figure(5), title('Elongation Rate vs. Time')
 hold on
