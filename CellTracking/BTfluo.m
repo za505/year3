@@ -275,20 +275,26 @@ avgRatio = mean(ratio, 1, 'omitnan');
 stdRatio = std(ratio, 0, 1, 'omitnan');
 
 %calculate Ratio Rate
-deltat=time(2:end)-time(1:end-1);
-Irate=(ratio(:, 2:end)-ratio(:, 1:end-1))./((ratio(:, 1:end-1)+ratio(:, 2:end))/2);
-for i=1:height(Irate)
-    Irate(i, :)=Irate(i, :)./deltat;
+deltat=[0 time(2:end)-time(1:end-1)];
+Irate=[zeros(maxcellnumber, 1), (cellIntensity(:, 2:end)-cellIntensity(:, 1:end-1))];
+diffC=nan(maxcellnumber,T);
+D=nan(maxcellnumber,T);
+for n=1:maxcellnumber
+    Irate(n, :)=Irate(n, :)./deltat;
+    diffC(n, :)=bgIntensity-cellIntensity(n, :);
+    D(n,:)=Irate(n,:)./diffC(n,:);
+end
+
+%Let's plot the diffusion constant
+figure, hold on, title('Diffusion Constant vs Time')
+for i=1:maxcellnumber
+    plot(time,D(i,:))
 end
 
 avgIrate = mean(Irate, 1, 'omitnan');
 stdIrate = std(Irate, 0, 1, 'omitnan');
 
 end
-
-%%Calculate the rate of change in background intensity over time
-dCbg=(bgIntensity(2:1:end)-bgIntensity(1:1:end-1))./(time(2:1:end)-time(1:1:end-1));
-[pks,locs] = findpeaks(abs(dCbg), 'MinPeakDistance',6);
 
 %let's change folders to save the plots and variables
 cd(savename)
@@ -356,20 +362,20 @@ ylim([0 Inf])
 hold off
 saveas(gcf, [basename,'_ratioTime.png'])
 
-%Plot Intensity Rate
-figure, hold on
-ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
-plot(tmid,avgIrate)
-xlabel('Time (s)')
-ylabel('Ratio Rate (s^{-1})')
-fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-ylim([0 Inf])
-xlim([0 Inf])
-hold off
-saveas(gcf, [basename,'_intensityRate.png'])
+% %Plot Intensity Rate
+% figure, hold on
+% ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
+% plot(tmid,avgIrate)
+% xlabel('Time (s)')
+% ylabel('Ratio Rate (s^{-1})')
+% fig2pretty
+% % for x=1:length(xlabels)
+% %     xline(xswitch(x), '--k', xlabels(x)) 
+% % end
+% ylim([0 Inf])
+% xlim([0 Inf])
+% hold off
+% saveas(gcf, [basename,'_intensityRate.png'])
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
