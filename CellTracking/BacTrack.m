@@ -64,29 +64,30 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05022021_Exp1_colony1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/'  basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05022021_analysis/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='04262021_Exp1_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04262021_analysis/04262021_Exp1/' basename '/plasmolysis_test/'  basename '_TADA'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04262021_analysis/04262021_Exp1/' basename '/plasmolysis_test/'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 %channel='647';
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
-tscale=10;%Frame rate.
-tscale2=1;
-tpt1=60; %number of seconds passed by first time set
-tpt2=180; %number of seconds passed by second time set
-tpt3=420; %number of seconds passed by third time set
-tpt4=1140; %number of seconds passed by fourth time step
-frame1=14; %FITC-K
-frame2=94; %PBS
-frame3=120; %FITC-K
-frame4=192; %PBS
-frame5=273;%FITC-K
-frame6=355; %PBS
-frame7=435; %FITC-K Mg
-frame8=517; %PBS
+tpoints=[0 60 420 720 1080 1220 1260 1300 1340 1380 1420 1440 1480 1520 1560 1600 1640 1680 1720 1760];
+% tscale=60;%Frame rate.
+% tscale2=10;
+% tpt1=1200; %number of seconds passed by first time set
+% tpt2=1920; %number of seconds passed by second time set
+% tpt3=420; %number of seconds passed by third time set
+% tpt4=1140; %number of seconds passed by fourth time step
+% frame1=14; %TADA-K
+% frame2=94; %PBS
+% frame3=120; %TADA-K
+% frame4=192; %PBS
+% frame5=273;%TADA-K
+% frame6=355; %PBS
+% frame7=435; %TADA-K Mg
+% frame8=517; %PBS
 thresh=0;%For default, enter zero.
-%IntThresh=2000;%Threshold used to enhance contrast. Default:35000
+IntThresh=2000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed %default: 1
 sm=2;%Parameter used in edge detection %default: 2
 minL=2;%Minimum cell length default: 2
@@ -98,7 +99,7 @@ dotA_min=8800; %area range of the 'dots' (pillars) in the trap
 dotA_max=8850;
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-xlabels=["FITC-K" "PBS" "FITC-K" "PBS" "FITC-K" "PBS" "FITC-K + 9 mM Mg^{2+}" "PBS"];
+xlabels=["PBS" "PBS + 3 M sorbitol + FSS"];
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -167,18 +168,22 @@ for t=1:T
     im=medfilt2(im); %each pixel is replaced with the median value of its neighboring pixels (in this case 3x3)
 %     imshow(im)
 %     pause
+%     m=['de-speckle']
     
     %Normalize images
     ppix=0.5; %I think this brings all the pixels in each image into a similar range
     im=norm16bit(im,ppix);
 %     imshow(im)
 %     pause
-    
+%      m=['normalize']
+     
     %Enhance contrast
-    imc=imcomplement(im); %flips the pixel values (cells go from black to white)
+    %imc=imcomplement(im); %flips the pixel values (cells go from black to white)
+    imc=im;
 %     imshow(imc)
 %     pause
-    
+%      m=['enhance contrast']
+     
     if checkhist==1
         figure,imhist(imc),pause;
     end
@@ -199,7 +204,8 @@ for t=1:T
     imc=imadjust(imc,[thresh1/65535 1],[]); %basically the background pixels get lumped together and get set to 0 (black background) 
 %     imshow(imc)
 %     pause
-    
+%     m=['imadjust']
+     
     %Calculate IntThresh for this frame %I added this, although it's worth
     %noting that IntThresh is always the same
     [~,imcBins]=imhist(imc); %store the bins from your contrasted image
@@ -248,21 +254,6 @@ for t=1:T
     idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
     ed4=ismember(labelmatrix(cc),idx);
     
-    %%Let's add a few more rounds of pruning
-    cc=bwconncomp(ed4,4); %new cc structure
-    stats=regionprops(cc,imc,'Area','MeanIntensity');
-    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
-    ed4=ismember(labelmatrix(cc),idx);
-    
-    cc=bwconncomp(ed4,4); %new cc structure
-    stats=regionprops(cc,imc,'Area','MeanIntensity');
-    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
-    ed4=ismember(labelmatrix(cc),idx);
-    
-    cc=bwconncomp(ed4,4); %new cc structure
-    stats=regionprops(cc,imc,'Area','MeanIntensity');
-    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
-    ed4=ismember(labelmatrix(cc),idx);
     %%
     %Find cell areas and centroids
     bw=bwmorph(ed4,'thicken');
@@ -318,7 +309,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
 
-if vis==1 & t >= T-10 | t <= 6
+if vis==1 %& t >= T-10 | t <= 6
    figure
    imshow(im)
    hold on
@@ -326,7 +317,7 @@ if vis==1 & t >= T-10 | t <= 6
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
    end
     
-  pause%(0.3)
+  pause
   close all
 end
     toc
@@ -396,12 +387,12 @@ else
     if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
-     tpoint1=[0:tscale:tpt1];
-     tpoint2=[tpt1+tscale2:tscale2:tpt2];
-     tpoint3=[tpt2+tscale:tscale:tpt3];
-     %tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
-     tpoint4=[tpt3+tscale2:tscale2:tpt4];
-     tpoints=[tpoint1, tpoint2, tpoint3, tpoint4];
+%      tpoint1=[0:tscale:tpt1];
+%      tpoint2=[tpt1+tscale2:tscale2:tpt2];
+% %      tpoint3=[tpt2+tscale:tscale:tpt3];
+%      %tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
+% %      tpoint4=[tpt3+tscale2:tscale2:tpt4];
+%      tpoints=[tpoint1, tpoint2];
      tpoints=tpoints(1:T);
     end
 end
@@ -577,7 +568,7 @@ ew(ew==0)=NaN;
 
 end
 
-xswitch=[tpoints(frame1) tpoints(frame2) tpoints(frame3) tpoints(frame4) tpoints(frame5) tpoints(frame6) tpoints(frame7) tpoints(frame8)]
+xswitch=[120 1320];
 
 % %Plot data
 cd(savedir);
