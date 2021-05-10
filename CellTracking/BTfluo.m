@@ -8,7 +8,7 @@ clear, close all
 
 %INSTRUCTIONS FOR USE:
 %Remove frames with poor contrast and save fluorescent image stacks
-%directories by themselves. 
+%directories by themselves. Need the Signal Processing Toolbox
 
 %INPUT
 %basename: name to save the results to.
@@ -285,6 +285,10 @@ avgIrate = mean(Irate, 1, 'omitnan');
 stdIrate = std(Irate, 0, 1, 'omitnan');
 
 end
+
+%%Calculate the rate of change in background intensity over time
+dCbg=(bgIntensity(2:1:end)-bgIntensity(1:1:end-1))./(time(2:1:end)-time(1:1:end-1));
+[pks,locs] = findpeaks(abs(dCbg), 'MinPeakDistance',6);
 
 %let's change folders to save the plots and variables
 cd(savename)
