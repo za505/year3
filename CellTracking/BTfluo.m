@@ -22,22 +22,21 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04222021_Exp1_colony1';
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/'  basename '_figures'];
+basename='05082021_Exp5_colony1';
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_FITC/'  basename '_figures'];
 labelname=[filename '/' basename '_phase/' basename '_figures/' basename '_BTlab'];
-channel=[filename '/' basename '_FSS/' basename '_aligned'];
+channel=[filename '/' basename '_FITC/' basename '_aligned'];
 
-frameSwitch=118; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
-frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
-frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
-frameBg=105; %this is the frame that you'll pick the background area from
-recrunch=1; %recrunch=1, just redo the plots, don't recalculate any values
+frameSwitch=187; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
+frameInitial=14; %this is the FIRST frame that has dye without lysing the membrane
+frameAuto=90; %this is the LAST frame that has dye without lysing the membrane
+frameBg=85; %this is the frame that you'll pick the background area from
+recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
 calibration=0; %this variable is to save time while I troubleshoot the code
 vis=1;
-%outThresh=850; %background intensity cutoff for autofluor. calibration; default 850
-%xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
-%xswitch=[300 360 420];
+upperLimit=1050; %in pixelIntensity height
+lowerLimit=300; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     
@@ -123,17 +122,22 @@ close all
     %this smooths the data for a given cell at a given time point
     ping=[];
     for t=1:T-2
-        lowThresh=heightTemp(1,t)*0.9;
-        highThresh=heightTemp(1,t)*1.1;
-        ind1=find(heightTemp(1, t:t+1)<lowThresh | heightTemp(1, t:t+1)>highThresh);
-        ind2=find(heightTemp(1, t:t+2)<lowThresh | heightTemp(1, t:t+2)>highThresh);
-        if length(ind1)==1 & length(ind2)==1
-            ping=[ping t+1];
-            r1c1{n,t+1}=r1c1{n,t};
+        
+        if heightTemp(1,t) > upperLimit | heightTemp(1,t) < lowerLimit
+            ind=find(heightTemp(1, :) == median(heightTemp(1, :));
+            r1c1{n,t}=r1c1{n,ind(1)};
+        else
+            lowThresh=heightTemp(1,t)*0.9;
+            highThresh=heightTemp(1,t)*1.1;
+            ind1=find(heightTemp(1, t:t+1)<lowThresh | heightTemp(1, t:t+1)>highThresh);
+            ind2=find(heightTemp(1, t:t+2)<lowThresh | heightTemp(1, t:t+2)>highThresh);
+            if length(ind1)==1 & length(ind2)==1
+                ping=[ping t+1];
+                r1c1{n,t+1}=r1c1{n,t};
+            end
         end
+     ping;
     end
-    
-    ping
  end
  
  %make sure each cell is unique and not double counted
@@ -202,13 +206,15 @@ end
     
 %%
 idx=[];
+flag=0;
 %Now, let's get a cutoff. 
-for i=1:length(Cout)
-    di=Cout(i+1)-Cout(i); %we want to make sure the increase is linear
-    if di>=0
+for i=5:length(Cout)
+    %di=Cout(i+1)-Cout(i); %we want to make sure the increase is linear
+    if Cout(i)>flag
         idx=[idx i];
-    else
-        break
+        flag=Cout(i);
+%     else
+%         break
     end
 end
 
