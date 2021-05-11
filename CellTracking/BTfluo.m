@@ -22,29 +22,26 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05082021_Exp5_colony1';
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_FITC/'  basename '_figures'];
+basename='04222021_Exp1_colony1';
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/'  basename '_figures'];
 labelname=[filename '/' basename '_phase/' basename '_figures/' basename '_BTlab'];
-channel=[filename '/' basename '_FITC/' basename '_aligned'];
+channel=[filename '/' basename '_FSS/' basename '_aligned'];
 
-frameSwitch=187; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
-frameInitial=14; %this is the FIRST frame that has dye without lysing the membrane
-frameAuto=90; %this is the LAST frame that has dye without lysing the membrane
-frameBg=85; %this is the frame that you'll pick the background area from
+frameSwitch=202; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
+frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
+frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
+frameBg=104; %this is the frame that you'll pick the background area from
 recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
 calibration=0; %this variable is to save time while I troubleshoot the code
-vis=1;
-upperLimit=1050; %in pixelIntensity height
-lowerLimit=300; 
+vis=0;
+xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
+xswitch=[300 360 420];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     
     load ([savename '/' basename '_BTfluo'])
-    
-%     xlabels=["PBS + 5% detergent" "PBS + FITC" "PBS + FITC + 9 mM Ca" "PBS + FITC"];
-%     xswitch=[60 300 410 530];
-    
+       
 elseif recrunch==0
 
 %load fluorescent images
@@ -61,7 +58,7 @@ tmid=(time(2:end)+time(1:end-1))/2;
 %preallocate variables
 cellnumber=zeros(1, T);
 
-%%This code takes a bit of time, so we can make a short cut while
+%%This code takes a bit of time, so we can make a short cut for
 %%troubleshooting
 if calibration==0
     load(labelname,'labels')
@@ -82,29 +79,25 @@ if calibration==0
 
         end
 else
-        load ([filename '/' basename '_FITC/' basename '_figures/' basename '_BTfluo'], 'cellnumber', 'r1', 'c1', 'r1c1')
+        load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'], 'cellnumber', 'r1', 'c1', 'r1c1')
 end
 
 %calculate max total cells
-maxcellnumber=mode(cellnumber(frameInitial:frameAuto)); %if we can't correct for it, throw it out
+maxcellnumber=mode(cellnumber(frameInitial:frameAuto)); %we don't want to track cells that show up only once or twice
     
 %pre-allocate more variables
 pixelIntensity=cell(maxcellnumber, T); %pixel intensities for each cell in each frame
-avgIntensity=zeros(1,T); %population average cellular intensity
-stdIntensity=zeros(1,T); %std of population cellular intensity
 
-bgIntensity=zeros(1,T); %background intensity for all the frames
+bgAuto=[]; %background autofluorescence
+cellAuto=[]; %cellular autofluorescence
+flag=1;
+bgIntensity=nan(1,T); %background intensity for all the frames
+cellIntensity=nan(maxcellnumber, T); %raw pixel intensity means
+Cin=nan(maxcellnumber, T); %adjusted cell intensities for each cell in each frame
+Cout=nan(1, T); %adjusted background intensity in each frame
 
-Cin=nan(maxcellnumber, T); %raw pixel intensity means
-Cexp=nan(maxcellnumber, T); %expected pixel intensity values
-cellIntensity=nan(maxcellnumber, T); %adjusted cell intensities for each cell in each frame
-intercept=nan(maxcellnumber, 1); 
-slope=nan(maxcellnumber, 1);
-Cout=[]; %background intensity during control perfusion
-Cauto=[]; %cellular intensity during control perfusion
-
-stats=cell(maxcellnumber, 1); %where all the models are stored
-
+avgIntensity=nan(1,T); %population average cellular intensity
+stdIntensity=nan(1,T); %std of population cellular intensity
 %%
 %determine region where you'll measure background intensity
 imagename=fluo_directory(frameBg).name;
@@ -122,22 +115,16 @@ close all
     %this smooths the data for a given cell at a given time point
     ping=[];
     for t=1:T-2
-        
-        if heightTemp(1,t) > upperLimit | heightTemp(1,t) < lowerLimit
-            ind=find(heightTemp(1, :) == median(heightTemp(1, :));
-            r1c1{n,t}=r1c1{n,ind(1)};
-        else
-            lowThresh=heightTemp(1,t)*0.9;
-            highThresh=heightTemp(1,t)*1.1;
-            ind1=find(heightTemp(1, t:t+1)<lowThresh | heightTemp(1, t:t+1)>highThresh);
-            ind2=find(heightTemp(1, t:t+2)<lowThresh | heightTemp(1, t:t+2)>highThresh);
+        lowThresh=heightTemp(1,t)*0.9;
+        highThresh=heightTemp(1,t)*1.1;
+        ind1=find(heightTemp(1, t:t+1)<lowThresh | heightTemp(1, t:t+1)>highThresh);
+        ind2=find(heightTemp(1, t:t+2)<lowThresh | heightTemp(1, t:t+2)>highThresh);
             if length(ind1)==1 & length(ind2)==1
                 ping=[ping t+1];
                 r1c1{n,t+1}=r1c1{n,t};
             end
-        end
-     ping;
     end
+    ping;
  end
  
  %make sure each cell is unique and not double counted
@@ -147,8 +134,7 @@ close all
         if isempty(match)==1
             r1c1{n,t}=r1c1{n,t-1};
         end
-    end
- 
+    end 
   end
  
 
@@ -179,16 +165,27 @@ for t=1:T
         %store this in the cellIntensity variable
         pixelIntensity{n,t}=cellTemp;
        
-        %take the mean and calculate Cin
-        Cin(n,t)=mean(pixelIntensity{n,t});
+        %take the mean and raw cell. intensity for each cell at each frame
+        cellIntensity(n,t)=mean(pixelIntensity{n,t});
         
     end
     
     %index Cout and Cin
-    if t>=frameInitial & t<=frameAuto %& bgIntensity(t)<=outThresh
-        Cout=[Cout bgIntensity(t)];
-        Cauto=[Cauto Cin(:, t)];
+    %for t=1:T
+    if t>frameAuto & t<frameSwitch 
+        t
+        lowerThresh=bgIntensity(t)*0.99;
+        upperThresh=bgIntensity(t)*1.01;
+        bgAuto=[bgAuto bgIntensity(t)];
+        cellAuto=[cellAuto cellIntensity(:,t)];
+        for n=1:maxcellnumber
+            if cellAuto(n,flag)<=lowerThresh|cellAuto(n,flag)>=upperThresh
+                cellAuto(n,flag)=NaN;
+            end
+        end
+        flag=flag+1;
     end
+    %end
     
      %check that the coordinates are correct
     if vis==1 & (t<=6 | t>=T-6)
@@ -205,100 +202,60 @@ for t=1:T
 end
     
 %%
-idx=[];
-flag=0;
-%Now, let's get a cutoff. 
-for i=5:length(Cout)
-    %di=Cout(i+1)-Cout(i); %we want to make sure the increase is linear
-    if Cout(i)>flag
-        idx=[idx i];
-        flag=Cout(i);
-%     else
-%         break
-    end
-end
-
-Cout=Cout(idx);
-Cauto=Cauto(:,idx);
-
-%plot Cauto vs Cout and save
+%plot cellAuto vs bgAuto. It should be a flat line
 figure, hold on
 for n=1:maxcellnumber
-    plot(Cout, Cauto(n,:))
+    plot(bgAuto, cellAuto(n,:))
 end
-title('Cin vs Cout during control perfusion')
+title('Cin vs Cout No Probe Perfusion')
 pause
 cd(savename);
 saveas(gcf, [basename '_control.png'])
 saveas(gcf, [basename '_control.fig'])
-close
 
-%display the information that's useful for the user to know
-fprintf('There are %d values in Cauto and the max value is %d.\n',length(idx), max(Cout));
-
-%use that cutoff to fit a line to the Cout and Cauto fluorescence data
-for n=1:maxcellnumber
-    stats{n,1}=fitlm(Cout, Cauto(n,:));
-    arrayTemp=table2array(stats{n,1}.Coefficients);
-    intercept(n,1)=arrayTemp(1,1);
-    slope(n,1)=arrayTemp(2,1);
-    
-    for t=1:T
-        Cexp(n,t)=slope(n,1)*bgIntensity(1,t)+intercept(n,1);
-        cellIntensity(n,t)=Cin(n,t)-Cexp(n,t);
-    end
-    
-end
-
-%calculate yhat for each cell
-xhat=[min(bgIntensity):1:max(bgIntensity)];
-yhat=nan(maxcellnumber, length(xhat));
-for n=1:maxcellnumber
-    yhat(n,:)=[slope(n).*xhat]+intercept(n);
-end
-
+%now take the mean of cellAuto & bgAuto, and plot it
+bgAuto=mean(bgAuto,2); %take the temporal average
+cellAuto=mean(cellAuto,2); %take the temporal average
 figure, hold on
 for n=1:maxcellnumber
-    plot(xhat, yhat(n,:))
+    plot(bgAuto, cellAuto(n,:))
 end
-title('predicted Cin for a given background intensity value')
+title('Cin vs Cout No Probe Perfusion')
 pause
 cd(savename);
-saveas(gcf, [basename '_yhat.png'])
-saveas(gcf, [basename '_yhat.fig'])
-close 
+saveas(gcf, [basename '_controlAvg.png'])
+saveas(gcf, [basename '_controlAvg.fig'])
 
+%Subtract the autofluorescence from the raw intensity
+Cout=bgIntensity-bgAuto;
+for n=1:maxcellnumber
+    Cin(n,:)=cellIntensity(n,:)-cellAuto(n,1);
+end
 %%
 %calculate average intensity and standard deviation
-avgIntensity = mean(cellIntensity, 'omitnan');
-stdIntensity = std(cellIntensity, 'omitnan');
+avgIntensity = mean(Cin, 1, 'omitnan');
+stdIntensity = std(Cin, 0, 1, 'omitnan');
 
 %now, calculate the Iin/Iout ratio
-ratio = cellIntensity ./ bgIntensity;
-ratio(:,frameInitial:frameAuto)=NaN; %note: 0/0 makes weird things happen
+ratio = Cin ./ Cout;
+ratio(:,[1:frameInitial-1, frameAuto+1:frameSwitch-1])=NaN; %note: 0/0 makes weird things happen
 
 avgRatio = mean(ratio, 1, 'omitnan');
 stdRatio = std(ratio, 0, 1, 'omitnan');
 
-%calculate Ratio Rate
+%calculate the diffusion constant
 deltat=[0 time(2:end)-time(1:end-1)];
-Irate=[zeros(maxcellnumber, 1), (cellIntensity(:, 2:end)-cellIntensity(:, 1:end-1))];
+dCin=[0 Cin(2:end)-Cin(1:end-1)];
 diffC=nan(maxcellnumber,T);
 D=nan(maxcellnumber,T);
 for n=1:maxcellnumber
-    Irate(n, :)=Irate(n, :)./deltat;
-    diffC(n, :)=bgIntensity-cellIntensity(n, :);
-    D(n,:)=Irate(n,:)./diffC(n,:);
+    dCin(n, :)=dCin(n, :)./deltat;
+    diffC(n, :)=Cin-Cout(n, :);
+    D(n,:)=dCin(n,:)./diffC(n,:);
 end
 
-%Let's plot the diffusion constant
-figure, hold on, title('Diffusion Constant vs Time')
-for i=1:maxcellnumber
-    plot(time,D(i,:))
-end
-
-avgIrate = mean(Irate, 1, 'omitnan');
-stdIrate = std(Irate, 0, 1, 'omitnan');
+avgIrate = mean(dCin, 2, 'omitnan');
+stdIrate = std(dCin, 0, 2, 'omitnan');
 
 end
 
@@ -311,10 +268,10 @@ clear labels
 save([basename '_BTfluo'])
 
 %Plot data
-%Let's plot cellular intensity first
-figure, hold on, title('Intensity vs Time')
+%Let's plot raw cellular intensity first
+figure, hold on, title('Adjusted Intensity vs Time')
 for i=1:maxcellnumber
-    plot(time,cellIntensity(i,:))
+    plot(time,Cin(i,:))
 end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
@@ -323,7 +280,7 @@ fig2pretty
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
 ylim([-200 Inf])
-saveas(gcf, [basename '_intensity.png'])
+saveas(gcf, [basename '_intensityRaw.png'])
 
 %now population average cell intensity
 figure
@@ -339,10 +296,10 @@ fig2pretty
 ylim([-3 Inf])
 saveas(gcf, [basename,'_intensityAvg.png'])
 
-%Plot average background fluorescence
+%Plot adj background fluorescence
 figure, hold on 
-title('Background Intensity vs Time')
-plot(time,bgIntensity)
+title('Adjusted Background Intensity vs Time')
+plot(time,Cout)
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
@@ -369,19 +326,27 @@ hold off
 saveas(gcf, [basename,'_ratioTime.png'])
 
 % %Plot Intensity Rate
-% figure, hold on
-% ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
-% plot(tmid,avgIrate)
-% xlabel('Time (s)')
-% ylabel('Ratio Rate (s^{-1})')
-% fig2pretty
-% % for x=1:length(xlabels)
-% %     xline(xswitch(x), '--k', xlabels(x)) 
-% % end
-% ylim([0 Inf])
-% xlim([0 Inf])
-% hold off
-% saveas(gcf, [basename,'_intensityRate.png'])
+figure, hold on
+title('Average Intensity Rate vs Time')
+ciplot(avgIrate - stdIrate, avgIrate + stdIrate, time, [0.75 0.75 1])
+plot(time,avgIrate)
+xlabel('Time (s)')
+ylabel('Intensity Rate')
+fig2pretty 
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+ylim([0 Inf])
+hold off
+saveas(gcf, [basename,'_intensityRate.png'])
+
+%Let's plot the diffusion constant
+figure, hold on, title('Diffusion Constant vs Time')
+for n=1:maxcellnumber
+    plot(time,D(n,:))
+end
+hold off
+saveas(gcf, [basename,'_dConstant.png'])
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
