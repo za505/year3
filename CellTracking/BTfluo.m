@@ -32,7 +32,7 @@ frameSwitch=202; %this is the initial frame for the switch (after which we pulse
 frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
 frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
 frameBg=104; %this is the frame that you'll pick the background area from
-recrunch=0; %recrunch=1, just redo the plots, don't recalculate any values
+recrunch=1; %recrunch=1, just redo the plots, don't recalculate any values
 calibration=0; %this variable is to save time while I troubleshoot the code
 vis=0;
 xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
@@ -89,8 +89,8 @@ maxcellnumber=mode(cellnumber(frameInitial:frameAuto)); %we don't want to track 
 pixelIntensity=cell(maxcellnumber, T); %pixel intensities for each cell in each frame
 
 bgAuto=[]; %background autofluorescence
-cellAuto=[]; %cellular autofluorescence
-flag=1;
+%cellAuto=[]; %cellular autofluorescence
+%flag=1;
 bgIntensity=nan(1,T); %background intensity for all the frames
 cellIntensity=nan(maxcellnumber, T); %raw pixel intensity means
 Cin=nan(maxcellnumber, T); %adjusted cell intensities for each cell in each frame
@@ -170,22 +170,10 @@ for t=1:T
         
     end
     
-    %index Cout and Cin
-    %for t=1:T
+    %get background fluorescence
     if t>frameAuto & t<frameSwitch 
-        t
-        lowerThresh=bgIntensity(t)*0.99;
-        upperThresh=bgIntensity(t)*1.01;
         bgAuto=[bgAuto bgIntensity(t)];
-        cellAuto=[cellAuto cellIntensity(:,t)];
-        for n=1:maxcellnumber
-            if cellAuto(n,flag)<=lowerThresh|cellAuto(n,flag)>=upperThresh
-                cellAuto(n,flag)=NaN;
-            end
-        end
-        flag=flag+1;
     end
-    %end
     
      %check that the coordinates are correct
     if vis==1 & (t<=6 | t>=T-6)
@@ -202,34 +190,13 @@ for t=1:T
 end
     
 %%
-%plot cellAuto vs bgAuto. It should be a flat line
-figure, hold on
-for n=1:maxcellnumber
-    plot(bgAuto, cellAuto(n,:))
-end
-title('Cin vs Cout No Probe Perfusion')
-pause
-cd(savename);
-saveas(gcf, [basename '_control.png'])
-saveas(gcf, [basename '_control.fig'])
-
-%now take the mean of cellAuto & bgAuto, and plot it
+%now take the mean of bgAuto
 bgAuto=mean(bgAuto,2); %take the temporal average
-cellAuto=mean(cellAuto,2); %take the temporal average
-figure, hold on
-for n=1:maxcellnumber
-    plot(bgAuto, cellAuto(n,:))
-end
-title('Cin vs Cout No Probe Perfusion')
-pause
-cd(savename);
-saveas(gcf, [basename '_controlAvg.png'])
-saveas(gcf, [basename '_controlAvg.fig'])
 
 %Subtract the autofluorescence from the raw intensity
 Cout=bgIntensity-bgAuto;
 for n=1:maxcellnumber
-    Cin(n,:)=cellIntensity(n,:)-cellAuto(n,1);
+    Cin(n,:)=cellIntensity(n,:)-bgAuto;
 end
 %%
 %calculate average intensity and standard deviation
@@ -245,17 +212,17 @@ stdRatio = std(ratio, 0, 1, 'omitnan');
 
 %calculate the diffusion constant
 deltat=[0 time(2:end)-time(1:end-1)];
-dCin=[0 Cin(2:end)-Cin(1:end-1)];
+dCin=[zeros(maxcellnumber,1) Cin(:,2:end)-Cin(:,1:end-1)];
 diffC=nan(maxcellnumber,T);
 D=nan(maxcellnumber,T);
 for n=1:maxcellnumber
     dCin(n, :)=dCin(n, :)./deltat;
-    diffC(n, :)=Cin-Cout(n, :);
+    diffC(n, :)=Cin(n, :)-Cout;
     D(n,:)=dCin(n,:)./diffC(n,:);
 end
 
-avgIrate = mean(dCin, 2, 'omitnan');
-stdIrate = std(dCin, 0, 2, 'omitnan');
+avgIrate = mean(dCin, 1, 'omitnan');
+stdIrate = std(dCin, 0, 1, 'omitnan');
 
 end
 
@@ -268,7 +235,7 @@ clear labels
 save([basename '_BTfluo'])
 
 %Plot data
-%Let's plot raw cellular intensity first
+%Let's plot cellular intensity first
 figure, hold on, title('Adjusted Intensity vs Time')
 for i=1:maxcellnumber
     plot(time,Cin(i,:))
@@ -321,7 +288,7 @@ fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-ylim([0 Inf])
+%ylim([0 Inf])
 hold off
 saveas(gcf, [basename,'_ratioTime.png'])
 
@@ -340,10 +307,10 @@ ylim([0 Inf])
 hold off
 saveas(gcf, [basename,'_intensityRate.png'])
 
-%Let's plot the diffusion constant
-figure, hold on, title('Diffusion Constant vs Time')
+%Let's plot Cin-Cout
+figure, hold on, title('Cin-Cout vs Time')
 for n=1:maxcellnumber
-    plot(time,D(n,:))
+    plot(time,Cin(n,:)-Cout)
 end
 hold off
 saveas(gcf, [basename,'_dConstant.png'])
