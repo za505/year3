@@ -6,10 +6,12 @@ clear
 close all
 
 %input%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-basename='FC1_112020_P1_2_a';
+basename='03082021_Exp3_colony3';
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+cd(savedir)
+load([basename '_BTphase.mat'],'T','labels','im','lcents','cellnum','tstamp','l','lscale');
 
-load([basename '_BT'],'T','labels','im','lcents','cellnum','tstamp','l','lscale');
 %% Part 2: Lineage Tracking
 
 % %view binary movie
@@ -49,7 +51,7 @@ for i = flip(1:T)
 end
 
 %Align cells from frame to frame, correct r1c1 to track lineage
-for i=T %should it be 1:T?
+for i=1:T %should it be 1:T?
     for j=1:mxnumofcells
         cell_id(j,i)=j; %makes cell id vector
         r2c2{j,i}=r1c1{j,i};%Seed r2c2
@@ -61,7 +63,7 @@ for i = flip(2:T)
     for j=1:mxnumofcells
         if isnan(r2c2{j,i})==1 %if NaN, find previous nonNaN id matrix for tracking
             index=cellfun('length', r2c2(j,:));
-            nindex=index>1;
+            nindex=index>2; %I think this is supposed to be 2
             ncols=min(find(nindex));
             Lia1=ismember(r2c2{j,ncols},r1c1{j,i-1},'rows');
             if 100*sum(Lia1)/length(r1c1{j,i-1})>50==1
