@@ -23,7 +23,13 @@ basename='05182021_FITCK_010';
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05182021_analysis/05182021_control/' basename];
 savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05182021_analysis/05182021_control/05182021_figures'];
 recrunch=0;
+tscale=10;
+vis=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if recrunch==1
+    cd(savename)
+    load([basename '_pbC'])
+else
 curdir=cd;
 
 cd(dirname);
@@ -80,29 +86,92 @@ while k~=1
     rp2(count,:)=round(p2);
 end
 
+exclude=[];
+for n=1:count-1
+    for row=rp1(n,2):rp2(n,2)
+        exc=[];
+        for col=rp1(n,1):rp2(n,1)
+            omit=[col, row];
+            exc=[exc; omit];
+        end
+        exclude=[exclude; exc];
+    end
+end
+
+coordinates=[];
+for row=1:imM
+    for col=1:imN
+        tally=0;
+        
+        for n=1:height(exclude)
+            if row~=exclude(n,2) & col~=exclude(n,1)
+                tally=tally+1;
+            end
+        end
+        
+        if tally==height(exclude)
+            coor=[row col];
+            coordinates=[coordinates; coor];
+        end
+    end
+end
+
+pixelIntensity=nan(height(coordinates), T);
 for t=1:T
+
     t
-    
-    %Load image
+
+    %load the image
     imagename=directory(t).name;
-
     im=imread(imagename);
-    [imM,imN]=size(im);
     
-    
-    figure
-    imshow(im, [])
-    hold on
-        
-    for n=1:count-1 %the last coordinates are a repeat
-        
-        w=rp2(n,1)-rp1(n,1);
-        h=rp2(n,2)-rp1(n,2);
-        rec=[rp1(n,1), rp1(n,2), w, h];
-
-        rectangle('Position', rec, 'Edgecolor', 'r')
-        
+    %measure background intensity
+    for n=1:height(coordinates)
+         pixelIntensity(n,t)=im(coordinates(n,1),coordinates(n,2));
     end
     
-    pause
+     %check that the coordinates are correct
+    if vis==1 & (t<=6 | t>=T-6)
+        figure
+        imshow(im, [])
+        hold on
+        %plot(rp1(1,2),rp1(1,1), 'r+', 'MarkerSize', 30, 'LineWidth', 2);
+        for n=1:height(coordinates)
+           plot(coordinates(n,2),coordinates(n,1),'-r') %x is im 'column', y is im 'row'
+        end
+        pause
+        close
+    end
+
 end
+    
+%Calculate time variable
+tpoints=[0:T-1]*tscale;
+time=tpoints(1,:);
+
+%calculate average intensity
+intensityAvg=mean(pixelIntensity,1);
+
+%calculate tau
+idx=find(intensityAvg == intensityAvg(6)/2);
+tau=time(idx)/log(2);
+
+end
+
+cd(savename)
+save([basename '_pbC'])
+
+%plot figures
+figure(1)
+plot(time, intensityAvg)
+title('Average Intensity vs Time')
+xlabel('Time (s)')
+ylabel('Average Intensity')
+
+figure(2), hold on
+for n=1:length(pixelIntensity)
+    plot(time, pixelIntensity(n,:))
+end
+title('Location-Specific Intensity vs Time')
+xlabel('Time (s)')
+ylabel('Intensity')
