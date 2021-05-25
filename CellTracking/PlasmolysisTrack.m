@@ -15,13 +15,13 @@ nframe=3;
 vis=1; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 cd(savedir)
-load([basename '_BTphase.mat'],'T','labels','labels2','directory', 'dirname');
+load([basename '_BTphase.mat'],'T','labels','directory', 'dirname');
 
 %Let's calculate the number of cells in our pre-shock frame
 cellnumber=max(max(labels(:,:,frameSwitch)));
 
 %Let's pull some stats from this image
-bw=labels2(:,:,frameSwitch);
+bw=labels(:,:,frameSwitch);
 stats=regionprops(bw,'Area','Centroid','PixelList'); 
 
 %pre-allocate variables
@@ -94,11 +94,11 @@ for t=frameShock:frameShock+nframe
         
         pixelMean(n, flag)=mean(pixelIntensity{n,flag});
         
-        flag2=1;
         for p=1:height(rowID{n})
-            if im(rowID{n}(p),colID{n}(p)) > pixelMean(n, 1)
-                pixIdx{n,flag-1}(flag2, :)=[rowID{n}(p),colID{n}(p)];
-                flag2=flag2+1;
+            if im(rowID{n}(p),colID{n}(p)) > pixelIntensity{n,1}(p)
+                pixIdx{n,flag-1}(p, :)=[rowID{n}(p),colID{n}(p)];
+            else 
+                pixIdx{n,flag-1}(p, :)=[NaN NaN];
             end
         end
         
@@ -107,7 +107,7 @@ for t=frameShock:frameShock+nframe
         imshow(im)
         hold on
         %for n=1:cellnumber
-           plot(pixIdx{n,1}(:,1),pixIdx{n,1}(:,2),'-r')
+           plot(pixIdx{n,1}(st:en,1),pixIdx{n,1}(st:en,2),'-r')
         %end
         pause
 
