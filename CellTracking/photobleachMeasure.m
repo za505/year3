@@ -19,11 +19,11 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05182021_FITCK_001';
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05182021_analysis/05182021_control/' basename '/' basename '_aligned'];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05182021_analysis/05182021_control/05182021_figures'];
+basename='05262021_FITCK_001';
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/' basename '/' basename '_aligned'];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/05262021_FITCK_figures'];
 recrunch=0;
-tscale=1.66;
+tscale=1.4;
 vis=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
@@ -75,23 +75,11 @@ end
     
 %Calculate time variable
 tpoints=[0:T-1]*tscale;
-time=tpoints(1,:);
+idx=find(tpoints>=264 & tpoints<265); %for this experiment specifically, there is a blip ~4.5 minutes
+time=tpoints(1,1:idx);
 
-%calculate the switch frame (when perfusion stops)
-switchFrame=round(120/tscale);
-
-%index average intensity from time points during perfusion
-A=intensityAvg(1,4:switchFrame-3);
-A=mean(A);
-
-%index average intensity from time points when flow stops
-exTime=time(1,switchFrame:end);
-exIntensity=intensityAvg(1,switchFrame:end);
-decay=log(intensityAvg(1,switchFrame:end)/A)/time(1,switchFrame:end);
-
-%calculate tau
-%idx=find(intensityAvg == intensityAvg(6)/2);
-%tau=time(idx)/log(2);
+%index average intensity for relevant times
+intensityAvg=intensityAvg(1,1:idx);
 
 end
 
