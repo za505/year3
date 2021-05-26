@@ -19,22 +19,22 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05182021_FITCK_010';
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05182021_analysis/05182021_control/' basename];
+basename='05182021_FITCK_001';
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05182021_analysis/05182021_control/' basename '/' basename '_aligned'];
 savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05182021_analysis/05182021_control/05182021_figures'];
 recrunch=0;
-tscale=10;
-vis=1;
+tscale=1.66;
+vis=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savename)
-    load([basename '_pbC'])
+    load([basename '_pb'])
 else
 curdir=cd;
 
 cd(dirname);
 directory=dir('*.tif');
-T=5; %length(directory);
+T=length(directory);
 path(dirname,path)
 
 %LB perfusion
@@ -42,81 +42,9 @@ imagename=directory(1).name;
 im1=imread(imagename);
 [imM,imN]=size(im1);
 
-ppix=0.5;
-im2=norm16bit(im1,ppix);
+[p1, p2]=selectRegion(imagename); %row=y, col=x
 
-figure,imshow(im1,stretchlim(im1)*65000)
-set(gcf,'Pointer','fullcross')
-hold on
-axis manual
-
-count=0;
-k=0;
-while k~=1
-    count=count+1;
-    k=waitforbuttonpress;
-    point1=get(gca,'CurrentPoint');   
-    finalRect=rbbox;                   
-    %pause
-    point2=get(gca,'CurrentPoint');    
-    point1=point1(1,1:2);              
-    point2=point2(1,1:2);
-    point1(point1<1)=1;
-    point2(point2<1)=1;
-    if point1(2)>imM
-        point1(2)=imM;
-    end
-    if point1(1)>imN
-        point1(1)=imN;
-    end
-    if point2(2)>imM
-        point2(2)=imM;
-    end
-    if point2(1)>imN
-        point2(1)=imN;
-    end
-    p1=min(point1,point2);%Calculate locations
-    p2=max(point1,point2);
-    offset = abs(point1-point2);%And dimensions
-    x = [p1(1) p1(1)+offset(1) p1(1)+offset(1) p1(1) p1(1)];
-    y = [p1(2) p1(2) p1(2)+offset(2) p1(2)+offset(2) p1(2)];
-    plot(x,y)
-    
-    rp1(count,:)=round(p1);
-    rp2(count,:)=round(p2);
-end
-
-exclude=[];
-for n=1:count-1
-    for row=rp1(n,2):rp2(n,2)
-        exc=[];
-        for col=rp1(n,1):rp2(n,1)
-            omit=[col, row];
-            exc=[exc; omit];
-        end
-        exclude=[exclude; exc];
-    end
-end
-
-coordinates=[];
-for row=1:imM
-    for col=1:imN
-        tally=0;
-        
-        for n=1:height(exclude)
-            if row~=exclude(n,2) & col~=exclude(n,1)
-                tally=tally+1;
-            end
-        end
-        
-        if tally==height(exclude)
-            coor=[row col];
-            coordinates=[coordinates; coor];
-        end
-    end
-end
-
-pixelIntensity=nan(height(coordinates), T);
+intensityAvg=[];
 for t=1:T
 
     t
@@ -126,19 +54,19 @@ for t=1:T
     im=imread(imagename);
     
     %measure background intensity
-    for n=1:height(coordinates)
-         pixelIntensity(n,t)=im(coordinates(n,1),coordinates(n,2));
-    end
+    intensityAvg(1,t)=mean(mean(im(p1(2):p2(2),p1(1):p2(1))));
+ 
     
      %check that the coordinates are correct
     if vis==1 & (t<=6 | t>=T-6)
         figure
         imshow(im, [])
         hold on
-        %plot(rp1(1,2),rp1(1,1), 'r+', 'MarkerSize', 30, 'LineWidth', 2);
-        for n=1:height(coordinates)
-           plot(coordinates(n,2),coordinates(n,1),'-r') %x is im 'column', y is im 'row'
-        end
+        plot(p1(1),p1(2), 'r+', 'MarkerSize', 30, 'LineWidth', 2);
+        %plot(p1(2):p2(2),p1(1):p2(1), '-r')
+%         for n=1:height(coordinates)
+%            plot(coordinates(n,2),coordinates(n,1),'-r') %x is im 'column', y is im 'row'
+%         end
         pause
         close
     end
@@ -149,17 +77,26 @@ end
 tpoints=[0:T-1]*tscale;
 time=tpoints(1,:);
 
-%calculate average intensity
-intensityAvg=mean(pixelIntensity,1);
+%calculate the switch frame (when perfusion stops)
+switchFrame=round(120/tscale);
+
+%index average intensity from time points during perfusion
+A=intensityAvg(1,4:switchFrame-3);
+A=mean(A);
+
+%index average intensity from time points when flow stops
+exTime=time(1,switchFrame:end);
+exIntensity=intensityAvg(1,switchFrame:end);
+decay=log(intensityAvg(1,switchFrame:end)/A)/time(1,switchFrame:end);
 
 %calculate tau
-idx=find(intensityAvg == intensityAvg(6)/2);
-tau=time(idx)/log(2);
+%idx=find(intensityAvg == intensityAvg(6)/2);
+%tau=time(idx)/log(2);
 
 end
 
 cd(savename)
-save([basename '_pbC'])
+save([basename '_pb'])
 
 %plot figures
 figure(1)
@@ -167,11 +104,37 @@ plot(time, intensityAvg)
 title('Average Intensity vs Time')
 xlabel('Time (s)')
 ylabel('Average Intensity')
+fig2pretty
+saveas(gcf, [basename,'_intensityAvg.fig'])
+saveas(gcf, [basename,'_intensityAvg.png'])
 
-figure(2), hold on
-for n=1:length(pixelIntensity)
-    plot(time, pixelIntensity(n,:))
-end
-title('Location-Specific Intensity vs Time')
-xlabel('Time (s)')
-ylabel('Intensity')
+%%%%%Functions
+function [p1, p2]=selectRegion(imagename)
+        
+        %Load last image
+        %imagename=fluo_directory{i}(t).name;
+        im2=imread(imagename);
+
+        %Determine Background
+        figure,imshow(im2,[]), hold on, title('Select Region')
+        k=waitforbuttonpress;
+        set(gcf,'Pointer')
+        hold on
+        axis manual
+        point1=get(gca,'CurrentPoint');
+        finalRect=rbbox;
+        point2=get(gca,'CurrentPoint');
+        point1=point1(1,1:2);
+        point2=point2(1,1:2);
+        point1(point1<1)=1;
+        point2(point2<1)=1;
+        p1=min(point1,point2);%Calculate locations
+        p2=max(point1,point2);
+        offset = abs(point1-point2);%And dimensions
+        x = [p1(1) p1(1)+offset(1) p1(1)+offset(1) p1(1) p1(1)];
+        y = [p1(2) p1(2) p1(2)+offset(2) p1(2)+offset(2) p1(2)];
+        plot(x,y)
+        p1=round(p1);
+        p2=round(p2);  
+        close
+end 
