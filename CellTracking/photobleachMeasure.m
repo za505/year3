@@ -21,6 +21,7 @@ clear, close all
 %USER INPUT
 basename='05262021_FITCK_001';
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/' basename '/' basename '_aligned'];
+conname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/' basename];
 savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/05262021_FITCK_figures'];
 recrunch=0;
 tscale=1.4;
@@ -70,8 +71,14 @@ for t=1:T
         pause
         close
     end
-
 end
+    
+%now measure the intensity of the control
+cd(conname);
+imname=dir('*tif');
+imname=imname(1).name;
+imc=imread(imname);
+conavg=mean(mean(imc(p1(2):p2(2),p1(1):p2(1))));
     
 %Calculate time variable
 tpoints=[0:T-1]*tscale;
@@ -92,6 +99,7 @@ plot(time, intensityAvg)
 title('Average Intensity vs Time')
 xlabel('Time (s)')
 ylabel('Average Intensity')
+yline(conavg, '--k', '*PBS control') 
 fig2pretty
 saveas(gcf, [basename,'_intensityAvg.fig'])
 saveas(gcf, [basename,'_intensityAvg.png'])
