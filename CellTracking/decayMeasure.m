@@ -19,8 +19,8 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basenames=["05262021_FITCK_001", "05262021_FITCK_010"];
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/05262021_figures'];
+basenames=["05272021_FITCK_e100", "05272021_FITCK_e001", "05272021_FITCK_e010"];
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/05272021_FITCK_figures'];
 recrunch=0;
 vis=0;
 B=length(basenames);%number of main directories to analyze
@@ -38,6 +38,9 @@ yhat=cell(B,1);
 A=nan(B,1);
 f=cell(B,1);
 yhat2=cell(B,1);
+thalf=nan(B,1);
+mindiff=nan(B,1);
+exp2=[];
 
 %initialize coeff
 coeff0=[40000, -0.1, 0.1];
@@ -80,11 +83,15 @@ for b=1:B
     %calculate new yhat values
     yhat2{b,1}=f{b,1}(times{b,1});
     
-    %find the half-life
-    idx=find(yhat2{b,1}==(yhat2{b,1}(1)/2))   
+    %pull out the coefficient values
+    exp2(b,:)=coeffvalues(f{b,1});
 end
 
-
+%plot to see how intensity changes as the coeff change in exp2
+x=exp2(:,2);
+y=yhat2{:,1}()
+z=
+save([basename '_dm'])
 
 function [y] = exponential(b,x)
 %this function calculates y=A*(e^alpha*t)+y0

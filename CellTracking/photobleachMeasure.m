@@ -19,12 +19,12 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05262021_FITCK_001';
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/' basename '/' basename '_aligned'];
-conname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/05262021_control/05262021_FITCK_figures'];
+basename='05272021_FITCK_e100';
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/' basename '/' basename '_aligned'];
+conname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/05272021_FITCK_figures'];
 recrunch=0;
-tscale=1.4;
+tscale=1;
 vis=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
@@ -82,11 +82,11 @@ conavg=mean(mean(imc(p1(2):p2(2),p1(1):p2(1))));
     
 %Calculate time variable
 tpoints=[0:T-1]*tscale;
-idx=find(tpoints>=264 & tpoints<265); %for this experiment specifically, there is a blip ~4.5 minutes
-time=tpoints(1,1:idx);
+%idx=find(tpoints>=264 & tpoints<265); %for this experiment specifically, there is a blip ~4.5 minutes
+time=tpoints(1,:);
 
 %index average intensity for relevant times
-intensityAvg=intensityAvg(1,1:idx);
+intensityAvg=intensityAvg(1,:);
 
 end
 
