@@ -87,10 +87,19 @@ for b=1:B
     exp2(b,:)=coeffvalues(f{b,1});
 end
 
-%plot to see how intensity changes as the coeff change in exp2
-x=exp2(:,2);
-y=yhat2{:,1}()
-z=
+%plot exposure as a function of intensity
+exposure=[0.1, 1, 10];
+k1=exp2(:,2);
+k2=exp2(:,4);
+
+yyaxis left
+plot(exposure, k1)
+ylabel('k1'), hold on
+yyaxis right
+plot(exposure,k2)
+ylabel('k2')
+title('Coefficients as a function of Exposure')
+
 save([basename '_dm'])
 
 function [y] = exponential(b,x)
