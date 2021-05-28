@@ -19,8 +19,8 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basenames=["05272021_FITCK_e100", "05272021_FITCK_e001", "05272021_FITCK_e010"];
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/05272021_FITCK_figures'];
+basenames=["05262021_FITCK_001", "05262021_FITCK_010"];
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis//05262021_control/05262021_FITCK_figures'];
 recrunch=0;
 vis=0;
 B=length(basenames);%number of main directories to analyze
@@ -88,17 +88,17 @@ for b=1:B
 end
 
 %plot exposure as a function of intensity
-exposure=[0.1, 1, 10];
+rate=[1.4, 10];
 k1=exp2(:,2);
 k2=exp2(:,4);
 
 yyaxis left
-plot(exposure, k1)
+plot(rate, k1)
 ylabel('k1'), hold on
 yyaxis right
-plot(exposure,k2)
+plot(rate,k2)
 ylabel('k2')
-title('Coefficients as a function of Exposure')
+title('Coefficients as a function of Frame Rate')
 
 save([basename '_dm'])
 
