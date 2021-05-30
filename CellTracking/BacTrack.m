@@ -100,7 +100,7 @@ cellLink=4;%Number of frames to ignore missing cells when tracking frame to fram
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 xlabels=["FITC-K + 12 mM Mg2+" "PBS + 12 mM Mg2+" "FITC-K + 12 mM Mg2+"];
 xswitch=[tpt3 tpt3+120 tpt3+240];
-vis=1;%Display cell tracking? 0=No, 1=Yes.
+vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -209,7 +209,7 @@ for t=1:T
     %noting that IntThresh is always the same
     [~,imcBins]=imhist(imc); %store the bins from your contrasted image
     nBins=height(imcBins); %find the number that corresponds to the 3rd percentile of bins
-    binx=round(nBins*(0.03));
+    binx=round(nBins*(0.02));
     IntThresh=imcBins(binx) %set that value as your image threshold
     
     
@@ -308,7 +308,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
 
-if vis==1 %& t >= T-10 | t <= 6
+if vis==1 & t >= T-10 | t <= 6
    figure
    imshow(im)
    hold on
@@ -479,15 +479,15 @@ acell(acell>dotA_min&acell<dotA_max)=NaN;
 
 %let's just get rid of some more noise
 for i=1:height(lcell)
-    if sum(isnan(lcell(i, :))) > T/2
+    if sum(isnan(lcell(i, :))) > round(T*0.95)
         lcell(i, :) = NaN;
     end
     
-    if sum(isnan(wcell(i, :))) > T/2
+    if sum(isnan(wcell(i, :))) > round(T*0.95)
         wcell(i, :) = NaN;
     end
     
-    if sum(isnan(acell(i, :))) > T/2
+    if sum(isnan(acell(i, :))) > round(T*0.95)
         acell(i, :) = NaN;
     end
 end
@@ -567,11 +567,11 @@ ew(ew==0)=NaN;
 
 end
 
-% %Plot data
+%% %Plot data
 cd(savedir);
 save([basename '_BTphase'])
 save([basename '_BTlab'],'labels','labels2','-v7.3')
-
+% 
 figure(1), title('Cell Length vs. Time')
 clf
 hold on
