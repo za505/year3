@@ -22,20 +22,20 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04222021_Exp1_colony1';
-filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/'  basename '_figures'];
+basename='05082021_Exp5_colony1';
+filename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_FITC/'  basename '_figures'];
 labelname=[filename '/' basename '_phase/' basename '_figures/' basename '_BTlab'];
-channel=[filename '/' basename '_FSS/' basename '_aligned'];
+channel=[filename '/' basename '_FITC/' basename '_aligned'];
 
-frameSwitch=202; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
-frameInitial=8; %this is the FIRST frame that has dye without lysing the membrane
-frameAuto=105; %this is the LAST frame that has dye without lysing the membrane
-frameBg=104; %this is the frame that you'll pick the background area from
+frameSwitch=187; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
+frameInitial=14; %this is the FIRST frame that has dye without lysing the membrane
+frameAuto=90; %this is the LAST frame that has dye without lysing the membrane
+frameBg=85; %this is the frame that you'll pick the background area from
 recrunch=1; %recrunch=1, just redo the plots, don't recalculate any values
 calibration=0; %this variable is to save time while I troubleshoot the code
 vis=0;
-xlabels=["PBS + FSS" "PBS + FSS + 9 mM Mg" "PBS + FSS"];
+xlabels=["PBS + FITC" "PBS + FITC + 9 mM Mg" "PBS + FITC"];
 xswitch=[300 360 420];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
@@ -79,7 +79,7 @@ if calibration==0
 
         end
 else
-        load ([filename '/' basename '_FSS/' basename '_figures/' basename '_BTfluo'], 'cellnumber', 'r1', 'c1', 'r1c1')
+        load ([filename '/' basename '_FITC/' basename '_figures/' basename '_BTfluo'], 'cellnumber', 'r1', 'c1', 'r1c1')
 end
 
 %calculate max total cells
@@ -224,18 +224,34 @@ end
 avgIrate = mean(dCin, 1, 'omitnan');
 stdIrate = std(dCin, 0, 1, 'omitnan');
 
+segments=[190 267 271 349 353 430 433 511 515 592 597 687];
+flag=1;
+stats=cell(maxcellnumber,length(segments)/2);
+coeff=cell(maxcellnumber,length(segments)/2);
+for s=1:length(segments)/2
+    seg1=segments(flag)
+    seg2=segments(flag+1)
+    flag=flag+2;
+    x=time(1,seg1:seg2)';
+    for n=1:maxcellnumber
+        n
+        y=diffC(n,seg1:seg2)';
+        stats{n,s}=fit(x,y,'exp2');
+        coeff{n,s}=coeffvalues(stats{n,s});
+        figure, plot(stats{n,s},x,y), pause, close
+    end
 end
-
-%let's change folders to save the plots and variables
-cd(savename)
-
 %save the variables (we are going to exclude saving labels, which requires
 %a lot of storage
 clear labels
-save([basename '_BTfluo'])
+%save([basename '_BTfluo'])
+
+end
 
 %Plot data
 %Let's plot cellular intensity first
+%let's change folders to save the plots and variables
+cd(savename)
 figure, hold on, title('Adjusted Intensity vs Time')
 for i=1:maxcellnumber
     plot(time,Cin(i,:))
@@ -246,24 +262,24 @@ fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-ylim([-200 Inf])
-saveas(gcf, [basename '_intensityRaw.png'])
-
-%now population average cell intensity
-figure
-ciplot(avgIntensity - stdIntensity, avgIntensity + stdIntensity, time, [0.75 0.75 1])
-plot(time, avgIntensity,'-r')
-title('Average Intensity vs Time')
-xlabel('Time (s)')
-ylabel('Intensity (A.U.)')
-fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-ylim([-3 Inf])
-saveas(gcf, [basename,'_intensityAvg.png'])
-
-%Plot adj background fluorescence
+% ylim([-200 Inf])
+% %saveas(gcf, [basename '_intensityRaw.fig'])
+% 
+% %now population average cell intensity
+% figure
+% ciplot(avgIntensity - stdIntensity, avgIntensity + stdIntensity, time, [0.75 0.75 1])
+% plot(time, avgIntensity,'-r')
+% title('Average Intensity vs Time')
+% xlabel('Time (s)')
+% ylabel('Intensity (A.U.)')
+% fig2pretty
+% % for x=1:length(xlabels)
+% %     xline(xswitch(x), '--k', xlabels(x)) 
+% % end
+% ylim([-3 Inf])
+% %saveas(gcf, [basename,'_intensityAvg.fig'])
+% 
+% %Plot adj background fluorescence
 figure, hold on 
 title('Adjusted Background Intensity vs Time')
 plot(time,Cout)
@@ -273,39 +289,39 @@ fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-ylim([-3 Inf])
-hold off
-saveas(gcf, [basename,'_background.png'])
-
-%Plot the Iin/Iout ratio over time
-figure, hold on
-title('Intensity/Background vs Time')
-ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
-plot(time,avgRatio)
-xlabel('Time (s)')
-ylabel('Intensity/Background')
-fig2pretty 
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-%ylim([0 Inf])
-hold off
-saveas(gcf, [basename,'_ratioTime.png'])
-
-% %Plot Intensity Rate
-figure, hold on
-title('Average Intensity Rate vs Time')
-ciplot(avgIrate - stdIrate, avgIrate + stdIrate, time, [0.75 0.75 1])
-plot(time,avgIrate)
-xlabel('Time (s)')
-ylabel('Intensity Rate')
-fig2pretty 
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
-ylim([0 Inf])
-hold off
-saveas(gcf, [basename,'_intensityRate.png'])
+% ylim([-3 Inf])
+% hold off
+% %saveas(gcf, [basename,'_background.fig'])
+% 
+% %Plot the Iin/Iout ratio over time
+% figure, hold on
+% title('Intensity/Background vs Time')
+% ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
+% plot(time,avgRatio)
+% xlabel('Time (s)')
+% ylabel('Intensity/Background')
+% fig2pretty 
+% % for x=1:length(xlabels)
+% %     xline(xswitch(x), '--k', xlabels(x)) 
+% % end
+% %ylim([0 Inf])
+% hold off
+% %saveas(gcf, [basename,'_ratioTime.fig'])
+% 
+% % %Plot Intensity Rate
+% figure, hold on
+% title('Average Intensity Rate vs Time')
+% ciplot(avgIrate - stdIrate, avgIrate + stdIrate, time, [0.75 0.75 1])
+% plot(time,avgIrate)
+% xlabel('Time (s)')
+% ylabel('Intensity Rate')
+% fig2pretty 
+% % for x=1:length(xlabels)
+% %     xline(xswitch(x), '--k', xlabels(x)) 
+% % end
+% ylim([0 Inf])
+% hold off
+%saveas(gcf, [basename,'_intensityRate.fig'])
 
 %Let's plot Cin-Cout
 figure, hold on, title('Cin-Cout vs Time')
@@ -313,7 +329,29 @@ for n=1:maxcellnumber
     plot(time,Cin(n,:)-Cout)
 end
 hold off
-saveas(gcf, [basename,'_dConstant.png'])
+%saveas(gcf, [basename,'_dConstant.fig'])
+
+%%%%%Troubleshooting
+%load fluorescent images
+curdir=cd;
+cd(channel); 
+fluo_directory=dir('*.tif');
+
+imagename=fluo_directory(frameBg).name;
+im=imread(imagename);
+        
+for n=1:maxcellnumber
+    
+    figure
+    imshow(im, [])
+    hold on
+    
+    for t=1:T
+        plot(r1c1{n,t}(:, 2),r1c1{n,t}(:, 1),'-r') %x is im 'column', y is im 'row'
+    end
+    pause
+    close
+end
 
 %%%%%Functions
 function [p1, p2]=getBackground(imagename)
