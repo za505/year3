@@ -68,7 +68,6 @@ basename='05082021_Exp5_colony1';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
 savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
-%channel='647';
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
 tscale=10;%Frame rate.
@@ -77,46 +76,32 @@ tpt1=120; %number of seconds passed by first time set
 tpt2=240; %number of seconds passed by second time set
 tpt3=480; %number of seconds passed by third time set
 tpt4=1320; %number of seconds passed by fourth time step
-% frame1=14; %TADA-K
-% frame2=94; %PBS
-% frame3=120; %TADA-K
-% frame4=192; %PBS
-% frame5=273;%TADA-K
-% frame6=355; %PBS
-% frame7=435; %TADA-K Mg
-% frame8=517; %PBS
 thresh=0;%For default, enter zero.
-IntThresh=2000;%Threshold used to enhance contrast. Default:35000
-dr=1;%Radius of dilation before watershed %default: 1
-sm=2;%Parameter used in edge detection %default: 2
-minL=2;%Minimum cell length default: 2
-maxL=30; %Maximum cell length
-minW=0.2;%Minimum cell width default: 0.2
-maxW=2.5;%Maximum cell width
-minA=50;%Minimum cell area. default: 50
-dotA_min=8800; %area range of the 'dots' (pillars) in the trap
-dotA_max=8850;
+IntThresh=20000;%Threshold used to enhance contrast. Default:35000
+dr=1;%Radius of dilation before watershed 
+sm=2;%Parameter used in edge detection
+minL=2;%Minimum cell length
+minW=0.2;%Minimum cell width
+maxW=1.5;%Maximum cell width
+minA=50;%Minimum cell area. default 50
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-xlabels=["FITC-K + 12 mM Mg2+" "PBS + 12 mM Mg2+" "FITC-K + 12 mM Mg2+"];
-xswitch=[tpt3 tpt3+120 tpt3+240];
-vis=0;%Display cell tracking? 0=No, 1=Yes.
+vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if recrunch==1
-    %load([savedir '/' basename '_' channel '_BTphase.mat'])
-    load([savedir '/' basename '_BTphase.mat'])
+    load([basename '_BT'])
 else
 
 %Determine number of frames
-curdir=cd; %when do we use this again?
+curdir=cd;
 cd(dirname);
 directory=dir('*.tif');
 T=length(directory);
 
 cd(curdir);
-path(dirname,path) %what does this do?
+path(dirname,path)
 
 nc=zeros(1,T);
 allcentroids=[];
@@ -153,7 +138,6 @@ im=imread(imagename);
 labels=zeros(imM,imN,T);
 labels2=zeros(imM,imN,T);
 
-%%
 %Track cells
 for t=1:T
     t
@@ -165,25 +149,16 @@ for t=1:T
     [imM,imN]=size(im);
     
     %De-speckle image
-    im=medfilt2(im); %each pixel is replaced with the median value of its neighboring pixels (in this case 3x3)
-%     imshow(im)
-%     pause
-%     m=['de-speckle']
+    im=medfilt2(im);
     
     %Normalize images
-    ppix=0.5; %I think this brings all the pixels in each image into a similar range
+    ppix=0.5;
     im=norm16bit(im,ppix);
-%     imshow(im)
-%     pause
-%      m=['normalize']
-     
+    
     %Enhance contrast
-    imc=imcomplement(im); %flips the pixel values (cells go from black to white)
-%     imshow(imc)
-%     pause
-%      m=['enhance contrast']
-     
-    if checkhist==1
+    imc=imcomplement(im);
+    
+    if checkhist==1;
         figure,imhist(imc),pause;
     end
     
@@ -191,99 +166,74 @@ for t=1:T
         [imcounts,bins]=imhist(imc);
         [imcounts,idx]=sort(imcounts);
         bins=bins(idx);
-        thresh1=bins(end-1); 
+        thresh1=bins(end-1);
     else
         thresh1=thresh;
     end
-    
-    if thresh1==65535
-        thresh1=bins(end-2);
-    end
-    
-    imc=imadjust(imc,[thresh1/65535 1],[]); %basically the background pixels get lumped together and get set to 0 (black background) 
-%     imshow(imc)
-%     pause
-%     m=['imadjust']
+    imc=imadjust(imc,[thresh1/65535 1],[]);   
      
-    %Calculate IntThresh for this frame %I added this, although it's worth
-    %noting that IntThresh is always the same
-    [~,imcBins]=imhist(imc); %store the bins from your contrasted image
-    nBins=height(imcBins); %find the number that corresponds to the 3rd percentile of bins
-    binx=round(nBins*(0.02));
-    IntThresh=imcBins(binx) %set that value as your image threshold
-    
-    
     %Find edges
-    [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2)); %what happens if you increase or decrease the sm value?
-    %thresh2 has a narrow range of values for different sm values
-    %ed2 is a imM x imN matrix, uses two thresholds to identify edges
+    [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
     
     %Clean image
-    cc=bwconncomp(ed2,8); %connect the components in a binary image
-    stats=regionprops(cc,imc,'Area','MeanIntensity'); %cc is the regions of imc that you want to find area and mean intensity for
-    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>IntThresh); %ed2 is binary, but imc is still not
-    ed2=ismember(labelmatrix(cc),idx); %label matrix is where each object has a unique number in the matrix
-
+    cc=bwconncomp(ed2,8);
+    stats=regionprops(cc,imc,'Area','MeanIntensity');
+    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>IntThresh);
+    ed2=ismember(labelmatrix(cc),idx);
+    
     %Close gaps in edges
-    despurred=bwmorph(ed2,'spur'); %a spur pixel is an unconnected pixel (although I'm not sure how matlab recognizes them or the specific rule)
+    despurred=bwmorph(ed2,'spur');
     spurs=ed2-despurred;
     [spy,spx]=find(spurs);
-     %what does this line of code do???? the montage doesn't show a diff
-     %before and after the loop
     for k=1:length(spx)
         ed2(spy(k)-1:spy(k)+1,spx(k)-1:spx(k)+1)=ed2(spy(k)-1:spy(k)+1,spx(k)-1:spx(k)+1)+rot90(ed2(spy(k)-1:spy(k)+1,spx(k)-1:spx(k)+1),2);
         ed2(spy(k),spx(k))=1;
     end
+    ed2=bwmorph(ed2,'bridge'); 
+  
+    se=strel('disk',dr);
+    ed2=imdilate(ed2,se);
+    ed2=bwmorph(ed2,'thin',2);
     
-    ed2=bwmorph(ed2,'bridge'); %again, I don't see a difference
- 
-    se=strel('disk',dr); %why so small a dr value?, I think se is a special class of object
-    ed2=imdilate(ed2,se); %dilation=make bigger, thicken lines
-    ed2=bwmorph(ed2,'thin',2); %thin lines 
-
     %Identify cells based on size and intensity
-    ed3=~ed2; %flip from black and white to white and black
-    ed3(1,:)=ones(1,imN); %I don't know why we need the edges to be white, maybe to remove edge cells?
+    ed3=~ed2;
+    ed3(1,:)=ones(1,imN);
     ed3(end,:)=ones(1,imN);
     ed3(:,1)=ones(imM,1);
     ed3(:,end)=ones(imM,1);
     
-    cc=bwconncomp(ed3,4); %new cc structure
+    cc=bwconncomp(ed3,4);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
-    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4); %more pruning
+    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4);
     ed4=ismember(labelmatrix(cc),idx);
     
- 
     %Find cell areas and centroids
     bw=bwmorph(ed4,'thicken');
-    [P,bw]=bwboundaries(bw,4,'noholes'); %P= row x column position, bw = binary with cell #
-    stats=regionprops(bw,'Area','Centroid','PixelIdxList', 'PixelList'); %why pixelIdxList instead of PixelList??????
-    %to figure out the coordinates of the PixelIdxList:
-    %column = round(PixelID/imM)
-    %row = PixelID-imM*column
+    [P,bw]=bwboundaries(bw,4,'noholes');
+    stats=regionprops(bw,'Area','Centroid','PixelIdxList');
     
     L=bwlabel(bw);    
-    labels(:,:,t)=L; %What is the difference between labels and labels2????
-    labels2(:,:,t)=bw; 
+    labels(:,:,t)=L;
+    labels2(:,:,t)=bw;
     
     nc(t)=length(P);
     areas=[stats.Area];
     cents=cat(1,stats.Centroid);
-    a(nc(t),t)=0; %initialize a vector
-    a(1:nc(t),t)=[stats.Area]'; %transpose area? not sure what the ' does
+    a(nc(t),t)=0;
+    a(1:nc(t),t)=[stats.Area]';
     centroids=cents;
      
     %Calculate smooth cell contours
     for n=1:nc(t)
          
-        rP=[P{n}(:,2),P{n}(:,1)]; %for all the pixels (col, row) in this cell
-        px=[rP(1:end-1,1);rP(1:end-1,1);rP(:,1)]; %col %why these values specifically? why the redundancy?
-        py=[rP(1:end-1,2);rP(1:end-1,2);rP(:,2)]; %row
-        sp=length(rP); %# of all the pixels 
-        dS=sqrt(diff(px).^2+diff(py).^2); %change in Eucledian distance? 
+        rP=[P{n}(:,2),P{n}(:,1)];
+        px=[rP(1:end-1,1);rP(1:end-1,1);rP(:,1)];
+        py=[rP(1:end-1,2);rP(1:end-1,2);rP(:,2)];
+        sp=length(rP);
+        dS=sqrt(diff(px).^2+diff(py).^2);
         S=[0 cumsum(dS)'];
 
-        px=csaps(S,px,0.05,S); %generate cubic smoothing spline
+        px=csaps(S,px,0.05,S);
         py=csaps(S,py,0.05,S);
         
         px=px(sp+1:2*sp);
@@ -297,17 +247,17 @@ for t=1:T
         ls=length(S);
         DS(n,t)=S(end)/(ls-1);
         Sn=(0:DS(n,t):S(end));
-        nx=spline(S,px,Sn); %vector of interpolated values at S
+        nx=spline(S,px,Sn);
         ny=spline(S,py,Sn);
         
-        boun{n,t}=[nx',ny']; %x, y coordinates
+        boun{n,t}=[nx',ny'];
         pxls{n,t}=stats(n).PixelIdxList;
         
     end
     allcentroids=[allcentroids;centroids];
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
-
+    
 if vis==1 & t >= T-10 | t <= 6
    figure
    imshow(im)
@@ -315,13 +265,14 @@ if vis==1 & t >= T-10 | t <= 6
    for k=1:nc(t)
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
    end
+    
   pause
   close all
 end
     toc
 
 end
-%%
+
 %Calculate cell length, width, etc.
 for t=1:T
     t
@@ -382,7 +333,7 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-    if multiScale==0
+      if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
      tpoint1=[0:tscale:tpt1];
@@ -397,7 +348,6 @@ end
 
 time=tpoints(1,:);
 time2=tpoints(end,:);
-tmid=(time(2:end)+time(1:end-1))/2;
 
 %Fix bug where micromanager screws up its timing
 dtime=diff(time);
@@ -468,29 +418,9 @@ wcell=wcell*lscale;
 acell=acell*lscale^2;
 
 %Throw away cells that are too short or too fat or too skinny
-lcell(lcell<minL|lcell>maxL|wcell>maxW|wcell<minW)=NaN;
-wcell(lcell<minL|lcell>maxL|wcell>maxW|wcell<minW)=NaN;
-acell(lcell<minL|lcell>maxL|wcell>maxW|wcell<minW)=NaN;
-
-%Throw away dots that may have been tracked
-lcell(acell>dotA_min&acell<dotA_max)=NaN;
-wcell(acell>dotA_min&acell<dotA_max)=NaN;
-acell(acell>dotA_min&acell<dotA_max)=NaN;
-
-%let's just get rid of some more noise
-for i=1:height(lcell)
-    if sum(isnan(lcell(i, :))) > round(T*0.95)
-        lcell(i, :) = NaN;
-    end
-    
-    if sum(isnan(wcell(i, :))) > round(T*0.95)
-        wcell(i, :) = NaN;
-    end
-    
-    if sum(isnan(acell(i, :))) > round(T*0.95)
-        acell(i, :) = NaN;
-    end
-end
+lcell(lcell<minL|wcell>maxW|wcell<minW)=NaN;
+wcell(lcell<minL|wcell>maxW|wcell<minW)=NaN;
+acell(lcell<minL|wcell>maxW|wcell<minW)=NaN;
 
 %Calculate circumferential strain
 wcell(isnan(wcell))=0;
@@ -567,30 +497,22 @@ ew(ew==0)=NaN;
 
 end
 
-%% %Plot data
-cd(savedir);
-save([basename '_BTphase'])
-save([basename '_BTlab'],'labels','labels2','-v7.3')
-% 
+%Plot data
 figure(1), title('Cell Length vs. Time')
 clf
 hold on
 for i=1:ncells  
     lcell(i,:)=movingaverage2(lcell(i,:),3);
-    indx=isnan(lcell(i,:))~=1;
-    indx=find(indx);
-    plot(time(indx),lcell(i,indx))
-    %plot(time(1:end),lcell(i,1:end)) 
+    %indx=isnan(lcell(i,:))~=1;
+    %indx=find(indx);
+    %plot(time(indx),lcell(i,indx))
+    plot(time(1:end),lcell(i,1:end)) 
 end
 xlabel('Time (s)')
 ylabel('Length (\mum)')
-%ylim([0 inf])
 fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
 saveas(gcf,[basename,'_lTraces.png'])
-%  
+
 % figure(2), title('Cell Width vs. Time')
 % hold on
 % for i=1:ncells
@@ -600,23 +522,19 @@ saveas(gcf,[basename,'_lTraces.png'])
 % xlabel('Time (s)')
 % ylabel('Width (/mum)')
 % fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
+
+% figure(4), title('Circumferential Strain vs. Time')
+% hold on
+% for i=1:ncells
+%     plot(time,ew(i,:)) 
 % end
-% saveas(gcf, [basename,'_wTraces.png'])
-% 
-% % figure(4), title('Circumferential Strain vs. Time')
-% % hold on
-% % for i=1:ncells
-% %     plot(time,ew(i,:)) 
-% % end
-% % plot(time,ewav,'-r','LineWidth',2)
-% % xlabel('t (s)')
-% % ylabel('\epsilon_w')
-% % fig2pretty
-% % saveas(gcf, [basename,'_cStrain.png'])
-% 
-% 
+% plot(time,ewav,'-r','LineWidth',2)
+% xlabel('t (s)')
+% ylabel('\epsilon_w')
+% fig2pretty
+
+tmid=(time(2:end)+time(1:end-1))/2;
+
 figure(5), title('Elongation Rate vs. Time')
 hold on
 for i=1:ncells
@@ -626,25 +544,17 @@ plot(tmid,vav,'-r')
 xlabel('Time (s)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
 saveas(gcf, [basename,'_eTraces.png'])
-% 
+
 figure(6), title('Elongation Rate vs. Time')
 hold on
 ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
 plot(tmid,vav*3600,'-r')
 xlabel('Time (s)')
 ylabel('Elongation (hr^{-1})')
-yline(2, '--b')
 fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
 saveas(gcf, [basename,'_ET.png'])
-   
-% 
+
 figure(7), title('Cell Length Average vs. Time')
 clf
 lcellAVG=mean(lcell,1, 'omitnan');
@@ -656,7 +566,11 @@ xlabel('Time (s)')
 ylabel('Length (\mum)')
 ylim([0 inf])
 fig2pretty
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
-end
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
 saveas(gcf,[basename,'_lTracesAVG.png'])
+
+cd(dirname);
+save([basename '_BTphase'])
+save([basename '_BTlab'],'labels','labels2','-v7.3')
