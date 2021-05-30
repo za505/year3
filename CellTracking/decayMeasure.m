@@ -19,8 +19,8 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basenames=["05262021_FITCK_001", "05262021_FITCK_010"];
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis//05262021_control/05262021_FITCK_figures'];
+basenames=["05262021_FITCK_001", "05282021_FITCK_f005", "05262021_FITCK_010"];
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/photobleaching'];
 recrunch=0;
 vis=0;
 B=length(basenames);%number of main directories to analyze
@@ -79,28 +79,41 @@ for b=1:B
     saveas(gcf, [basename,'_exp2.fig'])
     saveas(gcf, [basename,'_exp2.png'])
     close
-    
-    %calculate new yhat values
-    yhat2{b,1}=f{b,1}(times{b,1});
-    
+%     
+%     %calculate new yhat values
+%     yhat2{b,1}=f{b,1}(times{b,1});
+%     
     %pull out the coefficient values
     exp2(b,:)=coeffvalues(f{b,1});
 end
 
 %plot exposure as a function of intensity
-rate=[1.4, 10];
-k1=exp2(:,2);
-k2=exp2(:,4);
+frame=[1 5 10];
+k1=coeff(:,2);
+
+figure
+plot(frame, k1)
+ylabel('k1')
+xlabel('frame rate (fps)')
+title('Coefficients as a function of Frame Rate')
+saveas(gcf, [basename,'_frameFunction.fig'])
+saveas(gcf, [basename,'_frameFunction.png'])
+
+frame=[1 5 10];
+kb=exp2(:,2);
+kd=exp2(:,4);
 
 yyaxis left
-plot(rate, k1)
-ylabel('k1'), hold on
+plot(frame, kb)
+ylabel('b'), hold on
 yyaxis right
-plot(rate,k2)
-ylabel('k2')
+plot(frame,kd)
+ylabel('d')
 title('Coefficients as a function of Frame Rate')
+saveas(gcf, [basename,'_frameFunction2.fig'])
+saveas(gcf, [basename,'_frameFunction2.png'])
 
-save([basename '_dm'])
+save(['frame_dm'])
 
 function [y] = exponential(b,x)
 %this function calculates y=A*(e^alpha*t)+y0
