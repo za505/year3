@@ -7,115 +7,58 @@ clear
 close all
 
 %input%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-basename='03082021_Exp3_colony3';
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
-frameSwitch=137; %the last frame before hyperosmotic shock
-frameShock=140;
-nframe=3;
+basename='04262021_Exp1_colony1';
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04262021_analysis/04262021_Exp1/04262021_Exp1_colony1/plasmolysis_test'];%Directory to save the output .mat file to.
+frame=4; %frame immediately upon hyperosmotic shock
+channels={'phase', 'TADA'};
 vis=1; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-cd(savedir)
-load([basename '_BTphase.mat'],'T','labels','directory', 'dirname');
-
-%Let's calculate the number of cells in our pre-shock frame
-cellnumber=max(max(labels(:,:,frameSwitch)));
-
-%Let's pull some stats from this image
-bw=labels(:,:,frameSwitch);
-stats=regionprops(bw,'Area','Centroid','PixelList'); 
-
-%pre-allocate variables
-pixelIntensity=cell(cellnumber,nframe+2);
-pixelMean=zeros(cellnumber, nframe+2);
-pixIdx=cell(cellnumber,nframe+1);
-
-%now let's get the row and column coordinates from the pre-shock frame
-for n=1:cellnumber
-    
-    r1=stats(n).PixelList(:, 1);   %Find coordinates of cells in frame T
-    c1=stats(n).PixelList(:, 2);
-    pixelID{n,1}=[r1 c1]; % concatenate XY coords frame T 
-    
-    colID{n}=c1;
-    rowID{n}=r1;
-    
-end
-
-%Load pre-shock image
-imagename=directory(frameSwitch).name;
-im=imread(imagename);
-
-%check that the coordinates are correct
-figure
-imshow(im)
-hold on
-for n=1:cellnumber
-   plot(pixelID{n,1}(:,1),pixelID{n,1}(:,2),'-r')
-end
+%process the phase image
+[imp, impc, impb]=imageProcess([dirname '/' basename '_' channels{1}], frame, 1);
+phase=cat(3, imp, impc, impb);
+montage(phase)
 pause
-   
-for n=1:cellnumber
-   
-    %find the intensity for each pixel in each identified cell
-    for p=1:height(rowID{n})
-        pixelIntensity{n,1}(p)=im(rowID{n}(p),colID{n}(p));
-    end
-    
-    %calculate the mean
-    pixelMean(n, 1)=mean(pixelIntensity{n,1});
-    
-end
 
+%process the TADA image
+[imt, imtc, imtb]=imageProcess([dirname '/' basename '_' channels{2}], frame, 0);
+tada=cat(3, imt, imtc, imtb);
+montage(tada)
+pause
 
-%now, let's get the pixel intensities and pixel mean for post-shock cells
-%in the same coordinates as the pre-shock cells
-flag=2;
- 
-for t=frameShock:frameShock+nframe
+function [im, imc, imb] = imageProcess(dirname, frame, complement)
+    
+    %change directory
+    cd(dirname)
+    directory=dir('*.tif');
+    imagename=directory(frame).name;
     
     %Load image
-    imagename=directory(t).name;
     im=imread(imagename);
+    %[imM,imN]=size(im);
+    
+    %De-speckle image
+    im=medfilt2(im); %each pixel is replaced with the median value of its neighboring pixels (in this case 3x3)
 
-    %check to see the coordinates are correct
-    figure
-    imshow(im)
-    hold on
-    for n=1:cellnumber
-       plot(pixelID{n,1}(:,1),pixelID{n,1}(:,2),'-r')
-    end
-    pause
-
-    for n=1:cellnumber
-        
-        for p=1:height(rowID{n})
-            pixelIntensity{n,flag}(p)=im(rowID{n}(p),colID{n}(p));
-        end
-        
-        pixelMean(n, flag)=mean(pixelIntensity{n,flag});
-        
-        for p=1:height(rowID{n})
-            if im(rowID{n}(p),colID{n}(p)) > pixelIntensity{n,1}(p)
-                pixIdx{n,flag-1}(p, :)=[rowID{n}(p),colID{n}(p)];
-            else 
-                pixIdx{n,flag-1}(p, :)=[NaN NaN];
-            end
-        end
-        
-        %check to see the coordinates are correct
-        figure
-        imshow(im)
-        hold on
-        %for n=1:cellnumber
-           plot(pixIdx{n,1}(st:en,1),pixIdx{n,1}(st:en,2),'-r')
-        %end
-        pause
-
+    %Normalize images
+    ppix=0.5; %I think this brings all the pixels in each image into a similar range
+    im=norm16bit(im,ppix);
+     
+    if complement==1
+        %Enhance contrast
+        imc=imcomplement(im); %flips the pixel values (cells go from black to white)
+    else
+        imc=im;
     end
     
+    [imcounts,bins]=imhist(imc);
+    [imcounts,idx]=sort(imcounts);
+    bins=bins(idx);
+    thresh1=bins(end-1); 
     
-    flag=flag+1;
+    if thresh1==65535
+        thresh1=bins(end-2);
+    end
     
+    imb=imadjust(imc,[thresh1/65535 1],[]); %basically the background pixels get lumped together and get set to 0 (black background) 
 end
-
-close all
+        
