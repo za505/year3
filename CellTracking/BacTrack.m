@@ -64,18 +64,18 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05082021_Exp5_colony1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_phase/'  basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
+basename='05262021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '/' basename '_phase'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=1;
+multiScale=0;
 tscale=10;%Frame rate.
-tscale2=1;
-tpt1=120; %number of seconds passed by first time set
-tpt2=240; %number of seconds passed by second time set
-tpt3=480; %number of seconds passed by third time set
-tpt4=1320; %number of seconds passed by fourth time step
+% tscale2=1;
+% tpt1=120; %number of seconds passed by first time set
+% tpt2=240; %number of seconds passed by second time set
+% tpt3=480; %number of seconds passed by third time set
+% tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
 IntThresh=20000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -91,7 +91,7 @@ checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if recrunch==1
-    load([basename '_BT'])
+    load([basename '_BTphase'])
 else
 
 %Determine number of frames
@@ -333,7 +333,7 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-      if multiScale==0
+     if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
      tpoint1=[0:tscale:tpt1];
@@ -392,11 +392,12 @@ end
 
 %Throw away cells with only one or two time points
 delind=[];
-for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=2
-        delind=[delind;i];
-    end
-end
+%we are going to ignore this because we only have two time points
+% for i=1:ncells
+%     if length(nonzeros(lcell(i,:)))<=2
+%         delind=[delind;i];
+%     end
+% end
 
 lcell(delind,:)=[];
 wcell(delind,:)=[];
@@ -498,6 +499,7 @@ ew(ew==0)=NaN;
 end
 
 %Plot data
+cd(savedir);
 figure(1), title('Cell Length vs. Time')
 clf
 hold on
@@ -511,7 +513,7 @@ end
 xlabel('Time (s)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_lTraces.png'])
+% saveas(gcf,[basename,'_lTraces.png'])
 
 % figure(2), title('Cell Width vs. Time')
 % hold on
@@ -544,7 +546,7 @@ plot(tmid,vav,'-r')
 xlabel('Time (s)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_eTraces.png'])
+% saveas(gcf, [basename,'_eTraces.png'])
 
 figure(6), title('Elongation Rate vs. Time')
 hold on
@@ -553,7 +555,7 @@ plot(tmid,vav*3600,'-r')
 xlabel('Time (s)')
 ylabel('Elongation (hr^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_ET.png'])
+% saveas(gcf, [basename,'_ET.png'])
 
 figure(7), title('Cell Length Average vs. Time')
 clf
@@ -569,8 +571,8 @@ fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-saveas(gcf,[basename,'_lTracesAVG.png'])
+% saveas(gcf,[basename,'_lTracesAVG.png'])
 
-cd(dirname);
+cd(savedir);
 save([basename '_BTphase'])
 save([basename '_BTlab'],'labels','labels2','-v7.3')
