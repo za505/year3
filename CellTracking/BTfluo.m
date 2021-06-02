@@ -24,14 +24,14 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05082021_Exp5_colony1';
-channels={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_FITC/'  basename '_aligned']};
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_phase/'  basename '_figures'];
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_analysis/' basename '/' basename '_FITC/'  basename '_figures']; 
+basename='05282021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_FSS/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_FSS/'  basename '_aligned']; ['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_phase/'  basename '_aligned']}; 
 recrunch=0;
-frameSwitch=187; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
-frameInitial=14; %this is the FIRST frame that has dye without lysing the membrane
-frameAuto=90; %this is the LAST frame that has dye without lysing the membrane
+% frameSwitch=187; %this is the initial frame for the switch (after which we pulse w/ and w/out Mg2+)
+% frameInitial=14; %this is the FIRST frame that has dye without lysing the membrane
+% frameAuto=90; %this is the LAST frame that has dye without lysing the membrane
 frameBg=85; %this is the frame that you'll pick the background area from
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -77,10 +77,10 @@ for i=1:length(channels)
         bglevel = measureBackground(imagename, p1, p2);
         bgIntensity(i,t)=bglevel; 
         
-        %get background fluorescence
-        if t>frameAuto+1 & t<frameSwitch-1 
-            bgTemp=[bgTemp bgIntensity(i,t)];
-        end
+%         %get auto fluorescence
+%         if t>frameAuto+1 & t<frameSwitch-1 
+%             bgTemp=[bgTemp bgIntensity(i,t)];
+%         end
     
     end
     
@@ -92,12 +92,12 @@ for i=1:length(channels)
     ratio{i}=icell{i};
     
     %now take the mean of bgAuto
-    bgAuto(i)=mean(bgTemp,2); %take the temporal average
+    %bgAuto(i)=mean(bgTemp,2); %take the temporal average
     
     %Subtract the autofluorescence from the raw intensity
-    Cout(i,:)=bgIntensity(i,:)-bgAuto(i);
+    Cout(i,:)=bgIntensity(i,:); %-bgAuto(i);
     for n=1:ncells
-        Cin{i}(n,:)=icell{i}(n,:)-bgAuto;
+        Cin{i}(n,:)=icell{i}(n,:); %-bgAuto;
         iDiff{i}(n,:)=Cin{i}(n,:)-Cout(i,:);
         ratio{i}(n,:)=Cin{i}(n,:)./Cout(i,:);
     end
@@ -114,34 +114,38 @@ elseif recrunch==1
 end
 
 %Plot data
+cd(savedir)
+
 figure, hold on, 
 for i=1:ncells
     plot(time,icell{1}(i,:))
 end
 xlabel('Time (s)')
-ylabel('Intensity (A.U.)')
+ylabel('FSS Intensity (A.U.)')
 fig2pretty
-saveas(gcf, [basename '_intensityRaw.fig'])
+saveas(gcf, [basename '_intensityFSS.fig'])
+saveas(gcf, [basename '_intensityFSS.png'])
 
 %Plot adj background fluorescence
 figure, hold on 
 title('Adjusted Background Intensity vs Time')
 plot(time,Cout(1,:))
 xlabel('Time (s)')
-ylabel('Intensity (A.U.)')
+ylabel('FSS Intensity (A.U.)')
 fig2pretty
-saveas(gcf, [basename,'_Cout.fig'])
+saveas(gcf, [basename,'_CoutFSS.fig'])
+saveas(gcf, [basename,'_CoutFSS.png'])
 
 %Plot adj adjusted cellular fluorescence
-figure, hold on, title('Adjusted Intensity vs Time')
+figure, hold on, title('Phase Contrast vs Time')
 for n=1:ncells
-    plot(time,Cin{1}(n,:))
+    plot(time,Cin{2}(n,:))
 end
 xlabel('Time (s)')
-ylabel('Intensity (A.U.)')
+ylabel('Phase Contrast (A.U.)')
 fig2pretty
-saveas(gcf, [basename '_Cin.fig'])
-saveas(gcf, [basename '_Cin.png'])
+saveas(gcf, [basename '_intensityPhase.fig'])
+saveas(gcf, [basename '_intensityPhase.png'])
 
 %Let's plot Cin-Cout
 figure, hold on, title('Cin-Cout vs Time')
@@ -151,8 +155,8 @@ end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-saveas(gcf, [basename '_iDiff.fig'])
-saveas(gcf, [basename '_iDiff.png'])
+saveas(gcf, [basename '_iDiffFSS.fig'])
+saveas(gcf, [basename '_iDiffFSS.png'])
 
 %Let's plot Cin/Cout
 figure, hold on, title('Ratio vs Time')
@@ -162,16 +166,24 @@ end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-saveas(gcf, [basename '_ratio.fig'])
-saveas(gcf, [basename '_ratio.png'])
+saveas(gcf, [basename '_ratioFSS.fig'])
+saveas(gcf, [basename '_ratioFSS.png'])
 
 figure, hold on, 
 plot(time,icell_av{1},'-r')
 xlabel('Time (s)')
 ylabel('Average Intensity (A.U.)')
 fig2pretty
-saveas(gcf, [basename,'_intensityAvg.fig'])
-saveas(gcf, [basename,'_intensityAvg.png'])
+saveas(gcf, [basename,'_intensityAvgFSS.fig'])
+saveas(gcf, [basename,'_intensityAvgFSS.png'])
+
+figure, hold on, 
+plot(time,icell_av{2},'-r')
+xlabel('Time (s)')
+ylabel('Phase Contrast (A.U.)')
+fig2pretty
+saveas(gcf, [basename,'_intensityAvgPhase.fig'])
+saveas(gcf, [basename,'_intensityAvgPhase.png'])
 
 cd(savedir)
 save([basename '_BTfluo'])
