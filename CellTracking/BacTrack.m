@@ -64,9 +64,9 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05262021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '/' basename '_phase'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename];%Directory to save the output .mat file to.
+basename='05282021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
@@ -166,7 +166,7 @@ for t=1:T
         [imcounts,bins]=imhist(imc);
         [imcounts,idx]=sort(imcounts);
         bins=bins(idx);
-        thresh1=bins(end-1);
+        thresh1=bins(end);
     else
         thresh1=thresh;
     end
@@ -392,12 +392,12 @@ end
 
 %Throw away cells with only one or two time points
 delind=[];
-%we are going to ignore this because we only have two time points
-% for i=1:ncells
-%     if length(nonzeros(lcell(i,:)))<=2
-%         delind=[delind;i];
-%     end
-% end
+
+for i=1:ncells
+    if length(nonzeros(lcell(i,:)))<=2
+        delind=[delind;i];
+    end
+end
 
 lcell(delind,:)=[];
 wcell(delind,:)=[];
@@ -513,7 +513,7 @@ end
 xlabel('Time (s)')
 ylabel('Length (\mum)')
 fig2pretty
-% saveas(gcf,[basename,'_lTraces.png'])
+saveas(gcf,[basename,'_lTraces.png'])
 
 % figure(2), title('Cell Width vs. Time')
 % hold on
@@ -546,7 +546,7 @@ plot(tmid,vav,'-r')
 xlabel('Time (s)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-% saveas(gcf, [basename,'_eTraces.png'])
+saveas(gcf, [basename,'_eTraces.png'])
 
 figure(6), title('Elongation Rate vs. Time')
 hold on
@@ -555,7 +555,7 @@ plot(tmid,vav*3600,'-r')
 xlabel('Time (s)')
 ylabel('Elongation (hr^{-1})')
 fig2pretty
-% saveas(gcf, [basename,'_ET.png'])
+saveas(gcf, [basename,'_ET.png'])
 
 figure(7), title('Cell Length Average vs. Time')
 clf
@@ -571,7 +571,7 @@ fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-% saveas(gcf,[basename,'_lTracesAVG.png'])
+saveas(gcf,[basename,'_lTracesAVG.png'])
 
 cd(savedir);
 save([basename '_BTphase'])
