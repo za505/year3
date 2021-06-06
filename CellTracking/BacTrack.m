@@ -64,9 +64,9 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05282021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05282021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='05262021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
@@ -496,10 +496,17 @@ wcell(wcell==0)=NaN;
 acell(acell==0)=NaN;
 ew(ew==0)=NaN;
 
+tmid=(time(2:end)+time(1:end-1))/2;
+
+cd(savedir);
+save([basename '_BTphase'])
+save([basename '_BTlab'],'labels','labels2','-v7.3')
+
 end
 
 %Plot data
 cd(savedir);
+
 figure(1), title('Cell Length vs. Time')
 clf
 hold on
@@ -534,8 +541,6 @@ saveas(gcf,[basename,'_lTraces.png'])
 % xlabel('t (s)')
 % ylabel('\epsilon_w')
 % fig2pretty
-
-tmid=(time(2:end)+time(1:end-1))/2;
 
 figure(5), title('Elongation Rate vs. Time')
 hold on
@@ -573,6 +578,3 @@ fig2pretty
 % end
 saveas(gcf,[basename,'_lTracesAVG.png'])
 
-cd(savedir);
-save([basename '_BTphase'])
-save([basename '_BTlab'],'labels','labels2','-v7.3')
