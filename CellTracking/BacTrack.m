@@ -64,13 +64,13 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='06062021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='05262021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/' basename '_TADA/' basename '_newAlign'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
-tscale=60;%Frame rate.
+tscale=10;%Frame rate.
 % tscale2=1;
 % tpt1=120; %number of seconds passed by first time set
 % tpt2=240; %number of seconds passed by second time set
@@ -89,7 +89,6 @@ recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 if recrunch==1
     load([basename '_BTphase'])
 else
@@ -144,19 +143,24 @@ for t=1:T
     
     %Load image
     imagename=directory(t).name;
-
+    
     im=imread(imagename);
     [imM,imN]=size(im);
+    %imshow(im), pause
     
     %De-speckle image
     im=medfilt2(im);
-    
+    %imshow(im), pause
+
     %Normalize images
     ppix=0.5;
     im=norm16bit(im,ppix);
+    %imshow(im), pause
     
     %Enhance contrast
-    imc=imcomplement(im);
+    %imc=imcomplement(im);
+    imc=im;
+    %imshow(imc),pause
     
     if checkhist==1;
         figure,imhist(imc),pause;
@@ -169,11 +173,13 @@ for t=1:T
         thresh1=bins(end);
     else
         thresh1=thresh;
-    end
-    imc=imadjust(imc,[thresh1/65535 1],[]);   
-     
+    end 
+    imc2=imadjust(imc,[0 55000]/2^16,[]);   
+    %imshow(imc2), pause
+    
     %Find edges
-    [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
+    [ed2,thresh2]=edge(imc2,'canny',[0.3 0.5],sm*sqrt(2));
+    %imshow(ed2), pause
     
     %Clean image
     cc=bwconncomp(ed2,8);
@@ -263,13 +269,17 @@ if vis==1 %& t >= T-10 | t <= 6
    imshow(im)
    hold on
    for k=1:nc(t)
+       %if isempty(boun{k,t})==0
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
+       %end
    end
     
   pause
   close all
-end
+
     toc
+
+end
 
 end
 
