@@ -65,19 +65,19 @@ tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
 basename='06092021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_phase/'  basename '_tracked'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/'  basename '_tracked'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
-tscale=10;%Frame rate.
+tscale=60;%Frame rate.
 tscale2=1;
 tpt1=120; %number of seconds passed by first time set
 tpt2=240; %number of seconds passed by second time set
 tpt3=480; %number of seconds passed by third time set
 tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
-IntThresh=20000;%Threshold used to enhance contrast. Default:35000
+IntThresh=7000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
@@ -258,7 +258,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
     
-if vis==1 & t >= T-10 | t <= 6
+if vis==1 %& t >= T-10 | t <= 6
    figure
    imshow(im)
    hold on
@@ -496,7 +496,13 @@ wcell(wcell==0)=NaN;
 acell(acell==0)=NaN;
 ew(ew==0)=NaN;
 
+cd(savedir);
+save([basename '_BTphase'])
+save([basename '_BTlab'],'labels','labels2','-v7.3')
+
 end
+
+cd(savedir);
 
 %Plot data
 figure(1), title('Cell Length vs. Time')
@@ -572,6 +578,3 @@ fig2pretty
 % end
 saveas(gcf,[basename,'_lTracesAVG.png'])
 
-cd(dirname);
-save([basename '_BTphase'])
-save([basename '_BTlab'],'labels','labels2','-v7.3')
