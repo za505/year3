@@ -64,18 +64,18 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05262021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/' basename '_TADA/' basename '_newAlign'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='06092021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_phase/'  basename '_tracked'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_phase/'  basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=0;
+multiScale=1;
 tscale=10;%Frame rate.
-% tscale2=1;
-% tpt1=120; %number of seconds passed by first time set
-% tpt2=240; %number of seconds passed by second time set
-% tpt3=480; %number of seconds passed by third time set
-% tpt4=1320; %number of seconds passed by fourth time step
+tscale2=1;
+tpt1=120; %number of seconds passed by first time set
+tpt2=240; %number of seconds passed by second time set
+tpt3=480; %number of seconds passed by third time set
+tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
 IntThresh=20000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -89,8 +89,9 @@ recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if recrunch==1
-    load([basename '_BTphase'])
+    load([basename '_BT'])
 else
 
 %Determine number of frames
@@ -143,24 +144,19 @@ for t=1:T
     
     %Load image
     imagename=directory(t).name;
-    
+
     im=imread(imagename);
     [imM,imN]=size(im);
-    %imshow(im), pause
     
     %De-speckle image
     im=medfilt2(im);
-    %imshow(im), pause
-
+    
     %Normalize images
     ppix=0.5;
     im=norm16bit(im,ppix);
-    %imshow(im), pause
     
     %Enhance contrast
-    %imc=imcomplement(im);
-    imc=im;
-    %imshow(imc),pause
+    imc=imcomplement(im);
     
     if checkhist==1;
         figure,imhist(imc),pause;
@@ -170,16 +166,14 @@ for t=1:T
         [imcounts,bins]=imhist(imc);
         [imcounts,idx]=sort(imcounts);
         bins=bins(idx);
-        thresh1=bins(end);
+        thresh1=bins(end-1);
     else
         thresh1=thresh;
-    end 
-    imc2=imadjust(imc,[0 55000]/2^16,[]);   
-    %imshow(imc2), pause
-    
+    end
+    imc=imadjust(imc,[thresh1/65535 1],[]);   
+     
     %Find edges
-    [ed2,thresh2]=edge(imc2,'canny',[0.3 0.5],sm*sqrt(2));
-    %imshow(ed2), pause
+    [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
     
     %Clean image
     cc=bwconncomp(ed2,8);
@@ -264,22 +258,18 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
     
-if vis==1 %& t >= T-10 | t <= 6
+if vis==1 & t >= T-10 | t <= 6
    figure
    imshow(im)
    hold on
    for k=1:nc(t)
-       %if isempty(boun{k,t})==0
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
-       %end
    end
     
   pause
   close all
-
-    toc
-
 end
+    toc
 
 end
 
@@ -343,7 +333,7 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-     if multiScale==0
+      if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
      tpoint1=[0:tscale:tpt1];
@@ -402,7 +392,6 @@ end
 
 %Throw away cells with only one or two time points
 delind=[];
-
 for i=1:ncells
     if length(nonzeros(lcell(i,:)))<=2
         delind=[delind;i];
@@ -489,6 +478,7 @@ for t=1:T
     ewstd(t)=std(nonzeros(ew(:,t)));
     ewste(t)=ewstd(t)./length(nonzeros(ew(:,t)));
 end
+
 for t=1:T-1
     vav(t)=mean(nonzeros(v(:,t)));
     vstd(t)=std(nonzeros(v(:,t)));
@@ -506,16 +496,9 @@ wcell(wcell==0)=NaN;
 acell(acell==0)=NaN;
 ew(ew==0)=NaN;
 
-tmid=(time(2:end)+time(1:end-1))/2;
-
-cd(savedir);
-save([basename '_BTphase'])
-save([basename '_BTlab'],'labels','labels2','-v7.3')
 end
 
 %Plot data
-cd(savedir);
-
 figure(1), title('Cell Length vs. Time')
 clf
 hold on
@@ -550,6 +533,8 @@ saveas(gcf,[basename,'_lTraces.png'])
 % xlabel('t (s)')
 % ylabel('\epsilon_w')
 % fig2pretty
+
+tmid=(time(2:end)+time(1:end-1))/2;
 
 figure(5), title('Elongation Rate vs. Time')
 hold on
@@ -587,3 +572,6 @@ fig2pretty
 % end
 saveas(gcf,[basename,'_lTracesAVG.png'])
 
+cd(dirname);
+save([basename '_BTphase'])
+save([basename '_BTlab'],'labels','labels2','-v7.3')
