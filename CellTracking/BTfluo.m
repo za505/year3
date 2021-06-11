@@ -24,10 +24,10 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06062021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_aligned']; ['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_aligned']}; 
+basename='06092021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_aligned'];}; 
 recrunch=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
@@ -39,35 +39,39 @@ for i=1:length(channels)
 end
 
 cd(dirname)
-load([basename '_BTphase'])
-load([basename '_BTlab'])
+load([basename '_BTphase'], 'pixels', 'ncells', 'lcell', 'T', 'tscale')
 
-intensities=cell(length(channels),1);
+refFrame=T;
+T=length(fluo_directory{1});
+tpoints=[0:T-1]./60;
+time=tpoints(1,:);
+icell=cell(length(channels),1);
 
 
 for i=1:length(channels)
     
     cd(channels{i}); 
-    intensities_temp=zeros(size(lcell));
+    intensities_temp=zeros(ncells, T);
     
     for t=1:T
         t
         imagename=fluo_directory{i}(t).name;
         im=imread(imagename);
         for j=1:ncells
-            intensities_temp(j,t)=mean(im(pixels{j,t}));
-            
+            intensities_temp(j,t)=mean(im(pixels{j,refFrame}));    
         end
     end
+    
     intensities_temp(intensities_temp==0)=NaN;
     icell{i}=intensities_temp;
 end
 
 icell_av=cell(length(channels),1);
 for i=1:length(channels)
-    icell_av{i}=nanmean(icell{i});
+    icell_av{i}=nanmean(icell{i},1);
 end
 
+cd(savedir)
 save([basename '_BTfluo'])
 
 elseif recrunch==1
@@ -75,27 +79,25 @@ elseif recrunch==1
 end
 
 %Plot data
-%separate revelant time points
-tidx=[1:2:T-1];
-
 figure, hold on, 
-plot(time(tidx),icell_av{1}(tidx), '-g')
-plot(time(tidx),icell_av{2}(tidx), '-r')
-xlabel('Time (s)')
+for i=1:ncells
+    plot(time, icell{1}(i,:))
+end
+xlabel('Time (h)')
 ylabel('Intensity (A.U.)')
+xlim([-0.2 Inf])
 fig2pretty
-legend({'mNeonGreen', 'mCherry'})
 saveas(gcf, [basename,'_intensity.fig'])
 saveas(gcf, [basename,'_intensity.png'])
 
 
 figure, hold on, 
 for i=1:ncells
-    plot(time(tidx),icell_av{1}(:,tidx), '-g')
+    plot(time,icell_av{1}, '-r')
 end
-%plot(time(tidx),icell_av{2}(tidx), '-r')
-xlabel('Time (s)')
+xlabel('Time (h)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-
-save([basename '_BTfluo'])
+xlim([-0.2 Inf])
+saveas(gcf, [basename,'_intensityAvg.fig'])
+saveas(gcf, [basename,'_intensityAvg.png'])
