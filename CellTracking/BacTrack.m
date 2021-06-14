@@ -64,18 +64,18 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='06092021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/'  basename '_tracked'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_figures'];%Directory to save the output .mat file to.
+basename='06102021';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/'  basename '_aligned'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=1;
+multiScale=0;
 tscale=60;%Frame rate.
-tscale2=1;
-tpt1=120; %number of seconds passed by first time set
-tpt2=240; %number of seconds passed by second time set
-tpt3=480; %number of seconds passed by third time set
-tpt4=1320; %number of seconds passed by fourth time step
+% tscale2=1;
+% tpt1=120; %number of seconds passed by first time set
+% tpt2=240; %number of seconds passed by second time set
+% tpt3=480; %number of seconds passed by third time set
+% tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
 IntThresh=7000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -98,7 +98,7 @@ else
 curdir=cd;
 cd(dirname);
 directory=dir('*.tif');
-T=length(directory);
+T=13; %length(directory);
 
 cd(curdir);
 path(dirname,path)
@@ -542,25 +542,25 @@ saveas(gcf,[basename,'_lTraces.png'])
 
 tmid=(time(2:end)+time(1:end-1))/2;
 
-figure(5), title('Elongation Rate vs. Time')
-hold on
-for i=1:ncells
-    plot(tmid,v(i,:))
-end
-plot(tmid,vav,'-r')
-xlabel('Time (s)')
-ylabel('Elongation Rate (s^{-1})')
-fig2pretty
-saveas(gcf, [basename,'_eTraces.png'])
-
-figure(6), title('Elongation Rate vs. Time')
-hold on
-ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-plot(tmid,vav*3600,'-r')
-xlabel('Time (s)')
-ylabel('Elongation (hr^{-1})')
-fig2pretty
-saveas(gcf, [basename,'_ET.png'])
+% figure(5), title('Elongation Rate vs. Time')
+% hold on
+% for i=1:ncells
+%     plot(tmid,v(i,:))
+% end
+% plot(tmid,vav,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation Rate (s^{-1})')
+% fig2pretty
+% saveas(gcf, [basename,'_eTraces.png'])
+% 
+% figure(6), title('Elongation Rate vs. Time')
+% hold on
+% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+% plot(tmid,vav*3600,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation (hr^{-1})')
+% fig2pretty
+% saveas(gcf, [basename,'_ET.png'])
 
 figure(7), title('Cell Length Average vs. Time')
 clf
