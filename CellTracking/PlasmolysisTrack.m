@@ -11,31 +11,99 @@ basename='05262021_Exp1';
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename];%Directory to save the output .mat file to.
 %frame=4; %frame immediately upon hyperosmotic shock
 channels={'GFP', 'TADA'};
-vis=1; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
+vis=2; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
 preShock=2;
 postShock=3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%Load BackTrack.m data
-%first, let's go through the BacTrack labeling, TADA
+%% Load BackTrack.m data
+%TADA data
 cd([dirname '/' basename '_TADA/' basename '_figures']);
 load([basename '_BTtada'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im');
 
-pixelsTADA=pixels;
-acellTADA=acell;
-B_TADA=B;
+%pixelsTADA=pixels;
+%acellTADA=acell;
+%B_TADA=B;
 directory_TADA=directory;
-ncellsT=ncells;
+%ncellsT=ncells;
 
 %GFP data
 cd([dirname '/' basename '_GFP/' basename '_figures']);
-load([basename '_BTgfp'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell');
+load([basename '_BTgfp'], 'directory');
 
-pixelsGFP=pixels;
-acellGFP=acell;
-B_GFP=B;
 directory_GFP=directory;
 
-%%Find the difference in cell area between TADA and GFP preShock cells
+%% overlay TADA cell boundaries on GFP image stack
+cd(directory_GFP(1).folder);
+
+if vis==1
+for t=1:T
+    t
+    
+    %Load image
+    imagename=directory_GFP(t).name;
+
+    im=imread(imagename);
+    [imM,imN]=size(im);
+    
+    figure
+    imshow(im, [])
+    hold on
+    for k=1:ncells
+       if isempty(pixels{k,t})==0
+%            [r1 c1]=ind2sub(size(im), pixels{k,t});
+%            plot(c1, r1)
+             plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+       end
+    end
+    
+  pause
+  close all
+  
+end
+
+elseif vis==2
+    %Load gfp post-shock image
+    cd(directory_GFP(postShock).folder)
+    imagename=directory_GFP(postShock).name;
+    im1=imread(imagename);
+    
+    %Load tada post-shock image
+    cd(directory_TADA(postShock).folder)
+    imagename=directory_TADA(postShock).name;
+    im2=imread(imagename);
+    
+    minVal1=[];
+    maxVal1=[];
+    medVal1=[];
+    modVal1=[];
+    for k=1:ncells
+        tempCol=im1(pixels{k,postShock});
+        minVal1=[minVal1 max(min(tempCol))];
+        maxVal1=[maxVal1 min(max(tempCol))];
+        medVal1=[medVal1 min(median(tempCol))];
+        modVal1=[modVal1 min(mode(tempCol))];
+    end
+    
+    minVal2=[];
+    maxVal2=[];
+    for k=1:ncells
+        tempCol=im2(pixels{k,postShock});
+        minVal2=[minVal2 max(min(tempCol))];
+        maxVal2=[maxVal2 min(max(tempCol))];
+    end
+end
+
+%% develop a method to generate in "expected" GFP cell based on a TADA frame
+bw1=zeros(size(im));
+for k=1:ncells
+    bw1(im1(pixels{k,preShock})>1200)=1;
+end
+
+bw2=zeros(size(im));
+for k=1:ncells
+    bw1(pixels{k,preShock})=1;
+end
+%% Find the difference in cell area between TADA and GFP preShock cells
 preShock_area=nan(ncellsT, preShock);
 for i=1:preShock
     preShock_area(:,i)=acellTADA(:,i)-acellGFP(:,i);
@@ -143,43 +211,4 @@ function [im, imc, imb] = imageProcess(dirname, frame, complement)
     imb=imadjust(imc,[thresh1/65535 1],[]); %basically the background pixels get lumped together and get set to 0 (black background) 
 end
        
-%%%%%%%%%%%%Troubleshooting
-%%Part I
-A=[1:4];
-B=[3 6 8 1];
 
-idx=[];
-for i=1:length(A)
-    [L1, X1]=ismember(B,A(i))
-    idx=[idx find(X1>0)]
-end
-
-C=B(idx);
-
-L2=ismember(A,C);
-
-D=A(L2);
-
-C
-D
-
-%%Part II
-A=[1 2 3 2 3 3 5 1];
-B=[5 7 1 1 3 5 1 4 9 2];
-
-%find the elements in B not in A, without duplicates
-[L1 X1]=setdiff(B,A);
-
-%create a separate vector of these elements
-C=B(X1);
-
-%find the elements in B that are in A, without duplicates
-[L2, X2]=setdiff(B, C);
-
-%store the non-duplicated elements that match between A and B
-D=B(X2);
-
-
-
-C
-D
