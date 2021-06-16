@@ -11,7 +11,7 @@ basename='05262021_Exp1';
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename];%Directory to save the output .mat file to.
 %frame=4; %frame immediately upon hyperosmotic shock
 channels={'GFP', 'TADA'};
-vis=2; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
+vis=0; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
 preShock=2;
 postShock=3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,38 +61,31 @@ for t=1:T
   
 end
 
-elseif vis==2
-    %Load gfp post-shock image
-    cd(directory_GFP(postShock).folder)
-    imagename=directory_GFP(postShock).name;
-    im1=imread(imagename);
-    
-    %Load tada post-shock image
-    cd(directory_TADA(postShock).folder)
-    imagename=directory_TADA(postShock).name;
-    im2=imread(imagename);
-    
-    minVal1=[];
-    maxVal1=[];
-    medVal1=[];
-    modVal1=[];
-    for k=1:ncells
-        tempCol=im1(pixels{k,postShock});
-        minVal1=[minVal1 max(min(tempCol))];
-        maxVal1=[maxVal1 min(max(tempCol))];
-        medVal1=[medVal1 min(median(tempCol))];
-        modVal1=[modVal1 min(mode(tempCol))];
-    end
-    
-    minVal2=[];
-    maxVal2=[];
-    for k=1:ncells
-        tempCol=im2(pixels{k,postShock});
-        minVal2=[minVal2 max(min(tempCol))];
-        maxVal2=[maxVal2 min(max(tempCol))];
-    end
 end
 
+%from this, we know there are two "gaps" b/t the TADA and GFP images:
+%around the cells and in the middle (at the septum)
+
+%% Generate binary GFP images
+cd(directory_TADA(1).folder);
+im1=imread(directory_TADA(postShock).name);
+
+cd(directory_GFP(1).folder);
+im2=imread(directory_GFP(postShock).name);
+
+bw1=zeros(size(im));
+bw1(im1>6000)=1;
+
+bw2=zeros(size(im));
+bw2(im2>1500)=1;
+
+bw3=bw1-bw2;
+
+bw4=zeros(size(im));
+bw4(bw3==-1)=1;
+
+bw5=bw3;
+bw5(bw3==-1)=0;
 %% develop a method to generate in "expected" GFP cell based on a TADA frame
 bw1=zeros(size(im));
 for k=1:ncells
