@@ -27,7 +27,7 @@ B=length(basenames);%number of main directories to analyze
 exposure=[repelem(10,3), repelem(20, 3), repelem(40,3)];
 psi=[5 8 10 5 8 10 5 8 10];
 t1=[1:31];
-t2=[174:355];
+t2=[174:357];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(dirname)
@@ -55,11 +55,11 @@ thalf=nan(B,1);
 mindiff=nan(B,1);
 exp2=[];
 
+%initialize coeff
+coeff0=[40000, -0.1, 0.1];
+    
 %let's go through the mat files and store the variables we need
 for b=1:B
-    
-    %initialize coeff
-    coeff0=[40000, -0.1, 0.1];
 
     base=char(basenames(b))
     load([base '_pb'])
@@ -67,9 +67,9 @@ for b=1:B
     timescales(b,1)=tscale;
     Ts(b,1)=T;
     times1{b,1}=time(t1);
-    times2{b,1}=time(t2);
-    intensity1{b,1}=intensityAvg(tp1);
-    intensity2{b,1}=intensityAvg(tp2);
+    times2{b,1}=time(t2)-(t2(1)-1);
+    intensity1{b,1}=intensityAvg(t1);
+    intensity2{b,1}=intensityAvg(t2);
     A(b,1)=intensityAvg(1,1);
     
     %here, we can fit to a nonlinear exponential eqxn
@@ -82,68 +82,78 @@ for b=1:B
     
     %plot to see how well the eqxn fits the data
     figure
-    scatter(times1{b,1}, intensit1y{b,1}), hold on
-    plot(times1{b,1}, yhat1{b,1})
+    scatter(times1{b,1}, intensity1{b,1}), hold on
+    plot(times1{b,1}, yhat1{b,1}), title("Fit for k1")
     pause
     saveas(gcf, [basename,'_exp1.fig'])
     saveas(gcf, [basename,'_exp1.png'])
     close
     
     %plot to see how well the eqxn fits the data
-    f{b,1}=fit(times{b,1}', intensity{b,1}', 'exp2');
     figure
-    plot(f{b,1}, times{b,1}, intensity{b,1})
+    scatter(times2{b,1}, intensity2{b,1}), hold on
+    plot(times2{b,1}, yhat2{b,1}), title("Fit for k2")
     pause
     saveas(gcf, [basename,'_exp2.fig'])
     saveas(gcf, [basename,'_exp2.png'])
     close
-%     
-%     %calculate new yhat values
-%     yhat2{b,1}=f{b,1}(times{b,1});
-%     
-    %pull out the coefficient values
-    exp2(b,:)=coeffvalues(f{b,1});
 end
 
-save(['exposure_dm'])
+save(['dm'])
 
 end
 
 %plot exposure as a function of intensity
-k1=coeff(:,2);
+k1=coeff1(:,2);
+k2=coeff2(:,2);
 
-figure
-plot(exposure, k1)
+figure, hold on
+plot(exposure([1 4 7]), k1([1 4 7]), 'r')
+plot(exposure([2 5 8]), k1([2 5 8]), 'b')
+plot(exposure([3 6 9]), k1([3 6 9]), 'g')
 ylabel('k1')
 xlabel('exposure (ms)')
 title('Coefficients as a function of Exposure')
+legend({'5 psi', '8 psi', '10 psi'})
 saveas(gcf, [basename,'_exposureFunction.fig'])
 saveas(gcf, [basename,'_exposureFunction.png'])
 
-figure
-plot(psi, k1)
+figure, hold on
+plot(psi(1:3), k1(1:3), 'r')
+plot(psi(4:6), k1(4:6), 'b')
+plot(psi(7:9), k1(7:9), 'g')
 ylabel('k1')
-xlabel('exposure (ms)')
-title('Coefficients as a function of Exposure')
+xlabel('flow rate (psi)')
+legend({'10 ms', '20 ms', '40 ms'})
+title('Coefficients as a function of Flow Rate')
 saveas(gcf, [basename,'_psiFunction.fig'])
 saveas(gcf, [basename,'_psiFunction.png'])
 
-kb=exp2(:,2);
-kd=exp2(:,4);
-
-yyaxis left
-plot(exposure, kb)
-ylabel('b'), hold on
-yyaxis right
-plot(exposure,kd)
-ylabel('d')
+figure, hold on
+plot(exposure([1 4 7]), k2([1 4 7]), 'r')
+plot(exposure([2 5 8]), k2([2 5 8]), 'b')
+plot(exposure([3 6 9]), k2([3 6 9]), 'g')
+ylabel('k2')
+xlabel('exposure (ms)')
 title('Coefficients as a function of Exposure')
+legend({'5 psi', '8 psi', '10 psi'})
 saveas(gcf, [basename,'_exposureFunction2.fig'])
 saveas(gcf, [basename,'_exposureFunction2.png'])
+
+figure, hold on
+plot(psi(1:3), k2(1:3), 'r')
+plot(psi(4:6), k2(4:6), 'b')
+plot(psi(7:9), k2(7:9), 'g')
+ylabel('k2')
+xlabel('flow rate (psi)')
+legend({'10 ms', '20 ms', '40 ms'})
+title('Coefficients as a function of Flow Rate')
+saveas(gcf, [basename,'_psiFunction2.fig'])
+saveas(gcf, [basename,'_psiFunction2.png'])
 
 function [y] = exponential(b,x)
 %this function calculates y=A*(e^alpha*t)+y0
 %where a=A, b=alpha, c=t, and y0=y0;
-y=b(1)*exp(-b(2)*x)+b(3);
+y=b(1)*exp(b(2).*x)+b(3);
 end
 
