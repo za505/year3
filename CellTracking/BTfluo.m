@@ -24,14 +24,40 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06092021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06092021_analysis/' basename '_aligned'];}; 
+basename='06102021';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/' basename '_aligned'];}; 
 recrunch=0;
-frameBg=12; %this is the frame that you'll pick the background area from
+frameBg=16; %this is the frame that you'll pick the background area from
+multiScale=1;
+tscale1=[100 50 25 12.5 6 3 1 0.25];
+T1={[0:6];[7:20];[21:46];[47:96];[97:198];[199:400];[401:1002];[1003:1243]};
+tadd=[0 650 625 612.5 606 603 601 60.1];
+t1=14;
+refFrame=13;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
+
+%calculate time
+tpoints=[];
+if multiScale==0
+     tpoints=[0:T-1]*tscale;
+elseif multiScale==1
+    for i=1:length(tscale1)
+        if i==1
+            t_temp=T1{i}*tscale1(i);
+            tpoints=[tpoints t_temp];
+        else
+            t_temp=[t_temp(end)+tscale1(i):tscale1(i):t_temp(end)+tadd(i)+tscale1(i)]; 
+            tpoints=[tpoints t_temp];
+        end
+    end
+    
+end
+
+time=tpoints(1,:);
+time2=tpoints(end,:);
 
 curdir=cd;
 for i=1:length(channels)
@@ -40,12 +66,9 @@ for i=1:length(channels)
 end
 
 cd(dirname)
-load([basename '_BTphase'], 'pixels', 'ncells', 'lcell', 'T', 'tscale')
+load([basename '_BTphase'], 'pixels', 'ncells', 'lcell')
 
-refFrame=T;
-T=length(fluo_directory{1});
-tpoints=[0:T-1]./60;
-time=tpoints(1,:);
+T=length(fluo_directory{1})-refFrame;
 icell=cell(length(channels),1);
 icell_av=cell(length(channels),1);
 ratio=cell(length(channels),1);
@@ -61,7 +84,7 @@ for i=1:length(channels)
     
     for t=1:T
         t
-        imagename=fluo_directory{i}(t).name;
+        imagename=fluo_directory{i}(t+refFrame).name;
         im=imread(imagename);
         for j=1:ncells
             intensities_temp(j,t)=mean(im(pixels{j,refFrame}));    
@@ -113,7 +136,6 @@ end
 xlabel('Time (h)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 xlim([-0.2 Inf])
-ylim([0 1])
 fig2pretty
 saveas(gcf, [basename,'_ratio.fig'])
 saveas(gcf, [basename,'_ratio.png'])
