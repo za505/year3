@@ -11,7 +11,7 @@ basename='05262021_Exp1';
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename];%Directory to save the output .mat file to.
 %frame=4; %frame immediately upon hyperosmotic shock
 channels={'GFP', 'TADA'};
-vis=0; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
+vis=1; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
 preShock=2;
 postShock=3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -22,21 +22,21 @@ load([basename '_BTtada'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'a
 
 %pixelsTADA=pixels;
 %acellTADA=acell;
-%B_TADA=B;
+B_TADA=B;
 directory_TADA=directory;
 %ncellsT=ncells;
 
 %GFP data
 cd([dirname '/' basename '_GFP/' basename '_figures']);
-load([basename '_BTgfp'], 'directory');
+load([basename '_BTgfp'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im');
 
 directory_GFP=directory;
-
+B_GFP=B;
 %% overlay TADA cell boundaries on GFP image stack
 cd(directory_GFP(1).folder);
 
 if vis==1
-for t=1:T
+for t=postShock:T
     t
     
     %Load image
@@ -45,14 +45,26 @@ for t=1:T
     im=imread(imagename);
     [imM,imN]=size(im);
     
+    cd(directory_TADA(1).folder);
+    im1=imread(directory_TADA(postShock).name);
+
+    cd(directory_GFP(1).folder);
+    im2=imread(directory_GFP(postShock).name);
+
     figure
-    imshow(im, [])
+    imshowpair(im1, im2)
     hold on
     for k=1:ncells
-       if isempty(pixels{k,t})==0
+       if isempty(B_TADA{k,t})==0
 %            [r1 c1]=ind2sub(size(im), pixels{k,t});
 %            plot(c1, r1)
-             plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+             plot(B_TADA{k,t}(:,1),B_TADA{k,t}(:,2),'-r')
+       end
+       
+       if isempty(B_GFP{k,t})==0
+%            [r1 c1]=ind2sub(size(im), pixels{k,t});
+%            plot(c1, r1)
+             plot(B_GFP{k,t}(:,1),B_GFP{k,t}(:,2),'--g')
        end
     end
     
