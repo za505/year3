@@ -11,7 +11,7 @@ basename='05262021_Exp1';
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename];%Directory to save the output .mat file to.
 %frame=4; %frame immediately upon hyperosmotic shock
 channels={'GFP', 'TADA'};
-vis=1; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
+vis=0; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
 preShock=2;
 postShock=3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -20,11 +20,11 @@ postShock=3;
 cd([dirname '/' basename '_TADA/' basename '_figures']);
 load([basename '_BTtada'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im');
 
-%pixelsTADA=pixels;
+pixelsTADA=pixels;
 %acellTADA=acell;
 B_TADA=B;
 directory_TADA=directory;
-%ncellsT=ncells;
+ncellsT=ncells;
 
 %GFP data
 cd([dirname '/' basename '_GFP/' basename '_figures']);
@@ -32,11 +32,12 @@ load([basename '_BTgfp'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'ac
 
 directory_GFP=directory;
 B_GFP=B;
+pixelsGFP=pixels;
 %% overlay TADA cell boundaries on GFP image stack
 cd(directory_GFP(1).folder);
 
 if vis==1
-for t=postShock:T
+for t=1:T
     t
     
     %Load image
@@ -54,7 +55,7 @@ for t=postShock:T
     figure
     imshowpair(im1, im2)
     hold on
-    for k=1:ncells
+    for k=1:ncellsT
        if isempty(B_TADA{k,t})==0
 %            [r1 c1]=ind2sub(size(im), pixels{k,t});
 %            plot(c1, r1)
@@ -80,24 +81,33 @@ end
 
 %% Generate binary GFP images
 cd(directory_TADA(1).folder);
-im1=imread(directory_TADA(postShock).name);
+im1=imread(directory_TADA(preShock).name);
 
 cd(directory_GFP(1).folder);
-im2=imread(directory_GFP(postShock).name);
+im2=imread(directory_GFP(preShock).name);
 
 bw1=zeros(size(im));
-bw1(im1>6000)=1;
+for i=1:ncellsT
+    if isempty(pixelsTADA{i,preShock})==0
+        bw1(pixelsTADA{i,preShock})=1;
+    end
+end
 
 bw2=zeros(size(im));
-bw2(im2>1500)=1;
+for i=1:ncellsT
+    if isempty(pixelsTADA{i,preShock})==0
+        bw2(pixelsTADA{i, preShock})=im2(pixelsTADA{i,preShock})>1200;
+    end
+end
 
-bw3=bw1-bw2;
+nhood=[0,1,0;1,1,1;0,1,0];
+nhood2=[0 0 1 0 0; 0 0 1 0 0; 1 1 1 1 1; 0 0 1 0 0; 0 0 1 0 0];
+bw3=imdilate(bw2, nhood2);
 
-bw4=zeros(size(im));
-bw4(bw3==-1)=1;
+bw4=bw1-bw2;
+bw5=bw1-bw3;
 
-bw5=bw3;
-bw5(bw3==-1)=0;
+imshowpair(bw5, bw4, 'montage')
 %% develop a method to generate in "expected" GFP cell based on a TADA frame
 bw1=zeros(size(im));
 for k=1:ncells
