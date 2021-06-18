@@ -24,15 +24,15 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06062021';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
- savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
- channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_aligned']; ['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_aligned']}; 
- recrunch=1;
-frameBg=16; %this is the frame that you'll pick the background area from
+basename='06162021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_aligned']}; 
+recrunch=0;
+frameBg=4; %this is the frame that you'll pick the background area from
 multiScale=1;
-tscale1=[100 50 25 12.5 6 3 1 0.25];
-T1={[0:6];[7:20];[21:46];[47:96];[97:198];[199:400];[401:1002];[1003:1243]};
+tscale1=[100 50 25 12.5 6 3 1 0.263];
+T1={[0:6];[7:20];[21:46];[47:96];[97:198];[199:400];[401:1002];[1003:1244]};
 tadd=[0 650 625 612.5 606 603 601 60.1];
 t1=14;
 refFrame=13;
@@ -87,7 +87,7 @@ for i=1:length(channels)
         imagename=fluo_directory{i}(t+refFrame).name;
         im=imread(imagename);
         for j=1:ncells
-            intensities_temp(j,t)=mean(im(pixels{j,refFrame}));    
+            intensities_temp(j,t)=mean(im(pixels{j,refFrame-2}));    
         end
         
          %measure background level
@@ -141,7 +141,7 @@ saveas(gcf, [basename,'_ratio.fig'])
 saveas(gcf, [basename,'_ratio.png'])
 
 figure, hold on, 
-plot(time,icell_av{2}, '-r')
+plot(time,icell_av{1}, '-r')
 xlabel('Time (h)')
 ylabel('Intensity (A.U.)')
 fig2pretty
