@@ -8,16 +8,17 @@ close all
 
 %input%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 basename='05262021_Exp1';
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename];%Directory to save the output .mat file to.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack'];%Directory to save the output .mat file to.
 %frame=4; %frame immediately upon hyperosmotic shock
 channels={'GFP', 'TADA'};
 vis=0; %to visualize the boundaries of the pre-shock cells plotted in post-shock frames
-preShock=2;
+preShock=1;
 postShock=3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Load BackTrack.m data
 %TADA data
-cd([dirname '/' basename '_TADA/' basename '_figures']);
+%cd([dirname '/' basename '_TADA/' basename '_figures']);
+cd(dirname)
 load([basename '_BTtada'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im');
 
 pixelsTADA=pixels;
@@ -27,7 +28,7 @@ directory_TADA=directory;
 ncellsT=ncells;
 
 %GFP data
-cd([dirname '/' basename '_GFP/' basename '_figures']);
+%cd([dirname '/' basename '_GFP/' basename '_figures']);
 load([basename '_BTgfp'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im');
 
 directory_GFP=directory;
@@ -79,7 +80,7 @@ end
 %from this, we know there are two "gaps" b/t the TADA and GFP images:
 %around the cells and in the middle (at the septum)
 
-%% Generate binary GFP images
+%% Generate binary GFP and TADA preShock images
 cd(directory_TADA(1).folder);
 im1=imread(directory_TADA(preShock).name);
 
@@ -93,10 +94,52 @@ for i=1:ncellsT
     end
 end
 
+%try watershedding
+%https://www.mathworks.com/help/images/ref/watershed.html
+D = bwdist(~bw1);
+D = -D;
+L = watershed(D);
+L(~bw1) = 0;
+
+%it didn't work
+
+%try erosion
+%https://www.mathworks.com/help/images/ref/imerode.html
+%nhood=structuring element neighborhood
+nhood=[0,1,0;1,1,1;0,1,0];
+bwe=imerode(bw1, nhood);
+
 bw2=zeros(size(im));
+im3=imadjust(im2,[0 55000]/2^16,[]);   
+bw2=imbinarize(im3, graythresh(im3));
+
+nhood=[0,1,0;1,1,1;0,1,0];
+nhood2=[0 0 1 0 0; 0 0 1 0 0; 1 1 1 1 1; 0 0 1 0 0; 0 0 1 0 0];
+bw3=imdilate(bw2, nhood2);
+
+bw4=bw1-bw2;
+bw5=bwe-bw3;
+
+%imshowpair(bw5, bw4, 'montage')
+
+%% Generate binary GFP and TADA postShock images
+imscd(directory_TADA(1).folder);
+im1=imread(directory_TADA(postShock).name);
+
+cd(directory_GFP(1).folder);
+im2=imread(directory_GFP(postShock).name);
+
+bw1=zeros(size(im));
 for i=1:ncellsT
-    if isempty(pixelsTADA{i,preShock})==0
-        bw2(pixelsTADA{i, preShock})=im2(pixelsTADA{i,preShock})>1200;
+    if isempty(pixelsTADA{i,postShock})==0
+        bw1(pixelsTADA{i,postShock})=1;
+    end
+end
+
+bw2=zeros(size(im));
+for i=1:ncells
+    if isempty(pixelsGFP{i,postShock})==0
+        bw2(pixelsGFP{i,postShock})=1;
     end
 end
 
@@ -107,7 +150,6 @@ bw3=imdilate(bw2, nhood2);
 bw4=bw1-bw2;
 bw5=bw1-bw3;
 
-imshowpair(bw5, bw4, 'montage')
 %% develop a method to generate in "expected" GFP cell based on a TADA frame
 bw1=zeros(size(im));
 for k=1:ncells
