@@ -67,43 +67,86 @@ pdiff=setdiff(allpixels, allpixels2);
 %this is the amount of area loss we expect from contraction
 bw1=zeros(size(im));
 bw1(pmem)=1;
-bw1(pdiff)=1; 
-bw1=bwmorph(bw1, 'remove'); %this is my work-around because 'skel' isn't working the way I expect it to
-bw1(pdiff)=1;
-imshow(bw1)
-
-%another check becasue I'm ME
-bw2=zeros(size(im));
+bw1(pdiff)=1; %this is the full pre-shock TADA cell
+bw2=bwmorph(bw1, 'remove'); %this is my work-around because 'skel' isn't working the way I expect it to
 bw2(pdiff)=1;
-
-bwe=bw2-bw1;
-imshow(bwe)
+%imshow(bw2)
 %% now, let's look at the GFP cells
 cd(directory_GFP(1).folder);
 im3=imread(directory_GFP(preShock).name);
 im4=imread(directory_GFP(postShock).name);
 
-%trace the outline of the TADA tracked region onto the cell
-figure
-imshow(im3, [])
-hold on
-for k=1:ncells
-   if isempty(B{k,preShock})==0
-         plot(B_TADA{k,preShock}(:,1),B_TADA{k,preShock}(:,2),'-r')
-   end
-end   
-pause, close all
+% imshowpair(im3, im4, 'montage')
+% pause, close
 
-figure
-imshow(im4, [])
-hold on
-for k=1:ncells
-   if isempty(B{k,preShock})==0
-         plot(B_TADA{k,preShock}(:,1),B_TADA{k,preShock}(:,2),'-r')
-   end
-end   
-pause, close all
-  
+%we are only looking at pixels in the pre-shock TADA-tracked
+%region. Threshold using the Otsu method
+bw3=imbinarize(im3, graythresh(im3(bw1==1)));
+bw4=imbinarize(im4, graythresh(im4(bw1==1)));
+
+%imshow(bw3)
+%imshow(bw4)
+
+bdiff=bw3-bw4; %this is the area difference between the pre- and post-shock GFP cells
+bdiff2=bdiff-bw2; %hm, bw2 is bigger than bdiff. the overlap isn't perfect
+bdiff2(bdiff2==-1)=0; %these are the putative plasmolysis bays
+
+bdiff2=bwmorph(bdiff2, 'spur');
+bdiff2=bwmorph(bdiff2, 'clean');
+bdiff2=bwmorph(bdiff2, 'open');
+
+%sanity check
+%imshowpair(im4, bdiff2)
+
+%% measure the area of the plasmolysis bays
+baysCC=bwconncomp(bdiff2,8);
+baysStats=regionprops(baysCC,im4,'Area','MeanIntensity', 'PixelIdxList');
+idx=find([baysStats.Area]>1);
+bays=ismember(labelmatrix(baysCC),idx);
+
+%sanity check
+figure(1), imshowpair(im4, im2)
+figure(2), imshowpair(im4, bays)
+%% measure the frequency, severity, and localization of plasmolysis
+%firstly, how many cells do we have? (check pre-shock GFP binary image)
+% D = bwdist(~bw3);
+% D = -D;
+% cells = watershed(D);
+% cells(~bw3)=0;
+% 
+% rgb = label2rgb(cells,'jet',[.5 .5 .5]);
+% imshow(rgb)
+
+%assign each plasmolysis bay to a cell
+cellsBW=bwmorph(bw3, 'open'); %does this line make much of a difference?
+cellsL=bwlabel(cellsBW);
+
+cellsCC=bwconncomp(cellsBW,8);
+cellsStats=regionprops(cellsCC, im3, 'Area','MeanIntensity', 'PixelIdxList', 'Centroid');
+
+ncells=max(max(cellsL));
+
+pcells=[];
+for b=1:height(baysStats)
+    for n=1:ncells
+        if sum(ismember(baysStats(b).PixelIdxList, cellsStats(n).PixelIdxList))/height(baysStats(b).PixelIdxList)>0.95
+            baysStats(b).cellID=n;
+            pcells=[pcells, n];
+        end
+    end
+end
+
+%measure the frequency of plasmolysis (# plasmolyzed cells/total cells)
+freq=sum(ismember(1:ncells, baysStats.cellID))/ncells;
+
+%measure the severity of plasmolysis (plasmolysis area/total pre-shock area of plasmolyzed cells)
+severity=nan(length(pcells),1);
+for j=1:length(pcells)
+    n=pcells(j);
+    severity(n)=sum(baysStats(baysStats.cellID==n).Area)/cellsStats(n).Area;
+end
+
+
 %sanity check:
 %from the GFP image, set any pixels value not within the TADA region to 0
 didx=find(bwe==0);
