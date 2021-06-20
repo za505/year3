@@ -41,32 +41,19 @@ cd(directory_TADA(1).folder);
 im1=imread(directory_TADA(preShock).name);
 im2=imread(directory_TADA(postShock).name);
 
-imshowpair(im1, im2, 'montage')
-pause, close
+% imshowpair(im1, im2, 'montage')
+% pause, close
 
 %what is the size difference b/t the pre and post-shock cells. This is the
-%difference that will be negated when looking at the ddifference between
+%difference that will be negated when looking at the difference between
 %pre- and post-shock GFP cells
-bw1=zeros(size(im));
-for i=1:ncellsT
-    if isempty(pixelsTADA{i,preShock})==0
-        bw1(pixelsTADA{i,preShock})=1;
-    end
-end
-
-bw2=zeros(size(im));
-for i=1:ncells
-    if isempty(pixelsTADA{i,postShock})==0
-        bw2(pixelsTADA{i,postShock})=1;
-    end
-end
 
 %potential prob: what if the # of cells tracked in the pre and post
 %shock TADA images don't match? have to add a line of code that takes this into
 %account
 
 %potential solution
-%create a matrix of all the pixels indicies of the tracked pre-shock TADA cells
+%create a matrix of all the pixels indicies of the tracked TADA cells
 allpixels=[];
 allpixels2=[];
 for k=1:ncells
@@ -74,36 +61,23 @@ for k=1:ncells
     allpixels2=[allpixels2; pixels{k,postShock}];
 end
 
-pdiff=setdiff(allpixels2,allpixels); %it's about 140 pixels
-pdiff2=setdiff(pdiff, allpixels); %these are all the shared pixels
+pmem=allpixels(ismember(allpixels, allpixels2));
+pdiff=setdiff(allpixels, allpixels2);
 
 %this is the amount of area loss we expect from contraction
-bwe=bw1-bw2;
+bw1=zeros(size(im));
+bw1(pmem)=1;
+bw1(pdiff)=1; 
+bw1=bwmorph(bw1, 'remove'); %this is my work-around because 'skel' isn't working the way I expect it to
+bw1(pdiff)=1;
+imshow(bw1)
+
+%another check becasue I'm ME
+bw2=zeros(size(im));
+bw2(pdiff)=1;
+
+bwe=bw2-bw1;
 imshow(bwe)
-pause, close
-
-%this is the area in the post-shock cells not subtracted by the pre-shock
-%frame. It is the same index as pdiff, and the values are all -1
-% bwc=bw2-bw1;
-% imshow(bwc)
-% pause,close
-% pidx=find(bwc==1);
-% pdiff2=setdiff(pidx, pdiff);
-% val=bwe(pdiff);
-
-%dilate the pre-shock cells and set the pixels in the post-shock cell not subtracted by the pre-shock cell
-%to 0 
-%nhood=structuring element neighborhood
-nhood=[0,1,0;1,1,1;0,1,0];
-bw1=imdilate(bw1, nhood);
-bwe=bw1-bw2;
-imshow(bwe)
-pause, close
-bwe(bwe==-1)=0;
-bwe(pdiff2)=1;
-bwe=bwmorph(bwe,'skel');
-imshow(bwe);
-
 %% now, let's look at the GFP cells
 cd(directory_GFP(1).folder);
 im3=imread(directory_GFP(preShock).name);
