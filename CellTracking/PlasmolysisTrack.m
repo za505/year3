@@ -19,7 +19,7 @@ postShock=3;
 %TADA data
 %cd([dirname '/' basename '_TADA/' basename '_figures']);
 cd(dirname)
-load([basename '_BTtada'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im');
+load([basename '_BTtada'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im', 'mlines');
 
 pixelsTADA=pixels;
 %acellTADA=acell;
@@ -36,6 +36,43 @@ directory_GFP=directory;
 %B_GFP=B;
 %pixelsGFP=pixels;
 
+%% let's focus only on the post-Shock cells
+cd(directory_TADA(1).folder);
+im1=imread(directory_TADA(postShock).name);
+
+cd(directory_GFP(1).folder);
+im2=imread(directory_GFP(postShock).name);
+
+%create a binary image based on the post-Shock TADA frame
+bw1=zeros(size(im));
+for n=1:ncells
+    bw1(pixelsTADA{n, postShock})=1;
+end
+
+%look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
+bw2=imbinarize(im2, graythresh(im2(bw1==1)));
+
+%nhood=structuring element neighborhood
+nhood=[0,1,0;1,1,1;0,1,0];
+bw1=imerode(bw1, nhood);
+for n=1:ncells
+    midx=sub2ind(size(im), round(mlines{n, postShock}(:,1)), round(mlines{n, postShock}(:,2)));
+    bw1(midx)=0;
+end
+%for some reason, the septum's get merges/ignored in the binary. Since they
+%are usually the brightest regions, let's see if we can find them
+%sanity check
+% figure(1), imshowpair(im1, im2) %title('Orignal TADA vs GFP')
+% figure(2), imshowpair(bw1, bw2) %title('Binary TADA vs GFP')
+% figure(3), imshowpair(im1, bw1) %title('TADA: original vs binary')
+% figure(4), imshowpair(im2, bw2) %title('GFP: original vs binary')
+
+%% identify plasmolysis bays
+bw3=bw1-bw2;
+
+%sanity check
+figure(1), imshowpair(im1, im2) %title('Orignal TADA vs GFP')
+figure(2), imshowpair(bw3, im2) %title('P.bays vs original GFP')
 %% first, let's look at our TADA cells
 cd(directory_TADA(1).folder);
 im1=imread(directory_TADA(preShock).name);
