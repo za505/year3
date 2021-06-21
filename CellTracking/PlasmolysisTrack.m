@@ -36,6 +36,80 @@ directory_GFP=directory;
 %B_GFP=B;
 %pixelsGFP=pixels;
 
+%% start with the pre-shock cells
+cd(directory_TADA(1).folder);
+im1=imread(directory_TADA(preShock).name);
+
+cd(directory_GFP(1).folder);
+im2=imread(directory_GFP(preShock).name);
+
+%create a binary image based on the pre-shock TADA frame
+bw1=zeros(size(im));
+for n=1:ncells
+    bw1(pixelsTADA{n, preShock})=1;
+end
+
+%look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
+bw2=imbinarize(im2, graythresh(im2(bw1==1)));
+
+%what is the overlap/nonoverlap between the two?
+is1=bw1-bw2;
+%imshow(is1)
+
+%the conversion is 0.08 microns per pixel, and so this gap is unlikely to
+%be actual. What happens if we erode bw1 and dilate bw2 by one pixel?
+%nhood=structuring element neighborhood
+nhood=[0,1,0;1,1,1;0,1,0];
+bw1=imerode(bw1, nhood);
+bw2=imdilate(bw2, nhood);
+is2=bw1-bw2;
+%imshowpair(is1, is2, 'montage')
+
+%hm...still not quite right. there are -1 value pixels, but that's not the
+%main problem
+bw1(bw1==1)=2;
+is3=bw1-bw2;
+is3(is3==-1)=1;
+is3(is3==2)=0;
+imshow(is3)
+pause
+%% let's try this strategy on the post-Shock cells
+cd(directory_TADA(1).folder);
+im1=imread(directory_TADA(postShock).name);
+
+cd(directory_GFP(1).folder);
+im2=imread(directory_GFP(postShock).name);
+
+%create a binary image based on the pre-shock TADA frame
+bw1=zeros(size(im));
+for n=1:ncells
+    bw1(pixelsTADA{n, postShock})=1;
+end
+
+%look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
+bw2=imbinarize(im2, graythresh(im2(bw1==1)));
+
+%what is the overlap/nonoverlap between the two?
+is1=bw1-bw2;
+%imshow(is1)
+
+%the conversion is 0.08 microns per pixel, and so this gap is unlikely to
+%be actual. What happens if we erode bw1 and dilate bw2 by one pixel?
+%nhood=structuring element neighborhood
+nhood=[0,1,0;1,1,1;0,1,0];
+bw1=imerode(bw1, nhood);
+bw2=imdilate(bw2, nhood);
+is2=bw1-bw2;
+%imshowpair(is1, is2, 'montage')
+
+%hm...still not quite right. there are -1 value pixels, but that's not the
+%main problem
+bw1(bw1==1)=2;
+is3=bw1-bw2;
+is3(is3==-1)=1;
+is3(is3==2)=0;
+imshow(is3)
+pause
 %% let's focus only on the post-Shock cells
 cd(directory_TADA(1).folder);
 im1=imread(directory_TADA(postShock).name);
@@ -55,10 +129,15 @@ bw2=imbinarize(im2, graythresh(im2(bw1==1)));
 %nhood=structuring element neighborhood
 nhood=[0,1,0;1,1,1;0,1,0];
 bw1=imerode(bw1, nhood);
+bw1Shell=bwmorph(bw1, 'skel');
+
+bw1=imdilate(bw1, nhood);
+%bw1=imerode(bw1, strel('disk',4));
 for n=1:ncells
     midx=sub2ind(size(im), round(mlines{n, postShock}(:,1)), round(mlines{n, postShock}(:,2)));
     bw1(midx)=0;
 end
+%strel('disk',cellLink)
 %for some reason, the septum's get merges/ignored in the binary. Since they
 %are usually the brightest regions, let's see if we can find them
 %sanity check
