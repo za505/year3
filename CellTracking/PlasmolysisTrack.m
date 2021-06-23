@@ -42,6 +42,9 @@ im1=imread(directory_TADA(preShock).name);
 
 cd(directory_GFP(1).folder);
 im2=imread(directory_GFP(preShock).name);
+    
+ppix=0.5;
+im2=norm16bit(im2,ppix);
 
 %create a binary image based on the pre-shock TADA frame
 bw1=zeros(size(im));
@@ -51,7 +54,12 @@ end
 
 %look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
 bw2=imbinarize(im2, graythresh(im2(bw1==1)));
-
+bw3=bwdist(bw2);
+D=bwdist(~bw3);
+D=-bwdist(~bw3);
+watershed(D);
+bw3(L==0)=0;
+imshow(bw3)
 %what is the overlap/nonoverlap between the two?
 is1=bw1-bw2;
 %imshow(is1)
@@ -59,9 +67,10 @@ is1=bw1-bw2;
 %the conversion is 0.08 microns per pixel, and so this gap is unlikely to
 %be actual. What happens if we erode bw1 and dilate bw2 by one pixel?
 %nhood=structuring element neighborhood
-nhood=[0,1,0;1,1,1;0,1,0];
+%nhood=[0,1,0;1,1,1;0,1,0];
+nhood=[0 0 1 0 0; 0 0 1 0 0; 1 1 1 1 1; 0 0 1 0 0; 0 0 1 0 0];
 bw1=imerode(bw1, nhood);
-bw2=imdilate(bw2, nhood);
+%bw2=imdilate(bw2, nhood);
 is2=bw1-bw2;
 %imshowpair(is1, is2, 'montage')
 
