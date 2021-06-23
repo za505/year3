@@ -43,9 +43,6 @@ im1=imread(directory_TADA(preShock).name);
 cd(directory_GFP(1).folder);
 im2=imread(directory_GFP(preShock).name);
     
-ppix=0.5;
-im2=norm16bit(im2,ppix);
-
 %create a binary image based on the pre-shock TADA frame
 bw1=zeros(size(im));
 for n=1:ncells
@@ -54,16 +51,56 @@ end
 
 %look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
 bw2=imbinarize(im2, graythresh(im2(bw1==1)));
-bw3=bwdist(bw2);
-D=bwdist(~bw3);
-D=-bwdist(~bw3);
-watershed(D);
-bw3(L==0)=0;
-imshow(bw3)
+
+%erode the cells a bit (the reason is because there is a one-pixel diff between GFP cells tracked with BacTrack and those binarized this way through the Otsu method)
+nhood1=[0,1,0;1,1,1;0,1,0];
+nhood2=[0 0 1 0 0; 0 0 1 0 0; 1 1 1 1 1; 0 0 1 0 0; 0 0 1 0 0];
+bw1=imerode(bw1, nhood2);
+bw2=imerode(bw2, nhood1);
+
 %what is the overlap/nonoverlap between the two?
 is1=bw1-bw2;
-%imshow(is1)
 
+%% look at the post-shock cells
+cd(directory_TADA(1).folder);
+im3=imread(directory_TADA(postShock).name);
+
+cd(directory_GFP(1).folder);
+im4=imread(directory_GFP(postShock).name);
+    
+%create a binary image based on the pre-shock TADA frame
+bw3=zeros(size(im));
+for n=1:ncells
+    bw3(pixelsTADA{n, postShock})=1;
+end
+
+%look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
+bw4=imbinarize(im4, graythresh(im4(bw3==1)));
+
+%erode the cells a bit 
+bw3=imerode(bw, nhood2);
+bw4=imerode(bw1, nhood1);
+
+%what is the overlap/nonoverlap between the two?
+is2=bw3-bw4;
+
+%% get the stats for both
+cc1=bwconncomp(is1,8);
+stats1=regionprops(cc1,im2,'Area','MeanIntensity', 'PixelIdxList');
+idx1=find([stats1.Area]>1);
+bw5=ismember(labelmatrix(cc1),idx1);
+
+cc2=bwconncomp(is2,8);
+stats2=regionprops(cc2,im4,'Area','MeanIntensity', 'PixelIdxList');
+idx2=find([stats2.Area]>1);
+bw6=ismember(labelmatrix(cc2),idx2);
+
+figure
+imshow(im2, []), hold on
+for n=1:ncells
+    [r1 c1]=ind2sub(size(im), stats1(n).PixelIdxList);
+    scatter(c1, r1, 3, 'r', 's', 'filled')
+end
 %the conversion is 0.08 microns per pixel, and so this gap is unlikely to
 %be actual. What happens if we erode bw1 and dilate bw2 by one pixel?
 %nhood=structuring element neighborhood
