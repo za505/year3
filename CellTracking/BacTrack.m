@@ -6,14 +6,14 @@
 
 %INSTRUCTIONS FOR USE:
 %Remove frames with poor contrast and save phase image stack in a directory
-%by itself.  Also save the micromanager meGFPta file as 'basename.txt' in
+%by itself.  Also save the micromanager metadata file as 'basename.txt' in
 %the matlab path.
 %
 %INPUT:
 %basename: name of the image stack.
 %dirname:the full pathname of the directory where you saved the image
 %        stack.
-%metaname(optional):full or relative pathname of micromanager meGFPta file from
+%metaname(optional):full or relative pathname of micromanager metadata file from
 %which to extract time points.  If it is relative path name, the
 %directory in which it is saved must be on the matlab path.
 %lscale: microscope calibration in microns per pixels.
@@ -52,7 +52,7 @@
 %norm16bit.m
 %polefinder.m
 %cellcurvature.m
-%meGFPta.m
+%metadata.m
 %extrema.m
 %EffectiveLength.m
 %fig2pretty.m
@@ -64,20 +64,20 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05262021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack/05262021_TADA'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack'];%Directory to save the output .mat file to.
-%metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
+basename='06162021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/'  basename '/' basename '_tracked'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
+%metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/metadata.txt'];%Name of metadata file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
-tscale=480;%Frame rate.
+tscale=60;%Frame rate.
 % tscale2=1;
 % tpt1=120; %number of seconds passed by first time set
 % tpt2=240; %number of seconds passed by second time set
 % tpt3=480; %number of seconds passed by third time set
 % tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
-IntThresh=20000;%Threshold used to enhance contrast. Default:35000
+IntThresh=10000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
@@ -89,8 +89,9 @@ recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if recrunch==1
-    load([basename '_BTphase'])
+    load([basename '_BT'])
 else
 
 %Determine number of frames
@@ -143,24 +144,19 @@ for t=1:T
     
     %Load image
     imagename=directory(t).name;
-    
+
     im=imread(imagename);
     [imM,imN]=size(im);
-    %imshow(im), pause
     
     %De-speckle image
     im=medfilt2(im);
-    %imshow(im), pause
-
+    
     %Normalize images
     ppix=0.5;
     im=norm16bit(im,ppix);
-    %imshow(im), pause
     
     %Enhance contrast
-    %imc=imcomplement(im);
-    imc=im;
-    %imshow(imc),pause
+    imc=imcomplement(im);
     
     if checkhist==1;
         figure,imhist(imc),pause;
@@ -170,16 +166,14 @@ for t=1:T
         [imcounts,bins]=imhist(imc);
         [imcounts,idx]=sort(imcounts);
         bins=bins(idx);
-        thresh1=bins(end);
+        thresh1=bins(end-1);
     else
         thresh1=thresh;
-    end 
-    imc2=imadjust(imc,[0 55000]/2^16,[]);   
-    %imshow(imc2), pause
-    
+    end
+    imc=imadjust(imc,[thresh1/65535 1],[]);   
+     
     %Find edges
-    [ed2,thresh2]=edge(imc2,'canny',[0.3 0.5],sm*sqrt(2));
-    %imshow(ed2), pause
+    [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
     
     %Clean image
     cc=bwconncomp(ed2,8);
@@ -269,17 +263,13 @@ if vis==1 %& t >= T-10 | t <= 6
    imshow(im)
    hold on
    for k=1:nc(t)
-       %if isempty(boun{k,t})==0
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
-       %end
    end
     
   pause
   close all
-
-    toc
-
 end
+    toc
 
 end
 
@@ -326,11 +316,11 @@ for t=1:T
 end
 
 
-%Extract timepoints from meGFPta if it exists
+%Extract timepoints from metadata if it exists
 if exist('metaname')==1
     if exist(metaname)==2
-        %Extract timepoints from meGFPta
-        tpoints=meGFPta(metaname);
+        %Extract timepoints from metadata
+        tpoints=metadata(metaname);
         
         %Fix bug where micromanager screws up its timing
         dtime=diff(tpoints(1,:));
@@ -343,7 +333,7 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-     if multiScale==0
+      if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
      tpoint1=[0:tscale:tpt1];
@@ -402,7 +392,6 @@ end
 
 %Throw away cells with only one or two time points
 delind=[];
-
 for i=1:ncells
     if length(nonzeros(lcell(i,:)))<=2
         delind=[delind;i];
@@ -489,6 +478,7 @@ for t=1:T
     ewstd(t)=std(nonzeros(ew(:,t)));
     ewste(t)=ewstd(t)./length(nonzeros(ew(:,t)));
 end
+
 for t=1:T-1
     vav(t)=mean(nonzeros(v(:,t)));
     vstd(t)=std(nonzeros(v(:,t)));
@@ -509,13 +499,14 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_BTtada'])
-save([basename '_BTlabtada'],'labels','labels2','-v7.3')
+save([basename '_BTphase'])
+save([basename '_BTlab'],'labels','labels2','-v7.3')
+
 end
 
-%Plot data
 cd(savedir);
 
+%Plot data
 figure(1), title('Cell Length vs. Time')
 clf
 hold on
@@ -551,25 +542,25 @@ saveas(gcf,[basename,'_lTraces.png'])
 % ylabel('\epsilon_w')
 % fig2pretty
 
-figure(5), title('Elongation Rate vs. Time')
-hold on
-for i=1:ncells
-    plot(tmid,v(i,:))
-end
-plot(tmid,vav,'-r')
-xlabel('Time (s)')
-ylabel('Elongation Rate (s^{-1})')
-fig2pretty
-saveas(gcf, [basename,'_eTraces.png'])
-
-figure(6), title('Elongation Rate vs. Time')
-hold on
-ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-plot(tmid,vav*3600,'-r')
-xlabel('Time (s)')
-ylabel('Elongation (hr^{-1})')
-fig2pretty
-saveas(gcf, [basename,'_ET.png'])
+% figure(5), title('Elongation Rate vs. Time')
+% hold on
+% for i=1:ncells
+%     plot(tmid,v(i,:))
+% end
+% plot(tmid,vav,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation Rate (s^{-1})')
+% fig2pretty
+% saveas(gcf, [basename,'_eTraces.png'])
+% 
+% figure(6), title('Elongation Rate vs. Time')
+% hold on
+% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+% plot(tmid,vav*3600,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation (hr^{-1})')
+% fig2pretty
+% saveas(gcf, [basename,'_ET.png'])
 
 figure(7), title('Cell Length Average vs. Time')
 clf
