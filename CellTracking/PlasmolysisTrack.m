@@ -52,14 +52,9 @@ end
 %look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
 bw2=imbinarize(im2, graythresh(im2(bw1==1)));
 
-%erode the cells a bit (the reason is because there is a one-pixel diff between GFP cells tracked with BacTrack and those binarized this way through the Otsu method)
-nhood1=[0,1,0;1,1,1;0,1,0];
-nhood2=[0 0 1 0 0; 0 0 1 0 0; 1 1 1 1 1; 0 0 1 0 0; 0 0 1 0 0];
-bw1=imerode(bw1, nhood2);
-bw2=imerode(bw2, nhood1);
-
-%what is the overlap/nonoverlap between the two?
-is1=bw1-bw2;
+%erode the TADA cell outline by two pixels
+nhood=[0 0 1 0 0; 0 0 1 0 0; 1 1 1 1 1; 0 0 1 0 0; 0 0 1 0 0];
+bw1=imerode(bw1, nhood);
 
 %% look at the post-shock cells
 cd(directory_TADA(1).folder);
@@ -77,13 +72,59 @@ end
 %look only at TADA-tracked cells in the GFP frame. Threshold using the Otsu method
 bw4=imbinarize(im4, graythresh(im4(bw3==1)));
 
-%erode the cells a bit 
-bw3=imerode(bw, nhood2);
-bw4=imerode(bw1, nhood1);
+%erode the TADA cell outline by two pixels
+bw3=imerode(bw3, nhood);
 
-%what is the overlap/nonoverlap between the two?
-is2=bw3-bw4;
+%% what is the difference between pre- and post-shock frames
+is1=bw1-bw3; 
+is1(is1==-1)=0;
+is2=bw2-bw4;
+is2(is2==-1)=0;
 
+%clean and de-spur
+is1=bwmorph(is1, 'clean');
+is1=bwmorph(is1, 'spur');
+is1=bwmorph(is1, 'bridge');
+
+is2=bwmorph(is2, 'clean');
+is2=bwmorph(is2, 'spur');
+is2=bwmorph(is2, 'bridge');
+
+%subtract the change in area from contraction (TADA) from plasmolysis (GFP)
+is3=is2-is1;
+is3(is3==-1)=0;
+
+is3=bwmorph(is3, 'clean');
+is3=bwmorph(is3, 'spur');
+
+%get the stats
+cc1=bwconncomp(is3,8);
+stats1=regionprops(cc1,im4,'Area','MeanIntensity', 'PixelIdxList');
+idx1=find([stats1.Area]>2);
+by1=ismember(labelmatrix(cc1),idx1);
+
+%which cell does the plasmolysis bay belong to?
+stats=stats1(idx1); %remember these are the ones we care about
+
+pcells=[];
+for b=1:height(stats)
+    for n=1:ncellsT
+        if (sum(ismember(stats(b).PixelIdxList, pixelsTADA{n, postShock}))/length(stats(b).PixelIdxList))>=0.95
+            stats(b).cellID=n;
+            pcells=[pcells, n];
+        end
+    end
+end
+
+bays=nan(ncellsT,1);
+for n=1:ncellsT
+    idxN=find([stats.cellID]==n);
+    totalA=sum([stats(idxN).Area]);
+    bays(n)=totalA;
+end
+
+%% plot the comparison
+bar([1:ncellsT], bays)
 %% get the stats for both
 cc1=bwconncomp(is1,8);
 stats1=regionprops(cc1,im2,'Area','MeanIntensity', 'PixelIdxList');
