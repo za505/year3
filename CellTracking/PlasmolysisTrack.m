@@ -19,7 +19,7 @@ postShock=3;
 %TADA data
 %cd([dirname '/' basename '_TADA/' basename '_figures']);
 cd(dirname)
-load([basename '_BTtada'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im', 'lscale');
+load([basename '_noplasmolysisTADA'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im', 'lscale');
 
 pixelsTADA=pixels;
 %acellTADA=acell;
@@ -30,7 +30,7 @@ ncellsT=ncells;
 %GFP data
 %cd([dirname '/' basename '_GFP/' basename '_figures']);
 %load([basename '_BTgfp'], 'B', 'time', 'pixels', 'directory', 'T', 'ncells', 'acell', 'im');
-load([basename '_BTgfp'], 'directory');
+load([basename '_noplasmolysisGFP'], 'directory');
 
 directory_GFP=directory;
 %B_GFP=B;
@@ -141,7 +141,7 @@ xticks([1:ncellsT])
 xlim([0,3])
 xlabel('Cell ID')
 ylabel('Plasmolyzed Area (\mum^{2})')
-saveas(gcf, [basename,'_plasmolysis1.fig'])
-saveas(gcf, [basename,'_plasmolysis1.png'])
+saveas(gcf, [basename,'_noplasmolysis1.fig'])
+saveas(gcf, [basename,'_noplasmolysis1.png'])
 
-save(['plasmolysis1'])
+save(['noplasmolysis1'])
