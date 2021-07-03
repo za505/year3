@@ -64,11 +64,11 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05262021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_TADA'];%Directory that the image stack is saved in.
-phasename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_phase'];
-cytoname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_GFP'];
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_figures'];%Directory to save the output .mat file to.
+basename='01212021_Exp1_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/' basename '_647/' basename '_erased'];%Directory that the image stack is saved in.
+phasename=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/' basename '_phase/' basename '_single'];
+%cytoname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/01212021_plasmolysisTrack2/01212021_GFP'];
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
@@ -79,7 +79,7 @@ tscale=10;%Frame rate.
 % tpt3=480; %number of seconds passed by third time set
 % tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
-IntThresh=20000;%Threshold used to enhance contrast. Default:35000
+IntThresh=3000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
@@ -93,7 +93,7 @@ checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_tada'])
+    load([basename '_PTcy5'])
 else
 
 %Determine number of frames
@@ -146,24 +146,19 @@ for t=1:T
     
     %Load image
     imagename=directory(t).name;
-    
+
     im=imread(imagename);
     [imM,imN]=size(im);
-    %imshow(im), pause
     
     %De-speckle image
     im=medfilt2(im);
-    %imshow(im), pause
-
+    
     %Normalize images
     ppix=0.5;
     im=norm16bit(im,ppix);
-    %imshow(im), pause
     
     %Enhance contrast
-    %imc=imcomplement(im);
-    imc=im;
-    %imshow(imc),pause
+    imc=imcomplement(im);
     
     if checkhist==1;
         figure,imhist(imc),pause;
@@ -173,16 +168,14 @@ for t=1:T
         [imcounts,bins]=imhist(imc);
         [imcounts,idx]=sort(imcounts);
         bins=bins(idx);
-        thresh1=bins(end);
+        thresh1=bins(end-1);
     else
         thresh1=thresh;
-    end 
-    imc2=imadjust(imc,[0 55000]/2^16,[]);   
-    %imshow(imc2), pause
-    
+    end
+    imc=imadjust(imc,[thresh1/65535 1],[]);   
+     
     %Find edges
-    [ed2,thresh2]=edge(imc2,'canny',[0.3 0.5],sm*sqrt(2));
-    %imshow(ed2), pause
+    [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
     
     %Clean image
     cc=bwconncomp(ed2,8);
@@ -272,17 +265,13 @@ if vis==1 %& t >= T-10 | t <= 6
    imshow(im)
    hold on
    for k=1:nc(t)
-       %if isempty(boun{k,t})==0
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
-       %end
    end
     
   pause
   close all
-
-    toc
-
 end
+    toc
 
 end
 
@@ -329,11 +318,11 @@ for t=1:T
 end
 
 
-%Extract timepoints from meGFPta if it exists
+%Extract timepoints from metadata if it exists
 if exist('metaname')==1
     if exist(metaname)==2
-        %Extract timepoints from meGFPta
-        tpoints=meGFPta(metaname);
+        %Extract timepoints from metadata
+        tpoints=metadata(metaname);
         
         %Fix bug where micromanager screws up its timing
         dtime=diff(tpoints(1,:));
@@ -346,7 +335,7 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-     if multiScale==0
+      if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
      tpoint1=[0:tscale:tpt1];
@@ -405,7 +394,6 @@ end
 
 %Throw away cells with only one or two time points
 delind=[];
-
 for i=1:ncells
     if length(nonzeros(lcell(i,:)))<=2
         delind=[delind;i];
@@ -492,6 +480,7 @@ for t=1:T
     ewstd(t)=std(nonzeros(ew(:,t)));
     ewste(t)=ewstd(t)./length(nonzeros(ew(:,t)));
 end
+
 for t=1:T-1
     vav(t)=mean(nonzeros(v(:,t)));
     vstd(t)=std(nonzeros(v(:,t)));
@@ -516,7 +505,8 @@ save([basename '_PTlab'],'labels','labels2','-v7.3')
 
 clear labels
 clear labels2
-save([basename '_BTtada'])
+save([basename '_PTcy5'])
+
 end
 
 %% let's load the phase images (note that the frames in phase should correspond to the frames in TADA)
