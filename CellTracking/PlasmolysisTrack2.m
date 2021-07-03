@@ -64,11 +64,11 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='01212021_Exp1_colony1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/' basename '_647/' basename '_erased'];%Directory that the image stack is saved in.
-phasename=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/' basename '_phase/' basename '_single'];
-%cytoname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/01212021_plasmolysisTrack2/01212021_GFP'];
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/01212021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
+basename='07012021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_647/'];%Directory that the image stack is saved in.
+phasename=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_phase'];
+cytoname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_green'];
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
@@ -79,9 +79,9 @@ tscale=10;%Frame rate.
 % tpt3=480; %number of seconds passed by third time set
 % tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
-IntThresh=3000;%Threshold used to enhance contrast. Default:35000
+IntThresh=20000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
-sm=2;%Parameter used in edge detection
+sm=2;%Parameter used in edge detection %default sm=2
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width
 maxW=1.5;%Maximum cell width
@@ -90,17 +90,22 @@ cellLink=4;%Number of frames to ignore missing cells when tracking frame to fram
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
+hT=1; %hard code T
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_PTcy5'])
+    load([basename '_PT647'])
 else
 
 %Determine number of frames
 curdir=cd;
 cd(dirname);
 directory=dir('*.tif');
-T=length(directory);
+if hT==1
+    T=10;
+else
+    T=length(directory);
+end
 
 cd(curdir);
 path(dirname,path)
@@ -173,10 +178,10 @@ for t=1:T
         thresh1=thresh;
     end
     imc=imadjust(imc,[thresh1/65535 1],[]);   
-     
+
     %Find edges
     [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
-    
+
     %Clean image
     cc=bwconncomp(ed2,8);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
@@ -505,11 +510,15 @@ save([basename '_PTlab'],'labels','labels2','-v7.3')
 
 clear labels
 clear labels2
-save([basename '_PTcy5'])
-
+save([basename '_PT647'])
 end
 
 %% let's load the phase images (note that the frames in phase should correspond to the frames in TADA)
+clear
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_figures'];%Directory to save the output .mat file to.
+cd(savedir)
+load([basename '_PT647'], 'imM', 'imN', 'phasename', 'boun', 'ncells')
+
 %Determine number of frames
 curdir=cd;
 cd(phasename);
@@ -537,6 +546,31 @@ for t=1:T
     %Load phase image
     imagename=phasedir(t).name;
     imp=imread(imagename);
+    
+    %De-speckle image
+    imp=medfilt2(imp);
+
+    %Normalize images
+    ppix=0.5;
+    imp=norm16bit(imp,ppix);
+    
+%     %Enhance contrast
+%     imc=imcomplement(imp);
+%     
+%     if checkhist==1;
+%         figure,imhist(imc),pause;
+%     end
+%     
+%     if thresh==0;
+%         [imcounts,bins]=imhist(imc);
+%         [imcounts,idx]=sort(imcounts);
+%         bins=bins(idx);
+%         thresh1=bins(end-1);
+%     else
+%         thresh1=thresh;
+%     end
+%     imc=imadjust(imc,[thresh1/65535 1],[]);   
+%     
     phase{1,t}=imp;
     
     %overlay TADA boundaries
@@ -549,7 +583,7 @@ for t=1:T
     pause, close
     
     %threshold so higher pixel values are set to 45000
-    ptThresh=13000;
+    ptThresh=40000;
     
     for j=1:imN
         for i=1:imM
@@ -566,7 +600,7 @@ for t=1:T
     pim=uint16(pim);
     
     figure
-    imshow(pim)
+    imshow(pim, [])
     hold on
     for n=1:ncells
         plot(boun{n,t}(:,1),boun{n,t}(:,2),'-r')
@@ -617,156 +651,170 @@ for t=1:T
     imshow(phase{1,t}), pause
 end
 
-cd(savedir)
+% cd(savedir)
 % v = VideoWriter('pt2','MPEG-4');
 % open(v);
-
-for t=1:T
-    intensity{1,t}=ones(size(boun{1,t},1),2);
-    intensity{1,t}=intensity{1,t}*65530;
-end
-
-figure
-hold on
-for t=1:T
-    plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity{1,t})
-    hold on
-    t=surf(X,Y,65535-phase{1,t}/1000)
-    t.EdgeColor = 'interp';
-    t.FaceColor = 'interp';
-    view(0,95)
-%     frame = getframe(gcf);
-%     writeVideo(v,frame);
-    pause(2)
-    clf
-end
-
-% close(v)
-close all
-
-% %% let's load the GFP images (note that the frames in phase should correspond to the frames in TADA)
-% %Determine number of frames
-% curdir=cd;
-% cd(cytoname);
-% cytodir=dir('*.tif');
-% 
-% % pim=nan(imM,imN,T);
-% cim=nan(imM,imN);
-% 
-% 
-% 
-% percent_plas_cyto=cell(ncells,T);
-% plasm_cyto=nan(ncells, T);
-% percent_plasmolysis_cyto=nan(ncells,T);
-% cyto=cell(1,T);
 % 
 % for t=1:T
-%     t
-%     
-%     %Load phase image
-%     imagename=cytodir(t).name;
-%     img=imread(imagename);
-%     cyto{1,t}=img;
-%     
-%     %overlay TADA boundaries
-%     figure
-%     imshow(img, [])
-%     hold on
-%     for n=1:ncells
-%         plot(boun{n,t}(:,1),boun{n,t}(:,2),'-r')
-%     end
-%     pause, close
-%     
-%     %threshold so higher pixel values are set to 45000
-%     gfpThresh=1000;
-%     
-%     for j=1:imN
-%         for i=1:imM
-%             if img(i,j)<gfpThresh
-%                 cim(i,j)=0;
-%             elseif img(i,j)>gfpThresh
-%                 cim(i,j)=img(i,j);
-%             else
-%                 continue
-%             end
-%         end
-%     end
-%   
-%     cim=uint16(cim);
-%     
-%     figure
-%     imshow(cim, [])
-%     hold on
-%     for n=1:ncells
-%         plot(boun{n,t}(:,1),boun{n,t}(:,2),'-r')
-%     end
-%     pause, close
-%     
-%     for n=1:ncells
-%         
-%         percent_plas_cyto{n,t}=double(cim)-A_in{n,t};
-%         
-%         for j=1:imN %x direction
-%             for i=1:imM %y direction
-%                 if A_in{n,t}(i,j)==0
-%                     percent_plas_cyto{n,t}(i,j)=NaN;
-%                 end
-%             end
-%         end
-%         
-%         for j=1:imN %x direction
-%             for i=1:imM %y direction
-%                 if percent_plas_cyto{n,t}(i,j)<0
-%                     percent_plas_cyto{n,t}(i,j)=NaN;
-%                 elseif percent_plas_cyto{n,t}(i,j)>0
-%                     percent_plas_cyto{n,t}(i,j)=1;   
-%                 else
-%                     continue
-%                 end
-%             end
-%         end
-%         
-%         plasm_cyto(n,t)=sum(nansum(percent_plas_cyto{n,t}(:,:)));
-%         percent_plasmolysis_cyto(n,t)=100-(plasm_cyto(n,t)/total_pix(n,t))*100;
-%     end
-% 
-%     for n=1:ncells
-%         for j=1:imN %x direction
-%             for i=1:imM %y direction
-%                 if A_in{n,t}(i,j)==0
-%                     cyto{1,t}(i,j)=0;
-%                 end
-%             end
-%         end
-%     end
-%     
-%     imshow(cyto{1,t}, []), pause
-% end
-% 
-% cd(savedir)
-% % v = VideoWriter('pt2_cyto','MPEG-4');
-% % open(v);
-% 
-% for t=1:T
-%     intensity2{1,t}=ones(size(boun{1,t},1),2);
-%     intensity2{1,t}=intensity{1,t}*2000;
+%     intensity{1,t}=ones(size(boun{1,t},1),2);
+%     intensity{1,t}=intensity{1,t}*65530;
 % end
 % 
 % figure
 % hold on
 % for t=1:T
-%     plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity2{1,t})
+%     plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity{1,t})
+%     xlabel('X')
+%     ylabel('Y')
+%     zlabel('Z')
 %     hold on
-%     t=surf(X,Y,cyto{1,t})
-%     rotate3d on;
+%     t=surf(X,Y,65535-phase{1,t}/1000)
+%     %rotate3d on;
 %     t.EdgeColor = 'interp';
 %     t.FaceColor = 'interp';
-%     %view(0,95)
-% %     frame = getframe(gcf);
-% %     writeVideo(v,frame);
-%     pause
+%     view(0,20)
+%     frame = getframe(gcf);
+%     writeVideo(v,frame);
+%     pause(2)
 %     clf
 % end
 % 
 % close(v)
 % close all
+
+save([basename '_PTphase'])
+%% let's load the GFP images (note that the frames in phase should correspond to the frames in TADA)
+%Determine number of frames
+curdir=cd;
+cd(cytoname);
+cytodir=dir('*.tif');
+
+% pim=nan(imM,imN,T);
+cim=nan(imM,imN);
+
+percent_plas_cyto=cell(ncells,T);
+plasm_cyto=nan(ncells, T);
+percent_plasmolysis_cyto=nan(ncells,T);
+cyto=cell(1,T);
+
+for t=1:T
+    t
+    
+    %Load phase image
+    imagename=cytodir(t).name;
+    img=imread(imagename);
+    cyto{1,t}=img;
+
+    %Normalize images
+    ppix=0.5;
+    img=norm16bit(img,ppix);
+    
+    %overlay TADA boundaries
+    figure
+    imshow(img, [])
+    hold on
+    for n=1:ncells
+        plot(boun{n,t}(:,1),boun{n,t}(:,2),'-r')
+    end
+    pause, close
+    
+    %threshold so lower pixel values are set to 0
+    gfpThresh=40000;
+    
+    for j=1:imN
+        for i=1:imM
+            if img(i,j)<gfpThresh
+                cim(i,j)=0;
+            elseif img(i,j)>gfpThresh
+                cim(i,j)=img(i,j);
+            else
+                continue
+            end
+        end
+    end
+  
+    cim=uint16(cim);
+    
+    figure
+    imshow(cim, [])
+    hold on
+    for n=1:ncells
+        plot(boun{n,t}(:,1),boun{n,t}(:,2),'-r')
+    end
+    pause, close
+    
+    imshow([img, cim])
+    saveas(gcf, [basename '.fig'])
+    saveas(gcf, [basename '.png'])
+    close
+    
+    for n=1:ncells
+        
+        percent_plas_cyto{n,t}=double(cim)-A_in{n,t};
+        
+        for j=1:imN %x direction
+            for i=1:imM %y direction
+                if A_in{n,t}(i,j)==0
+                    percent_plas_cyto{n,t}(i,j)=NaN;
+                end
+            end
+        end
+        
+        for j=1:imN %x direction
+            for i=1:imM %y direction
+                if percent_plas_cyto{n,t}(i,j)<0
+                    percent_plas_cyto{n,t}(i,j)=NaN;
+                elseif percent_plas_cyto{n,t}(i,j)>0
+                    percent_plas_cyto{n,t}(i,j)=1;   
+                else
+                    continue
+                end
+            end
+        end
+        
+        plasm_cyto(n,t)=sum(nansum(percent_plas_cyto{n,t}(:,:)));
+        percent_plasmolysis_cyto(n,t)=100-(plasm_cyto(n,t)/total_pix(n,t))*100;
+    end
+
+    for n=1:ncells
+        for j=1:imN %x direction
+            for i=1:imM %y direction
+                if A_in{n,t}(i,j)==0
+                    cyto{1,t}(i,j)=0;
+                end
+            end
+        end
+    end
+    
+    imshow(cyto{1,t}, []), pause
+end
+
+cd(savedir)
+% v = VideoWriter('pt2_cyto','MPEG-4');
+% open(v);
+
+for t=1:T
+    intensity2{1,t}=ones(size(boun{1,t},1),2);
+    intensity2{1,t}=intensity{1,t}*2000;
+end
+
+figure
+hold on
+for t=1:T
+    plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity2{1,t})
+    hold on
+    t=surf(X,Y,cyto{1,t})
+    rotate3d on;
+    t.EdgeColor = 'interp';
+    t.FaceColor = 'interp';
+    %view(0,95)
+%     frame = getframe(gcf);
+%     writeVideo(v,frame);
+    pause
+    clf
+end
+
+%close(v)
+close all
+
+save([basename '_PTgreen'])
