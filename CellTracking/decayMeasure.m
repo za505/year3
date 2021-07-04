@@ -1,15 +1,16 @@
 %decayMeasure.m
-%Zarina Akbary, updated 05/25/21
-%Calculates decay as a function of frame rate and exposure
+%Zarina Akbary, updated 07/04/21
+%Calculates changes in fluor. intensity. Incorporates BTfluo.m code.
 
 clear, close all
 
 %INSTRUCTIONS FOR USE:
-%run photobleachMeasure.m first
+%run BacTrack.m first
 
 %INPUT
 %basename: experiments of interest
 %dirname: where .mat files are stored
+%channels: list of directories containing fluorescent image stacks to quantify.
 
 %OUTPUT:
 %timescale=array of time scales
@@ -19,45 +20,92 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basenames=["06062021_Exp1_mNeonGreen", "06062021_Exp1_mCherry"];
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/06062021_Exp1_colony1'];
+basename='06062021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_aligned']; ['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_aligned']}; 
 recrunch=0;
-vis=0;
-B=length(basenames);%number of main directories to analyze
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(dirname)
-    load(['dm.mat'])
+    load([basename '_dm.mat'])
 else
     
-%go to directory where .mat files are stored
-cd(dirname)
-load('06062021_Exp1_BTfluo.mat')
+    for i=1:length(channels)
+        cd(channels{i}); 
+        fluo_directory{i}=dir('*.tif');
+    end
+    
+    %go to directory where .mat files are stored
+    cd(dirname)
+    load([basename '_BTphase'], 'B', 'T', 'ncells', 'time', 'pixels')
 
-%pre-allocate variables
-icell_green=[];
-icell_mcherry=[];
-
-%define new time variable to make things easier later
-tpt=480;
-cutoff=find(time==tpt);
-tidx=tidx(tidx>=cutoff);
-time=time(tidx)-tpt;
-
-%split the cell intensity array into separate variables based on channel
-for h=1:length(channels)
-   for i=1:ncells
-       if h==1 & sum(isnan(icell{1,h}(i,tidx)))<8 & mean(icell{1,h}(i,:),'omitnan')>10000
-           icell_green=[icell_green; icell{1,h}(i,tidx)];
-       elseif h==2 & sum(isnan(icell{1,h}(i,tidx)))<8 & mean(icell{1,h}(i,:),'omitnan')>10000
-           icell_mcherry=[icell_mcherry; icell{1,h}(i,tidx)];
-       end 
+    %pre-allocate variables
+    icell_green=[];
+    icell_mcherry=[];
+    
+    %calculate time index
+    tidx=1:2:T-1; %remember, fluor images were taken every 2 frames
+    
+    for i=1:length(channels)
+        
+        cd(channels{i});
+        intensity=nan(ncells, length(tidx));
+        
+        for j=1:length(tidx)
+            t=tidx(j);
+            
+            imagename=fluo_directory{i}(t).name;
+            im=imread(imagename);
+            
+            for n=1:ncells
+                intensity(n,j)=mean(im(pixels{n,t}));
+            end
+            
+        end
+        
+        for n=1:ncells
+            if i==1 & mean(intensity(n, 1:5)>20000)
+                icell_green=[icell_green; intensity(n,:)];
+            elseif i==2 & mean(intensity(n, 1:5)>20000)
+                icell_cherry=[icell_cherry; intensity(n,:)];
+            else
+                continue
+            end
+        end
     end
 end
+
+%% Plot data
+
+%define ncells
+ncells=height(boun);
+
+%figure out which traces belongs to which channel
+% figure, hold on
+% for n=1:height(icell{1:1})
+%     plot(time(tidx),icell{1:1}(n, tidx)) 
+% end
+
+nGreen=[1,3,6,7,15,17,18,22,23,24,25,26,32,33,35,38];
+nCherry=[2,4,5,8,9,10,11,12,14,16,19,20,21,29,31,36,39];
+%skipped 13,27,28,30,34, and 37 because over half the values are NaN
+
+%split the cell intensity array into separate variables based on channel
+icell_green=icell{1,1}(nGreen, tidx);
+icell_mcherry=icell{1,2}(nCherry, tidx);
+
+%identity time point where cells lyse
+tpt=480;
 
 %initialize coefficients
 coeff0=[40000, 0.1];
     
+for n=1:height(icell{1:1})
+    n
+    x=sum(isnan(icell{1,1}(n,tidx)))
+end
+
 %pre-allocate variables
 coeff1=nan(height(icell_green), length(coeff0));
 coeff2=nan(height(icell_mcherry), length(coeff0));
@@ -78,8 +126,8 @@ end
 %plot to see how well the eqxn fits the data
 figure, hold on
 for i=1:height(icell_green)
-    plot(time, icell_green(i,:))
-    scatter(time, yhat1(i,:))
+    scatter(time, icell_green(i,:))
+    %scatter(time, yhat1(i,:))
 end
 % saveas(gcf, [basename,'_expGreen.fig'])
 % saveas(gcf, [basename,'_expGreen.png'])
@@ -96,21 +144,120 @@ end
 
 end
 %%
-coeff3=nan(height(icell_mcherry), length(coeff0));
-yhat3=nan(height(icell_green), length(time));
+% coeff3=nan(height(icell_mcherry), length(coeff0));
+% yhat3=nan(height(icell_green), length(time));
+% for i=1:height(icell_green)
+%     coeff3(i,:)=nlinfit(time, icell_green(i,:), @linear, coeff0);
+%     yhat3(i,:)=linear(coeff3(i,:), time);
+% end
+% 
+% figure, hold on
+% for i=1:height(icell_green)
+%     plot(time, icell_green(i,:))
+%     scatter(time, yhat3(i,:))
+% end
+% saveas(gcf, [basename,'_expGreen2.fig'])
+% saveas(gcf, [basename,'_expGreen2.png'])
+
+%plot to see how well the eqxn fits the data
+figure(1), hold on
 for i=1:height(icell_green)
-    coeff3(i,:)=nlinfit(time, icell_green(i,:), @linear, coeff0);
-    yhat3(i,:)=linear(coeff3(i,:), time);
+    plot(time(tidx), icell_green(i,:))
+    %scatter(time, yhat1(i,:))
+end
+xline(tpt, '--', {'Membrane Lysis'})
+title('Cellular Intensity of mNeonGreen vs Time')
+xlabel('Time (s)')
+ylabel('Cellular Intensity (A.U.)')
+saveas(gcf, [basename,'_fullGreen.fig'])
+saveas(gcf, [basename,'_fullGreen.png'])
+ 
+figure(2), hold on
+for i=1:height(icell_mcherry)
+   plot(time(tidx), icell_mcherry(i,:))
+end
+xline(tpt, '--', {'Membrane Lysis'})
+title('Cellular Intensity of mCherry vs Time')
+xlabel('Time (s)')
+ylabel('Cellular Intensity (A.U.)')
+saveas(gcf, [basename,'_fullCherry.fig'])
+saveas(gcf, [basename,'_fullCherry.png'])
+
+intensity=cell(ncells,T-1);
+
+for n=1:ncells
+    
+    if ismember(n, nGreen)
+        [~, locB]=ismember(n, nGreen);
+        cd( strcat(dirname, '/', basenames(1), '/', basename, '_figures'))
+        
+        dx=max(boun{n,1}(:,1))-min(boun{n,1}(:,1)); %columns are the x direction
+        dy=max(boun{n,1}(:,2))-min(boun{n,1}(:,2)); %rows are the y direction
+        x=min(boun{n,1}(:,1))-dx/2:max(boun{n,1}(:,1))+dx/2;
+        y=min(boun{n,1}(:,2))-dy/2:max(boun{n,1}(:,2))+dy/2;
+        [X,Y] = meshgrid(x,y);
+        
+        for t=1:2:T-1
+            t
+            intensity{n,t}=ones(size(boun{n,t},1),2);
+            intensity{n,t}=intensity{1,t}*65530;
+        end
+
+        v = VideoWriter('pt2_cyto','MPEG-4');
+        open(v);
+
+        figure, hold on
+        for t=1:2:T
+    plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity2{1,t})
+    hold on
+    t=surf(X,Y,cyto{1,t})
+    rotate3d on;
+    t.EdgeColor = 'interp';
+    t.FaceColor = 'interp';
+    view(0,95)
+    frame = getframe(gcf);
+    writeVideo(v,frame);
+    pause
+    clf
 end
 
-figure, hold on
-for i=1:height(icell_green)
-    plot(time, icell_green(i,:))
-    scatter(time, yhat3(i,:))
-end
-saveas(gcf, [basename,'_expGreen2.fig'])
-saveas(gcf, [basename,'_expGreen2.png'])
+close(v)
+close all
 
+    elseif ismember(n, nCherry)
+        [~, locB]=ismember(n, nCherry);
+        cd( strcat(dirname, '/', basenames(2), '/', basename, '_figures'))
+    else
+        continue
+    end
+end
+        
+cd(savedir)
+% % v = VideoWriter('pt2_cyto','MPEG-4');
+% % open(v);
+% 
+
+% 
+% figure
+% hold on
+% for t=1:T
+%     plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity2{1,t})
+%     hold on
+%     t=surf(X,Y,cyto{1,t})
+%     rotate3d on;
+%     t.EdgeColor = 'interp';
+%     t.FaceColor = 'interp';
+%     %view(0,95)
+% %     frame = getframe(gcf);
+% %     writeVideo(v,frame);
+%     pause
+%     clf
+% end
+% 
+% %close(v)
+close all
+
+%%%%%%%%%%%Functions
 function [y] = exponential(b,x)
 %this function calculates y=A*(e^-t/tau)
 %where b(1)=A, b(2)=tau, x=t, and the cellular intensity=y;
