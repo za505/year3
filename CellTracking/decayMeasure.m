@@ -27,7 +27,7 @@ B=length(basenames);%number of main directories to analyze
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(dirname)
-    load(['06062021_dm.mat'])
+    load(['dm.mat'])
 else
     
 %go to directory where .mat files are stored
@@ -81,20 +81,35 @@ for i=1:height(icell_green)
     plot(time, icell_green(i,:))
     scatter(time, yhat1(i,:))
 end
-saveas(gcf, [basename,'_expGreen.fig'])
-saveas(gcf, [basename,'_expGreen.png'])
+% saveas(gcf, [basename,'_expGreen.fig'])
+% saveas(gcf, [basename,'_expGreen.png'])
  
 figure, hold on
 for i=1:height(icell_mcherry)
     plot(time, icell_mcherry(i,:))
     scatter(time, yhat2(i,:))
 end
-saveas(gcf, [basename,'_expCherry.fig'])
-saveas(gcf, [basename,'_expCherry.png'])
+% saveas(gcf, [basename,'_expCherry.fig'])
+% saveas(gcf, [basename,'_expCherry.png'])
 
-save(['dm'])
+%save(['dm'])
 
 end
+%%
+coeff3=nan(height(icell_mcherry), length(coeff0));
+yhat3=nan(height(icell_green), length(time));
+for i=1:height(icell_green)
+    coeff3(i,:)=nlinfit(time, icell_green(i,:), @linear, coeff0);
+    yhat3(i,:)=linear(coeff3(i,:), time);
+end
+
+figure, hold on
+for i=1:height(icell_green)
+    plot(time, icell_green(i,:))
+    scatter(time, yhat3(i,:))
+end
+saveas(gcf, [basename,'_expGreen2.fig'])
+saveas(gcf, [basename,'_expGreen2.png'])
 
 function [y] = exponential(b,x)
 %this function calculates y=A*(e^-t/tau)
@@ -102,3 +117,8 @@ function [y] = exponential(b,x)
 y=b(1)*exp(-x./b(2));
 end
 
+function [y] = linear(b,x)
+%this function calculates y=A*(e^-t/tau)
+%where b(1)=A, b(2)=tau, x=t, and the cellular intensity=y;
+y=x.*b(1)+b(2);
+end
