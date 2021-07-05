@@ -57,7 +57,7 @@ else
         
         for j=1:length(tidx)
             t=tidx(j);
-            
+             
             imagename=fluo_directory{i}(t).name;
             im=imread(imagename);
             
@@ -108,13 +108,15 @@ ylabel('Cellular Intensity (A.U.)')
 saveas(gcf, [basename,'_fullCherry.fig'])
 saveas(gcf, [basename,'_fullCherry.png'])
 
-%% old code
-
-Z=cell(ncells,length(tidx));
+%% make movies
 cg=0; %green count
 cc=0; %cherry count
 
+imgreen=cell(length(nGreen),length(tidx));
+imcherry=cell(length(nCherry),length(tidx));
+
 for n=1:ncells
+    n
     
     if ismember(n, nGreen)
         cg=cg+1;
@@ -122,39 +124,61 @@ for n=1:ncells
         [~, locB]=ismember(n, nGreen);
         cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
         
-        dx=max(B{n,1}(:,1))-min(B{n,1}(:,1)); %columns are the x direction
-        dy=max(B{n,1}(:,2))-min(B{n,1}(:,2)); %rows are the y direction
-        x=min(B{n,1}(:,1))-dx/2:max(B{n,1}(:,1))+dx/2;
-        y=min(B{n,1}(:,2))-dy/2:max(B{n,1}(:,2))+dy/2;
-        [X,Y] = meshgrid(x,y);
+        m=min(find(cellfun('length', B(n,:))>0)); %find the initial boundaries
+        dx=max(B{n,m}(:,1))-min(B{n,m}(:,1)); %columns are the x direction
+        dy=max(B{n,m}(:,2))-min(B{n,m}(:,2)); %rows are the y direction
+        r1=round(min(B{n,m}(:,1))-dx/2);
+        r2=round(min(B{n,m}(:,2))-dy/2);
+        d1=max([dx dy]);
         
-        for j=1:length(tidx)
-            t=tidx(j);
-            Z{n,j}=ones(size(B{n,t},1),2);
-            Z{n,j}=Z{1,t}*65530;
-        end
-
+        cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
         v = VideoWriter(strcat('mNeonGreen_', num2str(cg), '_intensity'),'MPEG-4');
         open(v);
-
-        figure, hold on
+        
         for j=1:length(tidx)
-            t=tidx(j);
-            plot3(B{n,t}(:,1),B{n,t}(:,2),Z{n,j})
-            hold on
-            t=surf(X,Y,cyto{1,t})
-            %rotate3d on;
-            t.EdgeColor = 'interp';
-            t.FaceColor = 'interp';
-            view(0,95)
+            
+            t=tidx(j)
+            cd(channels{1});
+            imagename=fluo_directory{1}(t).name;
+            im=imread(imagename);
+            
+            
+            imgreen{n,j} = imcrop(im,[r1 r2 d1*2 d1*2]);
+            imshow(imgreen{n,j})
             frame = getframe(gcf);
             writeVideo(v,frame);
             pause(1)
             clf
-        end
 
+        end
+        
         close(v)
         close all
+        
+%         [imM,imN]=size(imgreen{n,m});
+%         y=1:imM; %rows are the y direction
+%         x=1:imN; %columns are the x direction
+%         [X,Y] = meshgrid(x,y);
+%         
+%         cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
+%         v = VideoWriter(strcat('mNeonGreen_', num2str(cg), '_intensity'),'MPEG-4');
+%         open(v);
+%         
+%         for j=1:length(tidx)
+%             figure, hold on
+%             t=surf(X,Y,imgreen{n,j})
+%             %rotate3d on;
+%             t.EdgeColor = 'interp';
+%             t.FaceColor = 'interp';
+%             view(0,95)
+%             frame = getframe(gcf);
+%             writeVideo(v,frame);
+%             pause(0.1)
+%             clf
+%         end
+%         
+%         close(v)
+%         close all
 
     elseif ismember(n, nCherry)
         cc=cc+1;
@@ -162,46 +186,66 @@ for n=1:ncells
         [~, locB]=ismember(n, nCherry);
         cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_figures'])
         
-        dx=max(B{n,1}(:,1))-min(B{n,1}(:,1)); %columns are the x direction
-        dy=max(B{n,1}(:,2))-min(B{n,1}(:,2)); %rows are the y direction
-        x=min(B{n,1}(:,1))-dx/2:max(B{n,1}(:,1))+dx/2;
-        y=min(B{n,1}(:,2))-dy/2:max(B{n,1}(:,2))+dy/2;
-        [X,Y] = meshgrid(x,y);
+        m=min(find(cellfun('length', B(n,:))>0)); %find the initial boundaries
+        dx=max(B{n,m}(:,1))-min(B{n,m}(:,1)); %columns are the x direction
+        dy=max(B{n,m}(:,2))-min(B{n,m}(:,2)); %rows are the y direction
+        r1=round(min(B{n,m}(:,1))-dx/2);
+        r2=round(min(B{n,m}(:,2))-dy/2);
+        d1=max([dx dy]);
         
-        for j=1:length(tidx)
-            t=tidx(j);
-            Z{n,j}=ones(size(B{n,t},1),2);
-            Z{n,j}=Z{1,t}*65530;
-        end
-
-        v = VideoWriter(strcat('mCherry_', num2str(cc), '_intensity'),'MPEG-4');
+        cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_figures'])
+        v = VideoWriter(strcat('mCherry_', num2str(cg), '_intensity'),'MPEG-4');
         open(v);
-
-        figure, hold on
         for j=1:length(tidx)
-            t=tidx(j);
-            plot3(B{n,t}(:,1),B{n,t}(:,2),Z{n,j})
-            hold on
-            t=surf(X,Y,cyto{1,t})
-            %rotate3d on;
-            t.EdgeColor = 'interp';
-            t.FaceColor = 'interp';
-            view(0,95)
+            
+            t=tidx(j)
+            cd(channels{2});
+            imagename=fluo_directory{2}(t).name;
+            im=imread(imagename);
+            
+            imcherry{n,j} = imcrop(im,[r1 r2 d1*2 d1*2]);
+            imshow(imcherry{n,j})
             frame = getframe(gcf);
             writeVideo(v,frame);
             pause(1)
             clf
-        end
 
+        end
+        
         close(v)
         close all
+        
+%         [imM,imN]=size(imcherry{n,m});
+%         y=1:imM; %rows are the y direction
+%         x=1:imN; %columns are the x direction
+%         [X,Y] = meshgrid(x,y);
+%         
+%         cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_figures'])
+%         v = VideoWriter(strcat('mCherry_', num2str(cg), '_intensity'),'MPEG-4');
+%         open(v);
+%         
+%         for j=1:length(tidx)
+%             figure, hold on
+%             t=surf(X,Y,imcherry{n,j})
+%             %rotate3d on;
+%             t.EdgeColor = 'interp';
+%             t.FaceColor = 'interp';
+%             view(0,95)
+%             frame = getframe(gcf);
+%             writeVideo(v,frame);
+%             pause(0.1)
+%             clf
+%         end
+%         
+%         close(v)
+%         close all
     else
         continue
     end
 end
         
 cd(savedir)
-saveas([basename 'processed_dm.mat'])
+save([basename 'processed_dm.mat'])
 
 %%%%%%%%%%%Functions
 function [y] = exponential(b,x)
