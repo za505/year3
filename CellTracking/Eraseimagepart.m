@@ -20,11 +20,11 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='03082021_Exp3_colony3';
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_647/'  basename '_erased'];
-mirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase/'  basename '_erased'];
+basename='07092021_Exp1';
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07092021_analysis/' basename '/' basename '_erased'];
+%mirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/PlasmolysisTrack_test/' basename '_phase/'  basename '_erased'];
 split=0; %there is a break in the movie
-%split1=15; %last frame for segment 1
+%split1=24; %first frame for segment 2
 %split2=; %last frame for segment 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 curdir=cd;
@@ -138,7 +138,7 @@ for t=1:T
         x = [p1(1) p1(1)+offset(1) p1(1)+offset(1) p1(1) p1(1)];
         y = [p1(2) p1(2) p1(2)+offset(2) p1(2)+offset(2) p1(2)];
         plot(x,y)
-
+        
         rp1(count,:)=round(p1);
         rp2(count,:)=round(p2);
     end
@@ -163,29 +163,29 @@ for t=1:T
 end
 
 %make sure the same regions are deleted in the other image stack as well
-cd(mirname);
-directory=dir('*.tif');
-T=length(directory);
-path(mirname,path)
-
-for t=1:T
-    t 
-
-    for n=1:count
-        %Load image
-        imagename=directory(t).name;
-        
-        im=imread(imagename);
-        [imM,imN]=size(im);
-        
-        [imcounts,bins]=hist(double(nonzeros(im1)));
-        [~,mpos]=max(imcounts);
-        val=bins(mpos);
-        im(rp1(n,2):rp2(n,2),rp1(n,1):rp2(n,1))=val*ones(rp2(n,2)-rp1(n,2)+1,rp2(n,1)-rp1(n,1)+1);
-        delete(imagename);
-        imwrite(im,imagename);
-    end
-end
+% cd(mirname);
+% directory=dir('*.tif');
+% T=length(directory);
+% path(mirname,path)
+% 
+% for t=1:T
+%     t 
+% 
+%     for n=1:count
+%         %Load image
+%         imagename=directory(t).name;
+%         
+%         im=imread(imagename);
+%         [imM,imN]=size(im);
+%         
+%         [imcounts,bins]=hist(double(nonzeros(im1)));
+%         [~,mpos]=max(imcounts);
+%         val=bins(mpos);
+%         im(rp1(n,2):rp2(n,2),rp1(n,1):rp2(n,1))=val*ones(rp2(n,2)-rp1(n,2)+1,rp2(n,1)-rp1(n,1)+1);
+%         delete(imagename);
+%         imwrite(im,imagename);
+%     end
+% end
 
 close all
 
