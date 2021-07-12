@@ -22,7 +22,7 @@ clear, close all
 %USER INPUT
 basename='06062021_Exp1';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_reanalysis/'];%Directory to save the output .mat file to.
 channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_aligned']; ['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_aligned']}; 
 recrunch=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -308,7 +308,7 @@ skip_mcherry=[2, 16];
 halfie_green=[9 10 11 16 17];
 halfie_mcherry=[3 4 5 12 14 15];
 
-%normalize cells by their initial intensity value upon lysitims
+%normalize cells by their initial intensity value upon lysis
 cutoff=find(time(tidx)==tpt);
 icell_green2=icell_green(:, cutoff:end);
 icell_mcherry2=icell_mcherry(:, cutoff:end);
@@ -323,31 +323,81 @@ icelln_mcherry=[];
 for c=1:length(channels)
     for n=1:height(icell_green)
         n
-        if c==1 & ismember(double(n), skip_green)==0
+        if c==1 & ismember(double(n), skip_green)==0 & ismember(double(n), halfie_green)==0
             fidx=find(isnan(icell_green2(n,:))==0);
             if isempty(fidx)==0
                 icelln_green=[icelln_green; icell_green2(n,:)/icell_green2(n,fidx(1))];
             end
-        elseif c==2  & ismember(double(n), skip_mcherry)==0
+        elseif c==2  & ismember(double(n), skip_mcherry)==0 & ismember(double(n), halfie_mcherry)==0
             fidx=find(isnan(icell_mcherry2(n,:))==0);
             if isempty(fidx)==0
                 icelln_mcherry=[icelln_mcherry; icell_mcherry2(n,:)/icell_mcherry2(n,fidx(1))];
             end
-        else
-            continue
         end
     end
 end 
+ 
+fitresult=cell(height(icelln_green),1);
+gof=cell(height(icelln_green),1);
+
+for n=1:height(icelln_green)
+    
+    [xData, yData] = prepareCurveData(time2, icelln_green(n,:));
+    
+    % Set up fittype and options.
+    ft = fittype( 'exp1' );
+    opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+    opts.Display = 'Off';
+    opts.StartPoint = [1.01151960663985 -0.000417556351326276];
+    
+    % Fit model to data.
+    [fitresult{n,:}, gof{n,:}] = fit( xData, yData, ft, opts );
+    
+    % Plot fit with data.
+    figure( 'Name', num2str(n));
+    h = plot( fitresult{n,:}, xData, yData );
+    legend( h, 'mNeonGreen Fluor Intesity (A.U.) vs. Time (s)', ['cell: ' num2str(n) ', tau: ' num2str(-1/fitresult{n,:}.b)], 'Location', 'NorthEast', 'Interpreter', 'none' );
+    % Label axes
+    xlabel( 'time2', 'Interpreter', 'none' );
+    ylabel( 'icelln_green', 'Interpreter', 'none' );
+    grid on
+    pause
+    
+    cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
+    saveas(gcf, [basename '_' num2str(n) '_expfit.fig'])
+    saveas(gcf, [basename '_' num2str(n) '_expfit.png'])
+    close
+    
+end
+
+% for n=1:height(icelln_green)
+%     
+%     if ismember(n, skip_green)==0
+%     [xData, yData] = prepareCurveData(time2, icelln_green(n,:));
+%     
+%     % Set up fittype and options.
+%     ft = fittype( 'poly1' );
 % 
-% %define initial coeff
-% coeff0=[1, 0.05];
-% 
-% %pre-allocate variables
-% coeff_green=nan(length(nGreen)-length(skip_green), 2);
-% coeff_mcherry=nan(length(nCherry)-length(skip_mcherry),2);
-% 
-% yhat_green=nan(length(nGreen)-length(skip_green), length(time2));
-% yhat_mcherry=nan(length(nCherry)-length(skip_mcherry),length(time2));
+%     % Fit model to data.
+%     [ftrlt, gf] = fit( xData, yData, ft);
+%     
+%     % Plot fit with data.
+%     figure( 'Name', num2str(n));
+%     h = plot( ftrlt, xData, yData );
+%     legend( h, 'mNeonGreen Fluor Intesity (A.U.) vs. Time (s)', 'untitled fit 1', 'Location', 'NorthEast', 'Interpreter', 'none' );
+%     % Label axes
+%     xlabel( 'time2', 'Interpreter', 'none' );
+%     ylabel( 'icelln_green', 'Interpreter', 'none' );
+%     grid on
+%     pause
+%     
+% %     cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
+% %     saveas(gcf, [basename '_' num2str(n) '_expfit.fig'])
+% %     saveas(gcf, [basename '_' num2str(n) '_expfit.png'])
+%     close
+%     end
+% end
+
 
 %here, we can fit each cell intensity to a nonlinear exponential eqxn
 % for c=1:length(channels)
@@ -468,81 +518,44 @@ end
 %     end
 % end
 
+% gof_green=[2,5,6,7,8,13,14];
+% tconst=[];
+% for n=1:height(fitresult)
+%     if ismember(n, gof_green)==1
+%         tconst=[tconst; fitresult{n,1}.b];
+%     end
+% end
+% 
+% figure
+% histogram(tconst, 7)
+% cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
+% saveas(gcf, [basename '_histogram.fig'])
+% saveas(gcf, [basename '_histogram.png'])
+
+tconst=[];
+for n=2:height(fitresult)
+    tconst=[tconst; -1/fitresult{n,1}.b];
+end
+
+figure
+histogram(tconst, height(icelln_green))
+cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
+xlabel('Time Scale Tau (s-)')
+saveas(gcf, [basename '_histogram.fig'])
+saveas(gcf, [basename '_histogram.png'])
+
+figure, hold on
+for n=2:height(icelln_green)
+    plot(time2, icelln_green(n,:))
+end
+xlabel('time (s)')
+
+ylabel('intensity (A.U.)')
+cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_figures'])
+saveas(gcf, [basename '_histogramTraces.fig'])
+saveas(gcf, [basename '_histogramTraces.png'])
 
 %%%%%%%%%%%Functions
-function [fitresult, gof] = createExpFit(x, y)
-%CREATEFIT(TIME2,ICELLN_GREEN1)
-%  Create a fit.
-%
-%  Data for 'untitled fit 1' fit:
-%      X Input : time2
-%      Y Output: icelln_green1
-%  Output:
-%      fitresult : a fit object representing the fit.
-%      gof : structure with goodness-of fit info.
-%
-%  See also FIT, CFIT, SFIT.
-
-%  Auto-generated by MATLAB on 07-Jul-2021 12:52:37
-
-
-%% Fit: 'untitled fit 1'.
-[xData, yData] = prepareCurveData(x, y);
-
-% Set up fittype and options.
-ft = fittype( 'exp1' );
-opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
-opts.Display = 'Off';
-opts.StartPoint = [1.01151960663985 -0.000417556351326276];
-
-% Fit model to data.
-[fitresult, gof] = fit( xData, yData, ft, opts );
-
-% % Plot fit with data.
-% figure( 'Name', 'untitled fit 1' );
-% h = plot( fitresult, xData, yData );
-% legend( h, 'mNeonGreen Fluor Intesity (A.U.) vs. Time (s)', 'untitled fit 1', 'Location', 'NorthEast', 'Interpreter', 'none' );
-% % Label axes
-% xlabel( 'time2', 'Interpreter', 'none' );
-% ylabel( 'icelln_green1', 'Interpreter', 'none' );
-% grid on
-end
-
-function [fitresult, gof] = createLinFit(time2, icelln_green1)
-%CREATEFIT(TIME2,ICELLN_GREEN1)
-%  Create a fit.
-%
-%  Data for 'untitled fit 1' fit:
-%      X Input : time2
-%      Y Output: icelln_green1
-%  Output:
-%      fitresult : a fit object representing the fit.
-%      gof : structure with goodness-of fit info.
-%
-%  See also FIT, CFIT, SFIT.
-
-%  Auto-generated by MATLAB on 07-Jul-2021 12:51:40
-
-
-%% Fit: 'untitled fit 1'.
-[xData, yData] = prepareCurveData( time2, icelln_green1 );
-
-% Set up fittype and options.
-ft = fittype( 'poly1' );
-
-% Fit model to data.
-[fitresult, gof] = fit( xData, yData, ft );
-
-% % Plot fit with data.
-% figure( 'Name', 'untitled fit 1' );
-% h = plot( fitresult, xData, yData );
-% legend( h, 'mNeonGreen Fluor Intesity (A.U.) vs. Time (s)', 'untitled fit 1', 'Location', 'NorthEast', 'Interpreter', 'none' );
-% % Label axes
-% xlabel( 'time2', 'Interpreter', 'none' );
-% ylabel( 'icelln_green1', 'Interpreter', 'none' );
-% grid on
-end
-
 function [y] = exponential(b,x)
 %this function calculates y=A*(e^-t/tau)
 %where b(1)=A, b(2)=tau, x=t, and the cellular intensity=y;
