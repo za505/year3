@@ -64,20 +64,20 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='05262021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack/noplasmolysis1_GFP'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack'];%Directory to save the output .mat file to.
+basename='06062021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_reanalysis'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
-tscale=10;%Frame rate.
+tscale=60;%Frame rate.
 % tscale2=1;
 % tpt1=120; %number of seconds passed by first time set
 % tpt2=240; %number of seconds passed by second time set
 % tpt3=480; %number of seconds passed by third time set
 % tpt4=1320; %number of seconds passed by fourth time step
 thresh=0;%For default, enter zero.
-IntThresh=20000;%Threshold used to enhance contrast. Default:35000
+IntThresh=12000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
@@ -86,7 +86,7 @@ maxW=1.5;%Maximum cell width
 minA=50;%Minimum cell area. default 50
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-vis=1;%Display cell tracking? 0=No, 1=Yes.
+vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
@@ -143,24 +143,19 @@ for t=1:T
     
     %Load image
     imagename=directory(t).name;
-    
+
     im=imread(imagename);
     [imM,imN]=size(im);
-    %imshow(im), pause
     
     %De-speckle image
     im=medfilt2(im);
-    %imshow(im), pause
-
+    
     %Normalize images
     ppix=0.5;
     im=norm16bit(im,ppix);
-    %imshow(im), pause
     
     %Enhance contrast
-    %imc=imcomplement(im);
-    imc=im;
-    %imshow(imc),pause
+    imc=imcomplement(im);
     
     if checkhist==1;
         figure,imhist(imc),pause;
@@ -170,16 +165,15 @@ for t=1:T
         [imcounts,bins]=imhist(imc);
         [imcounts,idx]=sort(imcounts);
         bins=bins(idx);
-        thresh1=bins(end);
+        thresh1=bins(end-1);
     else
         thresh1=thresh;
-    end 
-    imc2=imadjust(imc,[0 55000]/2^16,[]);   
-    %imshow(imc2), pause
-    
+    end
+    imc=imadjust(imc,[thresh1/65535 1],[]);   
+     
     %Find edges
-    [ed2,thresh2]=edge(imc2,'canny',[0.3 0.5],sm*sqrt(2));
-    %imshow(ed2), pause
+    [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
+    %imshow(ed2),pause, close
     
     %Clean image
     cc=bwconncomp(ed2,8);
@@ -212,7 +206,8 @@ for t=1:T
     stats=regionprops(cc,imc,'Area','MeanIntensity');
     idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4);
     ed4=ismember(labelmatrix(cc),idx);
-    
+    %imshow(ed4), pause, close
+     
     %Find cell areas and centroids
     bw=bwmorph(ed4,'thicken');
     [P,bw]=bwboundaries(bw,4,'noholes');
@@ -269,17 +264,13 @@ if vis==1 %& t >= T-10 | t <= 6
    imshow(im)
    hold on
    for k=1:nc(t)
-       %if isempty(boun{k,t})==0
        plot(boun{k,t}(:,1),boun{k,t}(:,2),'-r')
-       %end
    end
     
   pause
   close all
-
-    toc
-
 end
+    toc
 
 end
 
@@ -326,11 +317,11 @@ for t=1:T
 end
 
 
-%Extract timepoints from meGFPta if it exists
+%Extract timepoints from metadata if it exists
 if exist('metaname')==1
     if exist(metaname)==2
-        %Extract timepoints from meGFPta
-        tpoints=meGFPta(metaname);
+        %Extract timepoints from metadata
+        tpoints=metadata(metaname);
         
         %Fix bug where micromanager screws up its timing
         dtime=diff(tpoints(1,:));
@@ -343,7 +334,7 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-     if multiScale==0
+      if multiScale==0
      tpoints=[0:T-1]*tscale;
     elseif multiScale==1
      tpoint1=[0:tscale:tpt1];
@@ -400,11 +391,11 @@ for i=1:lcents
     pcell(cellid,tstamp(i))=pole(cellnum(i),tstamp(i));
 end
 
-%Throw away cells with only one or two time points
+%Throw away cells with only one or two time points, or less time point than
+%we want in general
 delind=[];
-
 for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=2
+    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.2
         delind=[delind;i];
     end
 end
@@ -489,6 +480,7 @@ for t=1:T
     ewstd(t)=std(nonzeros(ew(:,t)));
     ewste(t)=ewstd(t)./length(nonzeros(ew(:,t)));
 end
+
 for t=1:T-1
     vav(t)=mean(nonzeros(v(:,t)));
     vstd(t)=std(nonzeros(v(:,t)));
@@ -508,14 +500,56 @@ ew(ew==0)=NaN;
 
 tmid=(time(2:end)+time(1:end-1))/2;
 
-cd(savedir);
-clear labels
-clear labels2
-save([basename '_noplasmolysisGFP'])
-%save([basename '_BTlab'],'labels','labels2','-v7.3')
+% cd(savedir);
+% save([basename '_BTlab'],'labels','labels2','-v7.3')
+% clear labels
+% clear labels2
+% save([basename '_BTphase'])
 end
 
-%Plot data
+%% Troubleshooting
+% for k=1:ncells
+%    figure
+%    imshow(im)
+%    hold on
+%    
+%    for t=1:T
+%      if isempty(B{k,t})==0
+%         plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+%      else
+%          continue
+%      end
+%    end
+%     
+%   pause
+%   close all
+% end
+
+%% clean up
+% keep=[];
+% for n=1:height(B)
+%     if sum(cellfun(@isempty, B(n,:)))/T<0.2
+%         keep=[keep n];
+%     end
+% end
+
+% ncells=length(keep);
+% lcell=lcell(keep, :);
+% wcell=wcell(keep, :);
+% acell=acell(keep, :);
+% B=B(keep, :);
+% pixels=pixels(keep, :);
+% mlines=mlines(keep, :);
+% pcell=pcell(keep, :);
+
+%% save data
+cd(savedir);
+save([basename '_BTlab'],'labels','labels2','-v7.3')
+clear labels
+clear labels2
+save([basename '_BTphase'])
+
+%% Plot data
 cd(savedir);
 
 figure(1), title('Cell Length vs. Time')
@@ -531,7 +565,7 @@ end
 xlabel('Time (s)')
 ylabel('Length (\mum)')
 fig2pretty
-%saveas(gcf,[basename,'_lTraces.png'])
+saveas(gcf,[basename,'_lTraces.png'])
 
 % figure(2), title('Cell Width vs. Time')
 % hold on
@@ -562,7 +596,7 @@ plot(tmid,vav,'-r')
 xlabel('Time (s)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-%saveas(gcf, [basename,'_eTraces.png'])
+saveas(gcf, [basename,'_eTraces.png'])
 
 figure(6), title('Elongation Rate vs. Time')
 hold on
@@ -571,7 +605,7 @@ plot(tmid,vav*3600,'-r')
 xlabel('Time (s)')
 ylabel('Elongation (hr^{-1})')
 fig2pretty
-%saveas(gcf, [basename,'_ET.png'])
+saveas(gcf, [basename,'_ET.png'])
 
 figure(7), title('Cell Length Average vs. Time')
 clf
@@ -587,4 +621,4 @@ fig2pretty
 % for x=1:length(xlabels)
 %     xline(xswitch(x), '--k', xlabels(x)) 
 % end
-%saveas(gcf,[basename,'_lTracesAVG.png'])
+saveas(gcf,[basename,'_lTracesAVG.png'])
