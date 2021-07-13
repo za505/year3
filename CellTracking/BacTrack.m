@@ -64,13 +64,13 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='06062021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony2/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony2/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='07102021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
-tscale=60;%Frame rate.
+tscale=120;%Frame rate.
 % tscale2=1;
 % tpt1=120; %number of seconds passed by first time set
 % tpt2=240; %number of seconds passed by second time set
@@ -84,6 +84,7 @@ minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width
 maxW=1.5;%Maximum cell width
 minA=50;%Minimum cell area. default 50
+maxA=2000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
@@ -98,7 +99,7 @@ else
 curdir=cd;
 cd(dirname);
 directory=dir('*.tif');
-T=length(directory);
+T=12 %length(directory);
 
 cd(curdir);
 path(dirname,path)
@@ -179,7 +180,7 @@ for t=1:T
     %Clean image
     cc=bwconncomp(ed2,8);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
-    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>IntThresh);
+    idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>IntThresh);
     ed2=ismember(labelmatrix(cc),idx);
     
     %Close gaps in edges
@@ -205,7 +206,7 @@ for t=1:T
     
     cc=bwconncomp(ed3,4);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
-    idx=find([stats.Area]>minA&[stats.Area]<1e5&[stats.MeanIntensity]>3e4);
+    idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>3e4);
     ed4=ismember(labelmatrix(cc),idx);
     %imshow(ed4), pause, close
      
