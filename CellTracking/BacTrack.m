@@ -65,8 +65,8 @@ tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
 basename='06062021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_reanalysis'];%Directory to save the output .mat file to.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony2/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony2/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
@@ -90,6 +90,7 @@ vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
+    cd(savedir)
     load([basename '_BTphase'])
 else
 
@@ -508,22 +509,22 @@ tmid=(time(2:end)+time(1:end-1))/2;
 end
 
 %% Troubleshooting
-% for k=1:ncells
-%    figure
-%    imshow(im)
-%    hold on
-%    
-%    for t=1:T
-%      if isempty(B{k,t})==0
-%         plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
-%      else
-%          continue
-%      end
-%    end
-%     
-%   pause
-%   close all
-% end
+for k=1:ncells
+   figure
+   imshow(im)
+   hold on
+   
+   for t=1:T
+     if isempty(B{k,t})==0
+        plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+     else
+         continue
+     end
+   end
+    
+  pause
+  close all
+end
 
 %% clean up
 % keep=[];
