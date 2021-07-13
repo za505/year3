@@ -64,13 +64,13 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='07102021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory to save the output .mat file to.
+basename='06162021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/'  basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
-tscale=120;%Frame rate.
+tscale=60;%Frame rate.
 % tscale2=1;
 % tpt1=120; %number of seconds passed by first time set
 % tpt2=240; %number of seconds passed by second time set
@@ -99,7 +99,7 @@ else
 curdir=cd;
 cd(dirname);
 directory=dir('*.tif');
-T=12 %length(directory);
+T=length(directory);
 
 cd(curdir);
 path(dirname,path)
