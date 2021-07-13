@@ -24,14 +24,14 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06162021_Exp1';%Name of the image stack, used to save file.
+basename='06162021_Exp2';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory that the image stack is saved in.
 savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
 channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_aligned']}; 
 recrunch=0;
 frameBg=4; %this is the frame that you'll pick the background area from
 multiScale=1;
-tscale1=[100 50 25 12.5 6 3 1 0.263];
+tscale1=[100 50 25 12.5 6 3 1 0.24];
 T1={[0:6];[7:20];[21:46];[47:96];[97:198];[199:400];[401:1002];[1003:1244]};
 tadd=[0 650 625 612.5 606 603 601 60.1];
 t1=14;
