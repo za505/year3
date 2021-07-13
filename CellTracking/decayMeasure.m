@@ -21,9 +21,9 @@ clear, close all
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
 basename='07102021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_GFP/'  basename '_aligned']}; 
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony2/' basename '_phase2/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony2/' basename '_GFP/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony2/' basename '_GFP/'  basename '_aligned']}; 
 recrunch=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
@@ -37,7 +37,7 @@ else
     end
     
     %go to directory where .mat files are stored
-    cd(savedir)
+    cd(dirname)
     load([basename '_BTphase'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
@@ -71,6 +71,7 @@ else
 end
 
 %% Plot data
+cd(savedir)
 %plot to see single traces of mNeonGreen cells
 figure(1), hold on
 for i=1:height(icell_green)
@@ -91,7 +92,7 @@ for n=1:length(icell_green)
     plot(time, lcell(n, :))
     x=time(end);
     y=lcell(n,end);
-    text(x,y, num2str(i));
+    text(x,y, num2str(n));
 end
 %xline(tpt, '--', {'Membrane Lysis'})
 title('mNeonGreen Cell Length vs Time')
@@ -104,10 +105,43 @@ saveas(gcf, [basename,'_LTGreen.png'])
 for i=1:height(icell_green)
     figure('Name', num2str(i))
     plot(f{i}, time, icell_green(i,:))
-    title('Cellular Intensity of mNeonGreen vs Time')
+    title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
     xlabel('Time (s)')
     ylabel('Cellular Intensity (A.U.)')
     saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
     saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
     close
 end
+
+%% Calculate time constant histograms
+dir1=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_GFP/' basename '_figures'];
+dir2=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony2/' basename '_GFP/' basename '_figures'];
+
+cd(dir1)
+load([basename '_dm.mat'], 'f')
+f1=f;
+
+cd(dir2)
+load([basename '_dm.mat'], 'f')
+f2=f;
+
+tconst=[];
+for i=1:2
+    if i==1
+        for n=1:length(f1)
+            tconst=[tconst; -1/f1{n}.b];
+        end
+    elseif n==2
+        for n=1:length(f2)
+            tconst=[tconst; -1/f2{n}.b];
+        end
+    end
+end
+
+cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/'])
+bins=length(f1)+length(f2);
+ histogram(tconst,bins)
+ title('Histogram of Time Constants, n=37')
+ xlabel('Time Scale Tau (s-)')
+ saveas(gcf, [basename '_histogram.fig'])
+ saveas(gcf, [basename '_histogram.png'])
