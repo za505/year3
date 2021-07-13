@@ -20,11 +20,11 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06062021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_reanalysis'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_aligned']; ['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mCherry/'  basename '_aligned']}; 
-recrunch=1;
+basename='07102021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_GFP/'  basename '_aligned']}; 
+recrunch=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
@@ -41,42 +41,28 @@ else
     load([basename '_BTphase'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
-    icell_green=[];
-    icell_mcherry=[];
-    nGreen=[];
-    nCherry=[];
-    
-    %calculate time index
-    tidx=1:2:T-1; %remember, fluor images were taken every 2 frames
-    tpt=480; %time at which *PBS+5% NLS is perfused
+    icell_green=nan(ncells, T);
+    f={};
     
     for i=1:length(channels)
         
         cd(channels{i});
-        intensity=nan(ncells, length(tidx));
+        %intensity=nan(ncells, T);
         
-        for j=1:length(tidx)
-            t=tidx(j);
+        for t=1:T
              
             imagename=fluo_directory{i}(t).name;
             im=imread(imagename);
             
             for n=1:ncells
-                intensity(n,j)=mean(im(pixels{n,t}));
+                icell_green(n,t)=mean(im(pixels{n,t}));
             end
             
         end
         
         for n=1:ncells
-            if i==1 & mean(intensity(n, 1:5)>500)
-                icell_green=[icell_green; intensity(n,:)];
-                nGreen=[nGreen n];
-            elseif i==2 & mean(intensity(n, 1:5)>1000)
-                icell_mcherry=[icell_mcherry; intensity(n,:)];
-                nCherry=[nCherry n];
-            else
-                continue
-            end
+            [xData, yData] = prepareCurveData(time, icell_green(n,:));
+            f{n}=fit(xData, yData, 'exp1');
         end
     end
     
@@ -88,12 +74,12 @@ end
 %plot to see single traces of mNeonGreen cells
 figure(1), hold on
 for i=1:height(icell_green)
-    plot(time(tidx), icell_green(i,:))
-    x=time(tidx(end));
+    plot(time, icell_green(i,:))
+    x=time(end);
     y=icell_green(i,end);
     text(x,y, num2str(i));
 end
-xline(tpt, '--', {'Membrane Lysis'})
+%xline(tpt, '--', {'Membrane Lysis'})
 title('Cellular Intensity of mNeonGreen vs Time')
 xlabel('Time (s)')
 ylabel('Cellular Intensity (A.U.)')
@@ -101,59 +87,27 @@ saveas(gcf, [basename,'_fullGreen.fig'])
 saveas(gcf, [basename,'_fullGreen.png'])
 
 figure(2), hold on
-for i=1:length(nGreen)
-    n=nGreen(i);
-    plot(time(tidx), lcell(n,tidx))
-    x=time(tidx(end));
+for n=1:length(icell_green)
+    plot(time, lcell(n, :))
+    x=time(end);
     y=lcell(n,end);
     text(x,y, num2str(i));
 end
-xline(tpt, '--', {'Membrane Lysis'})
+%xline(tpt, '--', {'Membrane Lysis'})
 title('mNeonGreen Cell Length vs Time')
 xlabel('Time (s)')
 ylabel('Length (\mum)')
 saveas(gcf, [basename,'_LTGreen.fig'])
 saveas(gcf, [basename,'_LTGreen.png'])
- 
-%plot to see single traces of mCherry cells
-figure(3), hold on
-for i=1:height(icell_mcherry)
-   plot(time(tidx), icell_mcherry(i,:))
-   x=time(tidx(end));
-    y=icell_mcherry(i,end);
-    text(x,y, num2str(i));
-end
-xline(tpt, '--', {'Membrane Lysis'})
-title('Cellular Intensity of mCherry vs Time')
-xlabel('Time (s)')
-ylabel('Cellular Intensity (A.U.)')
-saveas(gcf, [basename,'_fullCherry.fig'])
-saveas(gcf, [basename,'_fullCherry.png'])
 
-figure(4), hold on
-for i=1:length(nCherry)
-    n=nCherry(i);
-    plot(time(tidx), lcell(n,tidx))
-    x=time(tidx(end));
-    y=lcell(n,end);
-    text(x,y, num2str(i));
-end
-xline(tpt, '--', {'Membrane Lysis'})
-title('mCherry Cell Length vs Time')
-xlabel('Time (s)')
-ylabel('Length (\mum)')
-saveas(gcf, [basename,'_LTCherry.fig'])
-saveas(gcf, [basename,'_LTCherry.png'])
-
-%%%%%%%%%%%Functions
-function [y] = exponential(b,x)
-%this function calculates y=A*(e^-t/tau)
-%where b(1)=A, b(2)=tau, x=t, and the cellular intensity=y;
-y=b(1)*exp(-x.*b(2));
-end
-
-function [y] = linear(b,x)
-%this function calculates y=A*(e^-t/tau)
-%where b(1)=A, b(2)=tau, x=t, and the cellular intensity=y;
-y=x.*b(1)+b(2);
+%plot to see single traces of mNeonGreen cells
+for i=1:height(icell_green)
+    figure('Name', num2str(i))
+    plot(f{i}, time, icell_green(i,:))
+    title('Cellular Intensity of mNeonGreen vs Time')
+    xlabel('Time (s)')
+    ylabel('Cellular Intensity (A.U.)')
+    saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
+    saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
+    close
 end
