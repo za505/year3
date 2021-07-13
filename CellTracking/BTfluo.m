@@ -24,40 +24,20 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06162021_Exp2';%Name of the image stack, used to save file.
+basename='06162021_Exp1';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory that the image stack is saved in.
 savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_aligned']}; 
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_tracked']}; 
 recrunch=0;
 frameBg=4; %this is the frame that you'll pick the background area from
-multiScale=1;
-tscale1=[100 50 25 12.5 6 3 1 0.24];
-T1={[0:6];[7:20];[21:46];[47:96];[97:198];[199:400];[401:1002];[1003:1244]};
-tadd=[0 650 625 612.5 606 603 601 60.1];
-t1=14;
-refFrame=13;
+time=[0:100:600, 650:50:1250, 1275:25:1875, 1887.5:12.5:2487.5, 2493.5:6:3093.5, 3096.5:3:3696.5, 3697.5:1:4297.5, 4297.6:0.1:4321.6];
+T=length(time);
+xtime=[650, 1275, 1887.5, 2493.5, 3096.5, 3697.5, 4297.6];
+labels={'50 s', '25 s', '12.5 s', '6 s', '3 s', '1 s', '100 ms'};
+refFrame=12;
+unsatFrame=398; %first unsaturated frame
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
-
-%calculate time
-tpoints=[];
-if multiScale==0
-     tpoints=[0:T-1]*tscale;
-elseif multiScale==1
-    for i=1:length(tscale1)
-        if i==1
-            t_temp=T1{i}*tscale1(i);
-            tpoints=[tpoints t_temp];
-        else
-            t_temp=[t_temp(end)+tscale1(i):tscale1(i):t_temp(end)+tadd(i)+tscale1(i)]; 
-            tpoints=[tpoints t_temp];
-        end
-    end
-    
-end
-
-time=tpoints(1,:);
-time2=tpoints(end,:);
 
 curdir=cd;
 for i=1:length(channels)
@@ -66,9 +46,9 @@ for i=1:length(channels)
 end
 
 cd(dirname)
-load([basename '_BTphase'], 'pixels', 'ncells', 'lcell')
+load([basename '_BTphase'], 'pixels', 'ncells', 'lcell', 'B')
 
-T=length(fluo_directory{1})-refFrame;
+%pre-allocate variables
 icell=cell(length(channels),1);
 icell_av=cell(length(channels),1);
 ratio=cell(length(channels),1);
@@ -78,16 +58,16 @@ bgIntensity=nan(length(channels), T);
 for i=1:length(channels)
     
     cd(channels{i}); 
-    intensities_temp=zeros(ncells, T);
+    intensities_temp=nan(ncells, T);
     imagename=fluo_directory{i}(frameBg).name;
     [p1, p2]=getBackground(imagename);
     
     for t=1:T
         t
-        imagename=fluo_directory{i}(t+refFrame).name;
+        imagename=fluo_directory{i}(t).name;
         im=imread(imagename);
-        for j=1:ncells
-            intensities_temp(j,t)=mean(im(pixels{j,refFrame-2}));    
+        for n=1:ncells
+            intensities_temp(n,t)=mean(im(pixels{n,refFrame}));    
         end
         
          %measure background level
@@ -95,7 +75,7 @@ for i=1:length(channels)
          bgIntensity(i,t)=bglevel; 
     end
     
-    intensities_temp(intensities_temp==0)=NaN;
+    %intensities_temp(intensities_temp==0)=NaN;
     icell{i}=intensities_temp;
 end
 
@@ -126,6 +106,9 @@ xlabel('Time (h)')
 ylabel('Intensity (A.U.)')
 xlim([-0.2 Inf])
 fig2pretty
+for x=1:length(labels)
+    xline(xtime(x), '--k', labels(x)) 
+end
 saveas(gcf, [basename,'_intensity.fig'])
 saveas(gcf, [basename,'_intensity.png'])
 
@@ -137,6 +120,9 @@ xlabel('Time (h)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 xlim([-0.2 Inf])
 fig2pretty
+for x=1:length(labels)
+    xline(xtime(x), '--k', labels(x)) 
+end
 saveas(gcf, [basename,'_ratio.fig'])
 saveas(gcf, [basename,'_ratio.png'])
 
@@ -145,6 +131,9 @@ plot(time,icell_av{1}, '-r')
 xlabel('Time (h)')
 ylabel('Intensity (A.U.)')
 fig2pretty
+for x=1:length(labels)
+    xline(xtime(x), '--k', labels(x)) 
+end
 xlim([-0.2 Inf])
 saveas(gcf, [basename,'_intensityAvg.fig'])
 saveas(gcf, [basename,'_intensityAvg.png'])
@@ -154,11 +143,36 @@ plot(time,ratio_av{1}, '-r')
 xlabel('Time (h)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 fig2pretty
+for x=1:length(labels)
+    xline(xtime(x), '--k', labels(x)) 
+end
 xlim([-0.2 Inf])
 saveas(gcf, [basename,'_ratioAvg.fig'])
 saveas(gcf, [basename,'_ratioAvg.png'])
 
-%%%%%Functions
+%% Troubleshooting
+cd(channels{1}); 
+ for t=1:T
+        t
+        imagename=fluo_directory{1}(t).name;
+        im=imread(imagename);
+        
+    
+       figure
+       imshow(im)
+       hold on
+       for k=1:ncells
+            if isempty(B{k,refFrame})==0
+                plot(B{k,refFrame}(:,1),B{k,refFrame}(:,2),'-r')
+            else
+                continue
+            end
+       end
+      pause
+      close all
+ end
+
+%% Functions
  function [p1, p2]=getBackground(imagename)
 
          %Load last image
