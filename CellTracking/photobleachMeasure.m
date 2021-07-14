@@ -19,10 +19,10 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05272021_FITCK_e100';
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/' basename '/' basename '_aligned'];
-conname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/' basename];
-savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05272021_analysis/05272021_FITCK_figures'];
+basename='06022021_FITCK_oscillations';
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/06022021_analysis/' basename '/' basename '_aligned'];
+%conname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/06022021_analysis/' basename];
+savename=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/06022021_analysis/06022021_FITCK_figures'];
 recrunch=0;
 tscale=1;
 vis=0;
@@ -74,11 +74,11 @@ for t=1:T
 end
     
 %now measure the intensity of the control
-cd(conname);
-imname=dir('*tif');
-imname=imname(1).name;
-imc=imread(imname);
-conavg=mean(mean(imc(p1(2):p2(2),p1(1):p2(1))));
+% cd(conname);
+% imname=dir('*tif');
+% imname=imname(1).name;
+% imc=imread(imname);
+% conavg=mean(mean(imc(p1(2):p2(2),p1(1):p2(1))));
     
 %Calculate time variable
 tpoints=[0:T-1]*tscale;
@@ -88,10 +88,10 @@ time=tpoints(1,:);
 %index average intensity for relevant times
 intensityAvg=intensityAvg(1,:);
 
-end
-
 cd(savename)
 save([basename '_pb'])
+
+end
 
 %plot figures
 figure(1)
@@ -99,8 +99,9 @@ plot(time, intensityAvg)
 title('Average Intensity vs Time')
 xlabel('Time (s)')
 ylabel('Average Intensity')
-yline(conavg, '--k', '*PBS control') 
+%yline(conavg, '--k', '*PBS control') 
 fig2pretty
+xlim([-10 Inf])
 saveas(gcf, [basename,'_intensityAvg.fig'])
 saveas(gcf, [basename,'_intensityAvg.png'])
 
