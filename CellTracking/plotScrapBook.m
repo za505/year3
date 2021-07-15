@@ -2,7 +2,8 @@
 %Purpose: to save code for one-off plots I've made
 
 clear, close all
-%re-analysis of 06/06/2021 data
+
+% %re-analysis of 06/06/2021 data
 %% first, I want to plot how intensity changes overtime
 %the change when switching from PBS + 5% NLS to *PBS [+ Mg2]
 colony1=['/Users/zarina/Documents/MATLAB/MatlabReady/06062021_analysis/06062021_Exp1_colony1'];
