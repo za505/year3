@@ -24,10 +24,10 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06162021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_tracked']}; 
+basename='06102021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/'  basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/'  basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06102021_analysis/'  basename '_tracked']}; 
 recrunch=0;
 frameBg=4; %this is the frame that you'll pick the background area from
 time=[0:100:600, 650:50:1250, 1275:25:1875, 1887.5:12.5:2487.5, 2493.5:6:3093.5, 3096.5:3:3696.5, 3697.5:1:4297.5, 4297.6:0.1:4321.6];
@@ -35,7 +35,7 @@ T=length(time);
 xtime=[650, 1275, 1887.5, 2493.5, 3096.5, 3697.5, 4297.6];
 labels={'50 s', '25 s', '12.5 s', '6 s', '3 s', '1 s', '100 ms'};
 refFrame=12;
-unsatFrame=139; %first unsaturated frame
+%unsatFrame=139; %first unsaturated frame
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
 
