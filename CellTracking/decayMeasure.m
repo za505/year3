@@ -45,8 +45,9 @@ else
     %pre-allocate variables
     icell_green=nan(ncells, T);
     norm_green=nan(ncells, T);
-    f={};
-    model={};
+    coeff=cell(ncells,1);
+    model=cell(ncells,1);
+    time=time./60;
     
     for i=1:length(channels)
         
@@ -69,50 +70,63 @@ else
             norm_green(n,:) = icell_green(n,:)./icell_green(n,1);
         end    
         
+        %fit to a curve
         for n=1:ncells
-            
-            [xData, yData] = prepareCurveData(time, norm_green(n,:));
-            f{n}=fit(xData, yData, 'exp1');
-            model{n}=['exp1'];
-            plot(f{n}, time, norm_green(n,:))
-            pause
+%             try
+                
+                [xData, yData] = prepareCurveData(time, norm_green(n,:));
+                f=fit(xData, yData, 'exp2');
+                coeff{n}=coeffvalues(f);
+                
+                figure, hold on
+                plot(xData, exponential2(coeff{n}, xData), 'magenta')
+                scatter(xData, yData, '.', 'b')
+                pause
 
-            prompt = 'Is this a good fit? 1=Yes, 2=Try Two-Term Exponential ';
-            answer = input(prompt)
+                prompt = 'Q1: Is this a good fit? 1=Yes, 2=Try Sigmoid ';
+                answer = input(prompt)
                 
-                if answer==1
-                    cd(savedir)
-                    model{n}=['exp1'];
-                    savePlot(time, norm_green, n, f{n}, basename);
-                else
-                    [xData, yData] = prepareCurveData(time, norm_green(n,:));
-                    f{n}=fit(xData, yData, 'exp2');
-                    model{n}=['exp2'];
-                    plot(f{n}, time, norm_green(n,:))
-                    pause 
+                    if answer==1
+                        cd(savedir)
+                        model{n}=['exp2'];
+                        savePlot(xData, yData, n, coeff, answer, basename);
+                    else
+                        coeff0=[4,1];
+
+                        [xData, yData] = prepareCurveData(time, norm_green(n,:));
+                        coeff{n}=nlinfit(xData, yData, @sigmoidal, coeff0);
+                        model{n}=['sigmoidal'];
+                        
+                        figure, hold on
+                        plot(xData, sigmoidal(coeff{n}, xData), 'magenta')
+                        scatter(xData, yData, '.', 'b')
+                        pause
                 
-                    prompt = 'Is this a good fit? 1=first one was better, 2=this one is better ';
-                    answer2 = input(prompt)
+                        prompt = 'Q2: Is this a good fit? 1=first one was better, 2=this one is better ';
+                        answer2 = input(prompt)
                         
                         if answer2==1
                             [xData, yData] = prepareCurveData(time, norm_green(n,:));
-                            f{n}=fit(xData, yData, 'exp1');
-                            model{n}=['exp1'];
+                            f=fit(xData, yData, 'exp2');
+                            coeff{n}=coeffvalues(f);
+                            model{n}=['exp2'];
+                            
                             cd(savedir)
-                            savePlot(time, norm_green, n, f{n}, basename);
+                            savePlot(xData, yData, n, coeff, answer2, basename);
                         else
                             cd(savedir)
-                            savePlot(time, norm_green, n, f{n}, basename);
+                            savePlot(xData, yData, n, coeff, answer2, basename);
                         end        
      
-                end
+                    end
                 
                 close
-         end
-            
-
-end
-    
+%             catch
+%                 coeff{n}=NaN;
+%                 model{n}=NaN;
+%             end
+        end
+    end    
 end
 
 %% Does only half the cell lose fluor?
@@ -149,7 +163,8 @@ for k=1:ncells
  end
 
 %% combine these variables into a table
-dataTable=table(lcell, icell_green, norm_green, f, model, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity', 'coefficients', 'model type', 'halfie'});
+dataTable=table(lcell, icell_green, norm_green, model, coeff, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity', 'model', 'coefficients', 'halfie'});
+
 %% Plot data
 if replot==1
     cd(savedir)
@@ -163,7 +178,7 @@ if replot==1
     end
     %xline(tpt, '--', {'Membrane Lysis'})
     title('Cellular Intensity of mNeonGreen vs Time')
-    xlabel('Time (s)')
+    xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
     saveas(gcf, [basename,'_fullGreen.fig'])
     saveas(gcf, [basename,'_fullGreen.png'])
@@ -177,7 +192,7 @@ if replot==1
     end
     %xline(tpt, '--', {'Membrane Lysis'})
     title('mNeonGreen Cell Length vs Time')
-    xlabel('Time (s)')
+    xlabel('Time (min)')
     ylabel('Length (\mum)')
     saveas(gcf, [basename,'_LTGreen.fig'])
     saveas(gcf, [basename,'_LTGreen.png'])
@@ -187,7 +202,7 @@ if replot==1
 %         figure('Name', num2str(i))
 %         plot(f{i}, time, icell_green(i,:))
 %         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
-%         xlabel('Time (s)')
+%         xlabel('Time (min)')
 %         ylabel('Cellular Intensity (A.U.)')
 %         saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
 %         saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
@@ -255,14 +270,43 @@ cd(savedir)
 save([basename '_dm.mat'])
     
 %% Functions
+function [y] = sigmoidal(b,x)
+%this function calculates y=A*(e^alpha*t)+y0
+%where a=A, b=alpha, c=t, and y0=y0;
+    y=1./1+exp(b(1)*(x-b(2)));
+end
 
-function savePlot(time, norm_green, i, newModel, basename) 
-                figure('Name', num2str(i))
-                plot(newModel, time, norm_green(i,:))
-                title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
-                xlabel('Time (s)')
-                ylabel('Cellular Intensity (A.U.)')
-                saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
-                saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
-                close  
+function [y] = exponential2(b,x)
+%this function calculates y=A*(e^alpha*t)+y0
+%where a=A, b=alpha, c=t, and y0=y0;
+    y=b(1)*exp(b(2)*x)+b(3)*exp(b(4)*x);
+    
+end
+
+function savePlot(xData, yData, i, coeff, modelType, basename) 
+    if modelType==1
+        
+            figure('Name', num2str(i)), hold on
+            plot(xData, exponential2(coeff{i}, xData), 'magenta')
+            scatter(xData, yData, '.', 'b')
+            title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
+            xlabel('Time (min)')
+            ylabel('Cellular Intensity (A.U.)')
+            %legend({strcat('lag: ', num2str(coeff(n,2))), strcat('diffusion: ', num2str(coeff(n,1)))})
+            saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
+            saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
+            pause(0.1), close
+            
+    elseif modelType==2
+            figure('Name', num2str(i)), hold on
+            plot(xData, sigmoidal(coeff{i}, xData), 'magenta')
+            scatter(xData, yData, '.', 'b')
+            title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
+            xlabel('Time (min)')
+            ylabel('Cellular Intensity (A.U.)')
+            %legend({strcat('lag: ', num2str(coeff(n,2))), strcat('diffusion: ', num2str(coeff(n,1)))})
+            saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
+            saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
+            pause(0.1), close
+    end
 end
