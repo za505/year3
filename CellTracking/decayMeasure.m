@@ -20,13 +20,14 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='07142021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07142021_analysis/' basename '/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07142021_analysis/' basename '/' basename '_colony1/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07142021_analysis/' basename '/' basename '_colony1/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='07162021_Exp4';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07162021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07162021_analysis/' basename '/' basename '_colony4/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07162021_analysis/' basename '/' basename '_colony4/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
-troubleshoot=0;
+troubleshoot=2;
+tidx=9;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
@@ -43,24 +44,23 @@ else
     load([basename '_BTphase'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
-    icell_green=nan(ncells, T);
-    norm_green=nan(ncells, T);
-    coeff=cell(ncells,1);
-    model=cell(ncells,1);
-    time=time./60;
+    icell_green=nan(ncells, T-tidx+1);
+    norm_green=nan(ncells, T-tidx+1);
+    time=time(tidx:end)./60;
     
     for i=1:length(channels)
         
         cd(channels{i});
         %intensity=nan(ncells, T);
         
-        for t=1:T
-             
+        for t=tidx:T
+            j=t-(tidx-1);
+            
             imagename=fluo_directory{i}(t).name;
             im=imread(imagename);
             
             for n=1:ncells
-                icell_green(n,t)=mean(im(pixels{n,t}));
+                icell_green(n,j)=mean(im(pixels{n,t}));
             end
             
         end
@@ -69,151 +69,14 @@ else
         for n=1:ncells
             norm_green(n,:) = icell_green(n,:)./icell_green(n,1);
         end    
-        
-        %fit to a curve
-        for n=1:ncells
-%             try
-                
-                [xData, yData] = prepareCurveData(time, norm_green(n,:));
-                f=fit(xData, yData, 'exp2');
-                coeff{n}=coeffvalues(f);
-                
-                figure, hold on
-                plot(xData, exponential2(coeff{n}, xData), 'magenta')
-                scatter(xData, yData, '.', 'b')
-                pause
-
-                prompt = 'Q1: Is this a good fit? 1=Yes, 2=Try Sigmoid ';
-                answer = input(prompt)
-                
-                    if answer==1
-                        cd(savedir)
-                        model{n}=['exp2'];
-                        savePlot(xData, yData, n, coeff, answer, basename);
-                    else
-                        coeff0=[4,1];
-
-                        [xData, yData] = prepareCurveData(time, norm_green(n,:));
-                        coeff{n}=nlinfit(xData, yData, @sigmoidal, coeff0);
-                        model{n}=['sigmoidal'];
-                        
-                        figure, hold on
-                        plot(xData, sigmoidal(coeff{n}, xData), 'magenta')
-                        scatter(xData, yData, '.', 'b')
-                        pause
-                
-                        prompt = 'Q2: Is this a good fit? 1=first one was better, 2=this one is better ';
-                        answer2 = input(prompt)
-                        
-                        if answer2==1
-                            [xData, yData] = prepareCurveData(time, norm_green(n,:));
-                            f=fit(xData, yData, 'exp2');
-                            coeff{n}=coeffvalues(f);
-                            model{n}=['exp2'];
-                            
-                            cd(savedir)
-                            savePlot(xData, yData, n, coeff, answer2, basename);
-                        else
-                            cd(savedir)
-                            savePlot(xData, yData, n, coeff, answer2, basename);
-                        end        
-     
-                    end
-                
-                close
-%             catch
-%                 coeff{n}=NaN;
-%                 model{n}=NaN;
-%             end
-        end
-    end    
-end
-
-%% Does only half the cell lose fluor?
-halfie=nan(ncells, 1);
-
-cd(channels{1}); 
-for k=1:ncells
-    
-    for t=T:T-5
-        t
-        imagename=fluo_directory{1}(t).name;
-        im=imread(imagename);
-
-
-       figure
-       imshow(im, [])
-       hold on
        
-        if isempty(B{k,t})==0
-            plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
-        else
-            continue
-        end
-        
-        pause
-        close all
     end
-      
-     prompt = 'Is only half the cell fluor or dark? 0=No, 1=Yes ';
-     answer = input(prompt)
-     
-     halfie(k)=answer;
-     
- end
-
-%% combine these variables into a table
-dataTable=table(lcell, icell_green, norm_green, model, coeff, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity', 'model', 'coefficients', 'halfie'});
-
-%% Plot data
-if replot==1
-    cd(savedir)
-    %plot to see single traces of mNeonGreen cells
-    figure(1), hold on
-    for i=1:height(icell_green)
-        plot(time, icell_green(i,:))
-        x=time(end);
-        y=icell_green(i,end);
-        text(x,y, num2str(i));
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Cellular Intensity of mNeonGreen vs Time')
-    xlabel('Time (min)')
-    ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_fullGreen.fig'])
-    saveas(gcf, [basename,'_fullGreen.png'])
-
-    figure(2), hold on
-    for n=1:height(icell_green)
-        plot(time, lcell(n, :))
-        x=time(end);
-        y=lcell(n,end);
-        text(x,y, num2str(n));
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('mNeonGreen Cell Length vs Time')
-    xlabel('Time (min)')
-    ylabel('Length (\mum)')
-    saveas(gcf, [basename,'_LTGreen.fig'])
-    saveas(gcf, [basename,'_LTGreen.png'])
-
-%     %plot to see single traces of mNeonGreen cells
-%     for i=1:height(icell_green)
-%         figure('Name', num2str(i))
-%         plot(f{i}, time, icell_green(i,:))
-%         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
-%         xlabel('Time (min)')
-%         ylabel('Cellular Intensity (A.U.)')
-%         saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
-%         saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
-%         close
-%     end
-end
+end    
 
 %% Troubleshooting
 if troubleshoot==1
     cd(channels{1}); 
-     for t=1:T
+     for t=tidx:T
             t
             imagename=fluo_directory{1}(t).name;
             im=imread(imagename);
@@ -232,81 +95,162 @@ if troubleshoot==1
           pause
           close all
      end
+     
+elseif troubleshoot==2
+    cd(channels{1});
+     for k=1:ncells
+            k
+            imagename=fluo_directory{1}(T).name;
+            im=imread(imagename);
+
+
+           figure
+           imshow(im, [])
+           hold on
+           for t=tidx:T
+                if isempty(B{k,t})==0
+                    plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+                else
+                    continue
+                end
+           end
+          pause
+          close all
+     end
 end
-%% Calculate time constant histograms
-% dir1=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07142021_analysis/' basename '_colony1/' basename '_GFP/' basename '_figures'];
-% dir2=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07142021_analysis/' basename '_colony2/' basename '_GFP/' basename '_figures'];
+
+%% Does only half the cell lose fluor?
+%halfie=nan(ncells, 1);
+n_halfie=[1,2,3,5,6,9,12,16,17];
+halfie=ismember([1:ncells], n_halfie)';
+% cd(channels{1}); 
 % 
-% cd(dir1)
-% load([basename '_dm.mat'], 'f')
-% f1=f;
+% for k=1:ncells
+%     
+%     %tL=max(find(cellfun(@isempty, B(k,:))==0)); %where is the last time point with cells?
+%     
+% %     v = VideoWriter(strcat('mNeonGreen_', num2str(k), '_intensity'),'MPEG-4');
+% %     open(v);
+%     
+%     for t=T
+%         
+%         imagename=fluo_directory{1}(t).name;
+%         im=imread(imagename);
 % 
-% cd(dir2)
-% load([basename '_dm.mat'], 'f')
-% f2=f;
-% 
-% tconst=[];
-% for i=1:2
-%     if i==1
-%         for n=1:length(f1)
-%             tconst=[tconst; -1/f1{n}.b];
+%         figure
+%         imshow(im, [])
+%         hold on
+%        
+%         if isempty(B{k,t})==0
+%             plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
 %         end
-%     elseif n==2
-%         for n=1:length(f2)
-%             tconst=[tconst; -1/f2{n}.b];
-%         end
+%         
+% %         frame = getframe(gcf);
+% %         writeVideo(v,frame);
+% %         pause(1)
+% %         clf
+% 
+%         pause
 %     end
-% end
-% 
-% cd(['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07142021_analysis/'])
-% bins=length(f1)+length(f2);
-%  histogram(tconst,bins)
-%  title('Histogram of Time Constants, n=37')
-%  xlabel('Time Scale Tau (s-)')
-%  saveas(gcf, [basename '_histogram.fig'])
-%  saveas(gcf, [basename '_histogram.png'])
+%      
+% %      close(v)
+% %      close all
+%      
+%      prompt = 'Is only half the cell fluor or dark? 0=No, 1=Yes ';
+%      answer = input(prompt)
+%      
+%      halfie(k)=answer;
+%      
+%  end
+
+%% combine these variables into a table
+dataTable=table(lcell, icell_green, norm_green, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity','halfie'});
+
+%% Plot data
+if replot==1
+    
+    cd(savedir)
+    
+    %plot to see single traces of mNeonGreen cells
+    figure(1), hold on
+    for i=1:height(norm_green)
+        if halfie(i)==0
+            plot(time, norm_green(i,:), '-r')
+            x=time(end);
+            y=norm_green(i,end);
+            text(x,y, num2str(i));
+        elseif halfie(i)==1
+            plot(time, norm_green(i,:), '-b')
+            x=time(end);
+            y=norm_green(i,end);
+            text(x,y, num2str(i));
+        end
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Normalized Intensity of mNeonGreen vs Time')
+    subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Cellular Intensity (A.U.)')
+    saveas(gcf, [basename,'_normGreen.fig'])
+    saveas(gcf, [basename,'_normGreen.png'])
+
+    figure(2), hold on
+    for n=1:height(norm_green)
+        if halfie(n)==0
+            plot(time, lcell(n, tidx:end), '-r')
+            x=time(end);
+            y=lcell(n,end);
+            text(x,y, num2str(n));
+        elseif halfie(n)==1
+            plot(time, lcell(n, tidx:end), '-b')
+            x=time(end);
+            y=lcell(n,end);
+            text(x,y, num2str(n));
+        end
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Cell Length vs Time')
+    subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Length (\mum)')
+    saveas(gcf, [basename,'_LTGreen.fig'])
+    saveas(gcf, [basename,'_LTGreen.png'])
+
+    figure(3), hold on
+    for i=1:height(icell_green)
+        if halfie(i)==0
+            plot(time, icell_green(i,:), '-r')
+            x=time(end);
+            y=icell_green(i,end);
+            text(x,y, num2str(i));
+        elseif halfie(i)==1
+            plot(time, icell_green(i,:), '-b')
+            x=time(end);
+            y=icell_green(i,end);
+            text(x,y, num2str(i));
+        end
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Intensity of mNeonGreen vs Time')
+    subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Cellular Intensity (A.U.)')
+    saveas(gcf, [basename,'_fullGreen.fig'])
+    saveas(gcf, [basename,'_fullGreen.png'])
+    
+%     %plot to see single traces of mNeonGreen cells
+%     for i=1:height(icell_green)
+%         figure('Name', num2str(i))
+%         plot(f{i}, time, icell_green(i,:))
+%         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
+%         xlabel('Time (min)')
+%         ylabel('Cellular Intensity (A.U.)')
+%         saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
+%         saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
+%         close
+%     end
+end
 
 cd(savedir)
 save([basename '_dm.mat'])
     
-%% Functions
-function [y] = sigmoidal(b,x)
-%this function calculates y=A*(e^alpha*t)+y0
-%where a=A, b=alpha, c=t, and y0=y0;
-    y=1./1+exp(b(1)*(x-b(2)));
-end
-
-function [y] = exponential2(b,x)
-%this function calculates y=A*(e^alpha*t)+y0
-%where a=A, b=alpha, c=t, and y0=y0;
-    y=b(1)*exp(b(2)*x)+b(3)*exp(b(4)*x);
-    
-end
-
-function savePlot(xData, yData, i, coeff, modelType, basename) 
-    if modelType==1
-        
-            figure('Name', num2str(i)), hold on
-            plot(xData, exponential2(coeff{i}, xData), 'magenta')
-            scatter(xData, yData, '.', 'b')
-            title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
-            xlabel('Time (min)')
-            ylabel('Cellular Intensity (A.U.)')
-            %legend({strcat('lag: ', num2str(coeff(n,2))), strcat('diffusion: ', num2str(coeff(n,1)))})
-            saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
-            saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
-            pause(0.1), close
-            
-    elseif modelType==2
-            figure('Name', num2str(i)), hold on
-            plot(xData, sigmoidal(coeff{i}, xData), 'magenta')
-            scatter(xData, yData, '.', 'b')
-            title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
-            xlabel('Time (min)')
-            ylabel('Cellular Intensity (A.U.)')
-            %legend({strcat('lag: ', num2str(coeff(n,2))), strcat('diffusion: ', num2str(coeff(n,1)))})
-            saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
-            saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
-            pause(0.1), close
-    end
-end
