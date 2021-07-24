@@ -514,13 +514,14 @@ save([basename '_PT647'])
 end
 
 %% let's load the phase images (note that the frames in phase should correspond to the frames in TADA)
-clear
+clear, close all
+basename='07012021_Exp1';%Name of the image stack, used to save file.
 savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_figures'];%Directory to save the output .mat file to.
+cytoname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_green'];
 cd(savedir)
-load([basename '_PT647'], 'imM', 'imN', 'phasename', 'boun', 'ncells')
+load([basename '_PT647'], 'imM', 'imN', 'phasename', 'boun', 'ncells', 'basename', 'T')
 
 %Determine number of frames
-curdir=cd;
 cd(phasename);
 phasedir=dir('*.tif');
 
@@ -543,6 +544,9 @@ phase=cell(1,T);
 for t=1:T
     t
     
+    close all
+    cd(phasename);
+    
     %Load phase image
     imagename=phasedir(t).name;
     imp=imread(imagename);
@@ -553,24 +557,7 @@ for t=1:T
     %Normalize images
     ppix=0.5;
     imp=norm16bit(imp,ppix);
-    
-%     %Enhance contrast
-%     imc=imcomplement(imp);
-%     
-%     if checkhist==1;
-%         figure,imhist(imc),pause;
-%     end
-%     
-%     if thresh==0;
-%         [imcounts,bins]=imhist(imc);
-%         [imcounts,idx]=sort(imcounts);
-%         bins=bins(idx);
-%         thresh1=bins(end-1);
-%     else
-%         thresh1=thresh;
-%     end
-%     imc=imadjust(imc,[thresh1/65535 1],[]);   
-%     
+        
     phase{1,t}=imp;
     
     %overlay TADA boundaries
@@ -605,7 +592,11 @@ for t=1:T
     for n=1:ncells
         plot(boun{n,t}(:,1),boun{n,t}(:,2),'-r')
     end
-    pause, close
+    pause, cd(savedir), saveas(gcf, [basename,'_phase_' num2str(t) '.png']), close
+    
+    imshow([imp, pim])
+    saveas(gcf, [basename, '_imp_pim_' num2str(t) '.png'])
+    close
     
     for n=1:ncells
         A_xv{n,t}=boun{n,t}(:,1);%total boun
@@ -684,8 +675,13 @@ end
 
 save([basename '_PTphase'])
 %% let's load the GFP images (note that the frames in phase should correspond to the frames in TADA)
+clear, close all
+basename='07012021_Exp1';%Name of the image stack, used to save file.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07012021_analysis/' basename '_p1/' basename '_figures'];%Directory to save the output .mat file to.
+cd(savedir)
+load([basename '_PTphase'])
+
 %Determine number of frames
-curdir=cd;
 cd(cytoname);
 cytodir=dir('*.tif');
 
@@ -699,6 +695,9 @@ cyto=cell(1,T);
 
 for t=1:T
     t
+    
+    close all
+    cd(cytoname);
     
     %Load phase image
     imagename=cytodir(t).name;
@@ -719,7 +718,7 @@ for t=1:T
     pause, close
     
     %threshold so lower pixel values are set to 0
-    gfpThresh=40000;
+    gfpThresh=42000;
     
     for j=1:imN
         for i=1:imM
@@ -741,11 +740,10 @@ for t=1:T
     for n=1:ncells
         plot(boun{n,t}(:,1),boun{n,t}(:,2),'-r')
     end
-    pause, close
-    
+    pause, cd(savedir), saveas(gcf, [basename,'_green_' num2str(t) '.png']), close
+   
     imshow([img, cim])
-    saveas(gcf, [basename '.fig'])
-    saveas(gcf, [basename '.png'])
+    saveas(gcf, [basename, '_img_cim_' num2str(t) '.png'])
     close
     
     for n=1:ncells
@@ -790,31 +788,32 @@ for t=1:T
 end
 
 cd(savedir)
-% v = VideoWriter('pt2_cyto','MPEG-4');
-% open(v);
-
-for t=1:T
-    intensity2{1,t}=ones(size(boun{1,t},1),2);
-    intensity2{1,t}=intensity{1,t}*2000;
-end
-
-figure
-hold on
-for t=1:T
-    plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity2{1,t})
-    hold on
-    t=surf(X,Y,cyto{1,t})
-    rotate3d on;
-    t.EdgeColor = 'interp';
-    t.FaceColor = 'interp';
-    %view(0,95)
-%     frame = getframe(gcf);
-%     writeVideo(v,frame);
-    pause
-    clf
-end
-
-%close(v)
+% % v = VideoWriter('pt2_cyto','MPEG-4');
+% % open(v);
+% 
+% for t=1:T
+%     intensity2{1,t}=ones(size(boun{1,t},1),2);
+%     intensity2{1,t}=intensity{1,t}*2000;
+% end
+% 
+% figure
+% hold on
+% for t=1:T
+%     plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity2{1,t})
+%     hold on
+%     t=surf(X,Y,cyto{1,t})
+%     rotate3d on;
+%     t.EdgeColor = 'interp';
+%     t.FaceColor = 'interp';
+%     %view(0,95)
+% %     frame = getframe(gcf);
+% %     writeVideo(v,frame);
+%     pause
+%     clf
+% end
+% 
+% %close(v)
 close all
 
+cd(savedir)
 save([basename '_PTgreen'])
