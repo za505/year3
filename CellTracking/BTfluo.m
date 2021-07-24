@@ -24,41 +24,17 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='06062021';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06062021_analysis/' basename '_colony1/' basename '_mNeonGreen/'  basename '_aligned']}; 
+basename='04202021_Exp1_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04202021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04202021_analysis/' basename '/' basename '_FSS/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04202021_analysis/' basename '/' basename '_FSS/' basename '_aligned'];}; 
 recrunch=0;
-frameBg=16; %this is the frame that you'll pick the background area from
+frameBg=66; %this is the frame that you'll pick the background area from
 multiScale=1;
-tscale1=[100 50 25 12.5 6 3 1 0.25];
-T1={[0:6];[7:20];[21:46];[47:96];[97:198];[199:400];[401:1002];[1003:1243]};
-tadd=[0 650 625 612.5 606 603 601 60.1];
-t1=14;
-refFrame=13;
+troubleshoot=2;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
-
-%calculate time
-tpoints=[];
-if multiScale==0
-     tpoints=[0:T-1]*tscale;
-elseif multiScale==1
-    for i=1:length(tscale1)
-        if i==1
-            t_temp=T1{i}*tscale1(i);
-            tpoints=[tpoints t_temp];
-        else
-            t_temp=[t_temp(end)+tscale1(i):tscale1(i):t_temp(end)+tadd(i)+tscale1(i)]; 
-            tpoints=[tpoints t_temp];
-        end
-    end
     
-end
-
-time=tpoints(1,:);
-time2=tpoints(end,:);
-
 curdir=cd;
 for i=1:length(channels)
     cd(channels{i}); 
@@ -66,9 +42,9 @@ for i=1:length(channels)
 end
 
 cd(dirname)
-load([basename '_BTphase'], 'pixels', 'ncells', 'lcell')
+load([basename '_BTphase'], 'pixels', 'ncells', 'lcell', 'B', 'time')
 
-T=length(fluo_directory{1})-refFrame;
+T=length(fluo_directory{1});
 icell=cell(length(channels),1);
 icell_av=cell(length(channels),1);
 ratio=cell(length(channels),1);
@@ -84,10 +60,10 @@ for i=1:length(channels)
     
     for t=1:T
         t
-        imagename=fluo_directory{i}(t+refFrame).name;
+        imagename=fluo_directory{i}(t).name;
         im=imread(imagename);
         for j=1:ncells
-            intensities_temp(j,t)=mean(im(pixels{j,refFrame}));    
+            intensities_temp(j,t)=mean(im(pixels{j,t}));    
         end
         
          %measure background level
@@ -105,6 +81,9 @@ for i=1:length(channels)
     end
 end
 
+icell{1}(:,1:65)=NaN;
+ratio{1}(:,1:65)=NaN;
+
 for i=1:length(channels)
     icell_av{i}=nanmean(icell{i},1);
     ratio_av{i}=nanmean(ratio{i},1);
@@ -119,64 +98,99 @@ end
 
 %% Troubleshooting
 cd(channels{1}); 
- for t=1:T
-        t
-        imagename=fluo_directory{1}(t).name;
-        im=imread(imagename);
-        
-    
-       figure
-       imshow(im)
-       hold on
-       for k=1:ncells
-            if isempty(B{k,refFrame})==0
-                plot(B{k,refFrame}(:,1),B{k,refFrame}(:,2),'-r')
-            else
-                continue
-            end
-       end
-      pause
-      close all
+ if troubleshoot==1
+     for t=1:T
+            t
+            imagename=fluo_directory{1}(t).name;
+            im=imread(imagename);
+
+
+           figure
+           imshow(im, [])
+           hold on
+           for k=1:ncells
+                if isempty(B{k,t})==0
+                    plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+                else
+                    continue
+                end
+           end
+          pause
+          close all
+     end
+ elseif troubleshoot==2
+      for k=1:ncells
+            k
+            imagename=fluo_directory{1}(T).name;
+            im=imread(imagename);
+
+
+           figure
+           imshow(im, [])
+           hold on
+           for t=1:T
+                if isempty(B{k,t})==0
+                    plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+                else
+                    continue
+                end
+           end
+          pause
+          close all
+     end
  end
- 
 %% Plot data
 figure, hold on, 
 for i=1:ncells
-    plot(time, icell{1}(i,:))
+    plot(time./60, icell{1}(i,:))
 end
-xlabel('Time (h)')
+xlabel('Time (min)')
 ylabel('Intensity (A.U.)')
+title('Intensity vs Time')
 xlim([-0.2 Inf])
 fig2pretty
+xline(5, '--k', 'FSS')
+xline(6.5, '--r', 'FSS + Mg^{2+}')
 saveas(gcf, [basename,'_intensity.fig'])
 saveas(gcf, [basename,'_intensity.png'])
 
 figure, hold on, 
 for i=1:ncells
-    plot(time, ratio{1}(i,:))
+    plot(time./60, ratio{1}(i,:))
 end
-xlabel('Time (h)')
+xlabel('Time (min)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
+title('Intensity Ratio vs Time')
 xlim([-0.2 Inf])
+ylim([0 1])
+xline(5, '--k', 'FSS')
+xline(6.5, '--r', 'FSS + Mg^{2+}')
 fig2pretty
 saveas(gcf, [basename,'_ratio.fig'])
 saveas(gcf, [basename,'_ratio.png'])
 
 figure, hold on, 
-plot(time,icell_av{2}, '-r')
-xlabel('Time (h)')
+plot(time./60,icell_av{1}, '-r')
+xlabel('Time (min)')
 ylabel('Intensity (A.U.)')
+title('Average Intensity vs Time')
 fig2pretty
 xlim([-0.2 Inf])
+xline(5, '--k', 'FSS')
+xline(6.5, '--r', 'FSS + Mg^{2+}')
 saveas(gcf, [basename,'_intensityAvg.fig'])
 saveas(gcf, [basename,'_intensityAvg.png'])
 
 figure, hold on, 
-plot(time,ratio_av{1}, '-r')
-xlabel('Time (h)')
+plot(time./60,ratio_av{1}, '-r')
+xlabel('Time (min)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
+title('Average Intensity Ratio vs Time')
 fig2pretty
 xlim([-0.2 Inf])
+ylim([0 1])
+xline(5, '--k', 'FSS')
+xline(6.5, '--r', 'FSS + Mg^{2+}')
 saveas(gcf, [basename,'_ratioAvg.fig'])
 saveas(gcf, [basename,'_ratioAvg.png'])
 
