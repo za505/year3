@@ -64,27 +64,25 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='06162021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/'  basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/06162021_analysis/' basename '/' basename '_figures'];%Directory to save the output .mat file to.
+basename='07222021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony4/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=0;
-tscale=60;%Frame rate.
-% tscale2=1;
-% tpt1=120; %number of seconds passed by first time set
-% tpt2=240; %number of seconds passed by second time set
-% tpt3=480; %number of seconds passed by third time set
-% tpt4=1320; %number of seconds passed by fourth time step
+multiScale=1;
+tscale=120;%Frame rate.
+% tscale2=120;%Frame rate.
+% tpt1=16;
+% tpt2=91;
 thresh=0;%For default, enter zero.
-IntThresh=12000;%Threshold used to enhance contrast. Default:35000
+IntThresh=5000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width
 maxW=1.5;%Maximum cell width
 minA=50;%Minimum cell area. default 50
-maxA=2000; %maximum cell area. default 2000
+maxA=1500; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
@@ -168,6 +166,9 @@ for t=1:T
         [imcounts,idx]=sort(imcounts);
         bins=bins(idx);
         thresh1=bins(end-1);
+        if thresh1==65535
+            thresh1=bins(end);
+        end
     else
         thresh1=thresh;
     end
@@ -261,7 +262,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
     
-if vis==1 %& t >= T-10 | t <= 6
+if vis==1 & t >= T-10 | t <= 6
    figure
    imshow(im)
    hold on
@@ -336,16 +337,14 @@ if exist('metaname')==1
         tpoints=[0:T-1]*tscale;
     end
 else
-      if multiScale==0
-     tpoints=[0:T-1]*tscale;
+    if multiScale==0
+        tpoints=[0:T-1]*tscale;
     elseif multiScale==1
-     tpoint1=[0:tscale:tpt1];
-     tpoint2=[tpt1+tscale2:tscale2:tpt2];
-     tpoint3=[tpt2+tscale:tscale:tpt3];
-     tlength=length(tpoint1)+length(tpoint2)+length(tpoint3);
-     tpoint4=[tpt3+tscale2:tscale2:tpt4];
-     tpoints=[tpoint1, tpoint2, tpoint3, tpoint4];
-     tpoints=tpoints(1:T);
+        %this gets a bit complicated
+        t1=[0:tscale1:tpt1*60]; %tpt1=how long the first time point is in min (hence why it's multiplied by 60)
+        %tscale2=(tpt2*60)/(T-length(t1)); %this is because tscale2 is not exactly 1 fps
+        t2=[t1(end)+tscale2:tscale2:197*60];
+        tpoints=[t1,t2];
     end
 end
 
@@ -397,7 +396,7 @@ end
 %we want in general
 delind=[];
 for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.2
+    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1
         delind=[delind;i];
     end
 end
@@ -502,11 +501,11 @@ ew(ew==0)=NaN;
 
 tmid=(time(2:end)+time(1:end-1))/2;
 
-% cd(savedir);
-% save([basename '_BTlab'],'labels','labels2','-v7.3')
-% clear labels
-% clear labels2
-% save([basename '_BTphase'])
+cd(savedir);
+save([basename '_BTlab'],'labels','labels2','-v7.3')
+clear labels
+clear labels2
+save([basename '_BTphase'])
 end
 
 %% Troubleshooting
@@ -544,13 +543,13 @@ end
 % mlines=mlines(keep, :);
 % pcell=pcell(keep, :);
 
-%% save data
-cd(savedir);
-save([basename '_BTlab'],'labels','labels2','-v7.3')
-clear labels
-clear labels2
-save([basename '_BTphase'])
-
+% %% save data
+% cd(savedir);
+% save([basename '_BTlab'],'labels','labels2','-v7.3')
+% clear labels
+% clear labels2
+% save([basename '_BTphase'])
+% 
 %% Plot data
 cd(savedir);
 
@@ -558,13 +557,13 @@ figure(1), title('Cell Length vs. Time')
 clf
 hold on
 for i=1:ncells  
-    lcell(i,:)=movingaverage2(lcell(i,:),3);
+    lcell(i,:)=movingaverage(lcell(i,:),3);
     %indx=isnan(lcell(i,:))~=1;
     %indx=find(indx);
     %plot(time(indx),lcell(i,indx))
-    plot(time(1:end),lcell(i,1:end)) 
+    plot(time./60,lcell(i,:)) 
 end
-xlabel('Time (s)')
+xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
 saveas(gcf,[basename,'_lTraces.png'])
