@@ -24,15 +24,15 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='07232021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07232021_analysis/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07232021_analysis/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07232021_analysis/' basename '_colony4/' basename '_TADA/' basename '_aligned'];['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07232021_analysis/' basename '_colony4/' basename '_FITC/' basename '_aligned']}; 
+basename='05082021_Exp5';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_aligned']}; 
 recrunch=0;
 frameBg=20; %this is the frame that you'll pick the background area from
-multiScale=1;
-troubleshoot=2;
-fluorFrames=[5:9, 40:44]; %frames where FITC is perfused
+multiScale=0;
+troubleshoot=0;
+fluorFrames=[14:92,104:687]; %frames where FITC is perfused
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
     
@@ -138,81 +138,67 @@ cd(channels{1});
       end
  else
  end
-%% Plot TADA data
-figure, hold on, 
+%% Plot FITCK data
+cd(savedir)
+
+figure(1), hold on, 
 for i=1:ncells
-    plot(time./60, icell{1}(i,:))
+    plot(time, icell{1}(i,:))
 end
-xlabel('Time (min)')
+xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 title('Intensity vs Time')
 xlim([-0.2 Inf])
 fig2pretty
-saveas(gcf, [basename,'_intensityTADA.fig'])
-saveas(gcf, [basename,'_intensityTADA.png'])
+saveas(gcf, [basename,'_intensity.fig'])
+saveas(gcf, [basename,'_intensity.png'])
 
-figure, hold on, 
-plot(time./60,icell_av{1}, '-r')
-xlabel('Time (min)')
+figure(2), hold on, 
+plot(time,icell_av{1}, '-r')
+xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 title('Average Intensity vs Time')
 fig2pretty
 xlim([-0.2 Inf])
-saveas(gcf, [basename,'_intensityAvgTADA.fig'])
-saveas(gcf, [basename,'_intensityAvgTADA.png'])
+saveas(gcf, [basename,'_intensityAvg.fig'])
+saveas(gcf, [basename,'_intensityAvg.png'])
 
-%% plot FITC data
-skp=setdiff(1:T, fluorFrames); %returns data in A that is not in B
-icell{2}(:,skp)=NaN;
-icell_av{2}(:,skp)=NaN;
-ratio{2}(:,skp)=NaN;
-ratio_av{2}(:,skp)=NaN;
-
-figure, hold on, 
+figure(3), hold on, 
 for i=1:ncells
-    plot(time./60, icell{2}(i,:))
+    plot(time, ratio{1}(i,:))
 end
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-title('Intensity vs Time')
-xlim([-0.2 Inf])
-fig2pretty
-saveas(gcf, [basename,'_intensityFITC.fig'])
-saveas(gcf, [basename,'_intensityFITC.png'])
-
-figure, hold on, 
-for i=1:ncells
-    plot(time./60, ratio{2}(i,:))
-end
-xlabel('Time (min)')
+xlabel('Time (s)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 title('Intensity Ratio vs Time')
 xlim([-0.2 Inf])
-ylim([0 1])
+%ylim([0 1])
 fig2pretty
-saveas(gcf, [basename,'_ratioFITC.fig'])
-saveas(gcf, [basename,'_ratioFITC.png'])
+saveas(gcf, [basename,'_ratio.fig'])
+saveas(gcf, [basename,'_ratio.png'])
 
-figure, hold on, 
-plot(time./60,icell_av{2}, '-r')
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-title('Average Intensity vs Time')
-fig2pretty
-xlim([-0.2 Inf])
-saveas(gcf, [basename,'_intensityAvgFITC.fig'])
-saveas(gcf, [basename,'_intensityAvgFITC.png'])
-
-figure, hold on, 
-plot(time./60,ratio_av{2}, '-r')
-xlabel('Time (min)')
+figure(4), hold on, 
+plot(time,ratio_av{1}, '-r')
+xlabel('Time (s)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 title('Average Intensity Ratio vs Time')
 fig2pretty
 xlim([-0.2 Inf])
-ylim([0 1])
-saveas(gcf, [basename,'_ratioAvgFITC.fig'])
-saveas(gcf, [basename,'_ratioAvgFITC.png'])
+%ylim([0 1])
+saveas(gcf, [basename,'_ratioAvg.fig'])
+saveas(gcf, [basename,'_ratioAvg.png'])
+
+%phase1=[14:92];
+phase2=[187:271];
+phase3=[351:433];
+phase4=[512:594];
+
+f=cell(ncells,3);
+for n=1:ncells
+    yData=icell{1}(n, phase2);
+    [xData, yData]=prepareCurveData(time(phase2), yData);
+    f{n,1}=fit(xData, yData, 'exp1');
+    plot(f{n,1}, xData, yData), pause, close
+end
 
 %% Functions
  function [p1, p2]=getBackground(imagename)
