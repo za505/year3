@@ -26,11 +26,14 @@ clear, close all
 %USER INPUT
 basename='05082021_Exp5';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_figures'];%Directory to save the output .mat file to.
 channels={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_aligned']}; 
-recrunch=0;
-frameBg=20; %this is the frame that you'll pick the background area from
-multiScale=0;
+recrunch=1;
+frameBg=85; %this is the frame that you'll pick the background area from
+frameInitial=14;
+frameSwitch=187;
+frameAuto=90;
+multiScale=1;
 troubleshoot=0;
 fluorFrames=[14:92,104:687]; %frames where FITC is perfused
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,6 +54,9 @@ icell_av=cell(length(channels),1);
 ratio=cell(length(channels),1);
 ratio_av=cell(length(channels),1);
 bgIntensity=nan(length(channels), T);
+bgAuto=[];
+Cin=nan(ncells, T);
+Cout=nan(1, T);
 
 for i=1:length(channels)
     
@@ -70,21 +76,58 @@ for i=1:length(channels)
          %measure background level
          bglevel = measureBackground(imagename, p1, p2);
          bgIntensity(i,t)=bglevel; 
+         
+           %get background fluorescence
+        if t>frameAuto & t<frameSwitch 
+            bgAuto=[bgAuto bgIntensity(i,t)];
+        end
     end
     
-    intensities_temp(intensities_temp==0)=NaN;
+    %now take the mean of bgAuto
+    bgAuto=mean(bgAuto,2); %take the temporal average
+
+    intensities_temp(intensities_temp<=0)=NaN;
     icell{i}=intensities_temp;
 end
 
-for i=1:length(channels)
-    for j=1:ncells
-        ratio{i}(j,:)=icell{i}(j,:)./bgIntensity(i,:);
+for t=1:T
+    
+    %Subtract the autofluorescence from the raw intensity
+    Cout(1,t)=bgIntensity(1,t)-bgAuto;
+    
+    for n=1:ncells
+        Cin(n,t)=icell{1}(n,t)-bgAuto;
     end
+    
 end
 
-for i=1:length(channels)
-    icell_av{i}=nanmean(icell{i},1);
-    ratio_av{i}=nanmean(ratio{i},1);
+%calculate average intensity and standard deviation
+avgIntensity = mean(Cin, 1, 'omitnan');
+stdIntensity = std(Cin, 0, 1, 'omitnan');
+
+%now, calculate the Cin/Cout ratio
+ratio = Cin ./ Cout;
+ratio(:,[1:frameInitial-1, frameAuto+1:frameSwitch-1])=NaN; %note: 0/0 makes weird things happen
+
+avgRatio = mean(ratio, 1, 'omitnan');
+stdRatio = std(ratio, 0, 1, 'omitnan');
+
+% for i=1:length(channels)
+%     for j=1:ncells
+%         ratio{i}(j,:)=icell{i}(j,:)./bgIntensity(i,:);
+%     end
+% end
+% 
+% for i=1:length(channels)
+%     icell_av{i}=nanmean(icell{i},1);
+%     ratio_av{i}=nanmean(ratio{i},1);
+% end
+
+dCin=nan(ncells,T);
+deltat=[1 time(2:end)-time(1:end-1)];
+for n=1:ncells
+    dCin(n,:)=[0 diff(Cin(n,:))];
+    dCin(n,:)=dCin(n,:)./deltat;
 end
 
 cd(savedir)
@@ -141,62 +184,135 @@ cd(channels{1});
 %% Plot FITCK data
 cd(savedir)
 
-figure(1), hold on, 
+%Plot data
+%Let's plot cellular intensity first
+figure, hold on, title('Cin vs Time')
 for i=1:ncells
-    plot(time, icell{1}(i,:))
+    plot(time,Cin(i,:))
 end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
-title('Intensity vs Time')
-xlim([-0.2 Inf])
 fig2pretty
+xline(240, '--', {'Membrane Lysis'})
+ylim([-200 Inf])
 saveas(gcf, [basename,'_intensity.fig'])
 saveas(gcf, [basename,'_intensity.png'])
 
-figure(2), hold on, 
-plot(time,icell_av{1}, '-r')
+%now population average cell intensity
+figure
+ciplot(avgIntensity - stdIntensity, avgIntensity + stdIntensity, time, [0.75 0.75 1])
+plot(time, avgIntensity,'-r')
+title('Average Intensity vs Time')
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
-title('Average Intensity vs Time')
 fig2pretty
-xlim([-0.2 Inf])
+ylim([-3 Inf])
+xline(240, '--', {'Membrane Lysis'})
 saveas(gcf, [basename,'_intensityAvg.fig'])
 saveas(gcf, [basename,'_intensityAvg.png'])
 
-figure(3), hold on, 
-for i=1:ncells
-    plot(time, ratio{1}(i,:))
-end
+%Plot adj background fluorescence
+figure, hold on 
+title('Cout vs Time')
+plot(time,Cout)
 xlabel('Time (s)')
-ylabel('Cellular Intensity/Background Intensity (A.U.)')
-title('Intensity Ratio vs Time')
-xlim([-0.2 Inf])
+ylabel('Intensity (A.U.)')
+fig2pretty
+% for x=1:length(xlabels)
+%     xline(xswitch(x), '--k', xlabels(x)) 
+% end
+ylim([-3 Inf])
+saveas(gcf, [basename,'_Cout.fig'])
+saveas(gcf, [basename,'_Cout.png'])
+
+%Let's plot Cin-Cout
+figure, hold on, title('Cin-Cout vs Time')
+for n=1:ncells
+    plot(time,Cin(n,:)-Cout)
+end
+xline(240, '--', {'Membrane Lysis'})
 %ylim([0 1])
 fig2pretty
-saveas(gcf, [basename,'_ratio.fig'])
-saveas(gcf, [basename,'_ratio.png'])
+xlabel('Time (s)')
+ylabel('Intensity (A.U.)')
+saveas(gcf, [basename,'_diffC.fig'])
+saveas(gcf, [basename,'_diffC.png'])
 
-figure(4), hold on, 
-plot(time,ratio_av{1}, '-r')
+% figure(1), hold on, 
+% for i=1:ncells
+%     plot(time, icell{1}(i,:))
+% end
+% xlabel('Time (s)')
+% ylabel('Intensity (A.U.)')
+% title('Intensity vs Time')
+% xlim([-0.2 Inf])
+% fig2pretty
+
+% figure(2), hold on, 
+% plot(time,icell_av{1}, '-r')
+% xlabel('Time (s)')
+% ylabel('Intensity (A.U.)')
+% title('Average Intensity vs Time')
+% fig2pretty
+% xlim([-0.2 Inf])
+
+% % figure, hold on, 
+% % for i=1:ncells
+% %     plot(time, ratio(i,:))
+% % end
+% % xlabel('Time (s)')
+% % ylabel('Cellular Intensity/Background Intensity (A.U.)')
+% % title('Intensity Ratio vs Time')
+% % xlim([-0.2 Inf])
+% % xline(240, '--', {'Membrane Lysis'})
+% % %ylim([0 1])
+% % fig2pretty
+% % saveas(gcf, [basename,'_ratio.fig'])
+% % saveas(gcf, [basename,'_ratio.png'])
+
+figure, hold on, 
+plot(time,avgRatio, '-r')
 xlabel('Time (s)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 title('Average Intensity Ratio vs Time')
 fig2pretty
 xlim([-0.2 Inf])
-%ylim([0 1])
+ylim([0 Inf])
 saveas(gcf, [basename,'_ratioAvg.fig'])
 saveas(gcf, [basename,'_ratioAvg.png'])
-
-%phase1=[14:92];
+% 
+% %phase1=[14:92];
 phase2=[187:271];
 phase3=[351:433];
 phase4=[512:594];
 
+diffC=nan(ncells,T);
+for n=1:ncells
+    diffC(n,:)=Cin(n,:)-Cout;
+end
+
+deltaC=diffC./Cin;
+fC=1-deltaC;
+
+den=nan(ncells,T);
+for t=1:T
+    for n=1:ncells
+        [~, den(n,t)]=rat(fC(n,t));
+    end
+end
+
+fCin=nan(ncells,T);
+for t=1:T
+    for n=1:ncells
+        fCin(n,t)=Cin(n,t)/den(n,t);
+    end
+end
+
 f=cell(ncells,3);
 for n=1:ncells
-    yData=icell{1}(n, phase2);
-    [xData, yData]=prepareCurveData(time(phase2), yData);
-    f{n,1}=fit(xData, yData, 'exp1');
+    yData=dCin(n, phase2);
+    [xData, yData]=prepareCurveData(diffC(n,phase2), yData);
+    f{n,1}=fit(xData, yData, 'poly1');
     plot(f{n,1}, xData, yData), pause, close
 end
 
