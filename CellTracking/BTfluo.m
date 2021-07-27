@@ -28,7 +28,7 @@ basename='05082021_Exp5';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
 savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_figures'];%Directory to save the output .mat file to.
 channels={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_aligned']}; 
-recrunch=1;
+recrunch=0;
 frameBg=85; %this is the frame that you'll pick the background area from
 frameInitial=14;
 frameSwitch=187;
@@ -306,6 +306,11 @@ for t=1:T
     for n=1:ncells
         fCin(n,t)=Cin(n,t)/den(n,t);
     end
+end
+
+figure, hold on
+for n=1:ncells
+    plot(time, fCin(n,:))
 end
 
 f=cell(ncells,3);
