@@ -11,14 +11,12 @@ clear, close all
 
 %INPUT
 %basename: name to save the results to.
-%channels: list of directories containing fluorescent image stacks to quantify.
+%fluordir: name of folder containing fluorescent image stacks to quantify.
 
 %OUTPUT:
-%icell: Cell array with length equal to the number of fluorescent
-        %channels.  Each entry is a matrix (ncellxT) with the fluorescent intensities of each
+%icell: a matrix (ncellxT) with the fluorescent intensities of each
         %cell, where rows are the cells and columns are time points.
-%icell_av:  Cell array with length equal to the number of fluorescent
-        %channels.  Each entry is a vector containing the population-
+%icell_av: Each entry is a vector containing the population-
         %average of the single-cell fluorescent intensities.
 
 
@@ -27,77 +25,91 @@ clear, close all
 basename='05082021_Exp5';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
 savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_aligned']}; 
+fluordir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_aligned']; 
 recrunch=0;
 frameBg=85; %this is the frame that you'll pick the background area from
-frameInitial=14;
-frameSwitch=187;
-frameAuto=90;
+frameInitial=14; %first FITC frame prelysis
+frameSwitch=188; %first FITC perfusion frame post-lysis
+frameAuto=[144:151]; %post lysis PBS perfusion (to calculate autofluorescence)
 multiScale=1;
 troubleshoot=0;
-fluorFrames=[14:92,104:687]; %frames where FITC is perfused
+fluorFrames=[14:90,188:269,351:431,513:592]; %frames where FITC is perfused
+dotThresh=18000; %this is the lightest pixel value of the dot during FITC perfusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
     
-curdir=cd;
-for i=1:length(channels)
-    cd(channels{i}); 
-    fluo_directory{i}=dir('*.tif');
-end
+    cd(fluordir); 
+    fluo_directory=dir('*.tif');
 
-cd(dirname)
-load([basename '_BTphase'], 'pixels', 'ncells', 'lcell', 'B', 'time')
+    cd(dirname)
+    load([basename '_BTphase'], 'pixels', 'ncells', 'lcell', 'B', 'time', 'imM', 'imN', 'directory')
 
-T=length(fluo_directory{1});
-icell=cell(length(channels),1);
-icell_av=cell(length(channels),1);
-ratio=cell(length(channels),1);
-ratio_av=cell(length(channels),1);
-bgIntensity=nan(length(channels), T);
-bgAuto=[];
-Cin=nan(ncells, T);
-Cout=nan(1, T);
+    T=length(fluo_directory);
+    icell=nan(ncells, T);
+    icell_av=nan(ncells, T);
+    ratio=nan(ncells, T);
+    ratio_av=nan(ncells, T);
 
-for i=1:length(channels)
+    bgIntensity=nan(ncells, T);
+    bgAuto=[];
+    cellAuto=[];
+    bgPixels=cell(ncells, T);
+    Cin=nan(ncells, T);
+    Cout=nan(ncells, T);
     
-    cd(channels{i}); 
-    intensities_temp=zeros(ncells, T);
-    imagename=fluo_directory{i}(frameBg).name;
-    [p1, p2]=getBackground(imagename);
+    %nhood=[0 0 1 0 0; 0 0 1 0 0; 1 1 1 1 1; 0 0 1 0 0; 0 0 1 0 0];
+    nhood=[repmat([0 0 0 0 0 1 0 0 0 0 0],5,1); ones(1,11);repmat([0 0 0 0 0 1 0 0 0 0 0],5,1)];
     
+    allPixels=[];
+    pixelTemp=[];
+    %define a matrix that has all the pixel coordinates combined
+    for n=1:ncells
+        for t=round([1, T/2, T])
+            pixelTemp=[pixelTemp; pixels{n,t}];
+        end
+        allPixels=[allPixels; unique(pixelTemp)];
+    end
+    allPixels=unique(allPixels);
+   
+    cd(fluordir);
     for t=1:T
         t
-        imagename=fluo_directory{i}(t).name;
+        imagename=fluo_directory(t).name;
         im=imread(imagename);
-        for j=1:ncells
-            intensities_temp(j,t)=mean(im(pixels{j,t}));    
+
+        for n=1:ncells
+            
+            %find local bg pixel locations
+            im2=zeros(imM, imN);
+            im2(pixels{n,t})=1;
+            im2=imdilate(im2, nhood);
+            im2(allPixels)=0;
+            bgPixels{n,t}=im(im2==1);
+            if ismember(t,fluorFrames)==1
+                idx=find(bgPixels{n,t}>dotThresh);
+                bgPixels{n,t}=bgPixels{n,t}(idx);
+            end
+            bgIntensity(n,t)=mean(bgPixels{n,t}, 'omitnan');
+            
+            icell(n,t)=mean(im(pixels{n,t}));    
+        end
+         
+        if ismember(t, frameAuto)==1
+            bgAuto=[bgAuto bgIntensity(:, t)];
+            cellAuto=[cellAuto icell(:,t)];
         end
         
-         %measure background level
-         bglevel = measureBackground(imagename, p1, p2);
-         bgIntensity(i,t)=bglevel; 
-         
-           %get background fluorescence
-        if t>frameAuto & t<frameSwitch 
-            bgAuto=[bgAuto bgIntensity(i,t)];
-        end
     end
     
     %now take the mean of bgAuto
-    bgAuto=mean(bgAuto,2); %take the temporal average
-
-    intensities_temp(intensities_temp<=0)=NaN;
-    icell{i}=intensities_temp;
-end
+    bgAuto_avg=mean(bgAuto,2, 'omitnan'); %take the temporal average
+    cellAuto_avg=mean(cellAuto,2, 'omitnan');
 
 for t=1:T
     
     %Subtract the autofluorescence from the raw intensity
-    Cout(1,t)=bgIntensity(1,t)-bgAuto;
-    
-    for n=1:ncells
-        Cin(n,t)=icell{1}(n,t)-bgAuto;
-    end
+    Cout(:,t)=bgIntensity(:,t)-bgAuto_avg(:,1);
+    Cin(:,t)=icell(:,t)-cellAuto_avg(:,1);
     
 end
 
@@ -107,24 +119,19 @@ stdIntensity = std(Cin, 0, 1, 'omitnan');
 
 %now, calculate the Cin/Cout ratio
 ratio = Cin ./ Cout;
-ratio(:,[1:frameInitial-1, frameAuto+1:frameSwitch-1])=NaN; %note: 0/0 makes weird things happen
+ratio(:,[1:frameInitial-1, frameAuto])=NaN; %note: 0/0 makes weird things happen
 
 avgRatio = mean(ratio, 1, 'omitnan');
 stdRatio = std(ratio, 0, 1, 'omitnan');
 
-% for i=1:length(channels)
-%     for j=1:ncells
-%         ratio{i}(j,:)=icell{i}(j,:)./bgIntensity(i,:);
-%     end
-% end
-% 
-% for i=1:length(channels)
-%     icell_av{i}=nanmean(icell{i},1);
-%     ratio_av{i}=nanmean(ratio{i},1);
-% end
+%find Cin-Cout
+diffC=nan(ncells,T);
+for n=1:ncells
+    diffC(n,:)=Cin(n,:)-Cout(n,:);
+end
 
 dCin=nan(ncells,T);
-deltat=[1 time(2:end)-time(1:end-1)];
+deltat=[0 time(2:end)-time(1:end-1)];
 for n=1:ncells
     dCin(n,:)=[0 diff(Cin(n,:))];
     dCin(n,:)=dCin(n,:)./deltat;
@@ -138,11 +145,11 @@ elseif recrunch==1
 end
 
 %% Troubleshooting
-cd(channels{1}); 
+cd(fluordir); 
  if troubleshoot==1
      for t=1:T
             t
-            imagename=fluo_directory{1}(t).name;
+            imagename=fluo_directory(t).name;
             im=imread(imagename);
 
 
@@ -162,7 +169,7 @@ cd(channels{1});
  elseif troubleshoot==2
       for k=1:ncells
             k
-            imagename=fluo_directory{1}(T).name;
+            imagename=fluo_directory(T).name;
             im=imread(imagename);
 
 
@@ -187,14 +194,14 @@ cd(savedir)
 %Plot data
 %Let's plot cellular intensity first
 figure, hold on, title('Cin vs Time')
-for i=1:ncells
-    plot(time,Cin(i,:))
+for n=1:ncells
+    plot(time,Cin(n,:))
 end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
 xline(240, '--', {'Membrane Lysis'})
-ylim([-200 Inf])
+ylim([-3 Inf])
 saveas(gcf, [basename,'_intensity.fig'])
 saveas(gcf, [basename,'_intensity.png'])
 
@@ -214,13 +221,13 @@ saveas(gcf, [basename,'_intensityAvg.png'])
 %Plot adj background fluorescence
 figure, hold on 
 title('Cout vs Time')
-plot(time,Cout)
+for n=1:ncells
+    plot(time,Cout(n,:))
+end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
-% end
+xline(240, '--', {'Membrane Lysis'})
 ylim([-3 Inf])
 saveas(gcf, [basename,'_Cout.fig'])
 saveas(gcf, [basename,'_Cout.png'])
@@ -228,47 +235,27 @@ saveas(gcf, [basename,'_Cout.png'])
 %Let's plot Cin-Cout
 figure, hold on, title('Cin-Cout vs Time')
 for n=1:ncells
-    plot(time,Cin(n,:)-Cout)
+    plot(time,Cin(n,:)-Cout(n,:))
 end
 xline(240, '--', {'Membrane Lysis'})
-%ylim([0 1])
+%ylim([-3 Inf])
 fig2pretty
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 saveas(gcf, [basename,'_diffC.fig'])
 saveas(gcf, [basename,'_diffC.png'])
 
-% figure(1), hold on, 
-% for i=1:ncells
-%     plot(time, icell{1}(i,:))
-% end
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% title('Intensity vs Time')
-% xlim([-0.2 Inf])
-% fig2pretty
-
-% figure(2), hold on, 
-% plot(time,icell_av{1}, '-r')
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% title('Average Intensity vs Time')
-% fig2pretty
-% xlim([-0.2 Inf])
-
-% % figure, hold on, 
-% % for i=1:ncells
-% %     plot(time, ratio(i,:))
-% % end
-% % xlabel('Time (s)')
-% % ylabel('Cellular Intensity/Background Intensity (A.U.)')
-% % title('Intensity Ratio vs Time')
-% % xlim([-0.2 Inf])
-% % xline(240, '--', {'Membrane Lysis'})
-% % %ylim([0 1])
-% % fig2pretty
-% % saveas(gcf, [basename,'_ratio.fig'])
-% % saveas(gcf, [basename,'_ratio.png'])
+figure, hold on, title('Ratio vs Time')
+for n=1:ncells
+    plot(time,ratio(n,:))
+end
+xlabel('Time (s)')
+ylabel('Cellular Intensity/Background Intensity (A.U.)')
+fig2pretty
+xline(240, '--', {'Membrane Lysis'})
+ylim([-3 Inf])
+saveas(gcf, [basename,'_ratio.fig'])
+saveas(gcf, [basename,'_ratio.png'])
 
 figure, hold on, 
 plot(time,avgRatio, '-r')
@@ -276,92 +263,48 @@ xlabel('Time (s)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 title('Average Intensity Ratio vs Time')
 fig2pretty
-xlim([-0.2 Inf])
-ylim([0 Inf])
+ylim([-3 Inf])
+xline(240, '--', {'Membrane Lysis'})
 saveas(gcf, [basename,'_ratioAvg.fig'])
 saveas(gcf, [basename,'_ratioAvg.png'])
 % 
 % %phase1=[14:92];
-phase2=[187:271];
-phase3=[351:433];
-phase4=[512:594];
+% phase2=[187:271];
+% phase3=[351:433];
+% phase4=[512:594];
 
-diffC=nan(ncells,T);
-for n=1:ncells
-    diffC(n,:)=Cin(n,:)-Cout;
-end
+% diffC=nan(ncells,T);
+% for n=1:ncells
+%     diffC(n,:)=Cin(n,:)-Cout;
+% end
+% 
+% deltaC=diffC./Cin;
+% fC=1-deltaC;
+% 
+% den=nan(ncells,T);
+% for t=1:T
+%     for n=1:ncells
+%         [~, den(n,t)]=rat(fC(n,t));
+%     end
+% end
+% 
+% fCin=nan(ncells,T);
+% for t=1:T
+%     for n=1:ncells
+%         fCin(n,t)=Cin(n,t)/den(n,t);
+%     end
+% end
+% 
+% figure, hold on
+% for n=1:ncells
+%     plot(time, fCin(n,:))
+% end
+% 
+% f=cell(ncells,3);
+% for n=1:ncells
+%     yData=dCin(n, phase2);
+%     [xData, yData]=prepareCurveData(diffC(n,phase2), yData);
+%     f{n,1}=fit(xData, yData, 'poly1');
+%     plot(f{n,1}, xData, yData), pause, close
+% end
 
-deltaC=diffC./Cin;
-fC=1-deltaC;
-
-den=nan(ncells,T);
-for t=1:T
-    for n=1:ncells
-        [~, den(n,t)]=rat(fC(n,t));
-    end
-end
-
-fCin=nan(ncells,T);
-for t=1:T
-    for n=1:ncells
-        fCin(n,t)=Cin(n,t)/den(n,t);
-    end
-end
-
-figure, hold on
-for n=1:ncells
-    plot(time, fCin(n,:))
-end
-
-f=cell(ncells,3);
-for n=1:ncells
-    yData=dCin(n, phase2);
-    [xData, yData]=prepareCurveData(diffC(n,phase2), yData);
-    f{n,1}=fit(xData, yData, 'poly1');
-    plot(f{n,1}, xData, yData), pause, close
-end
-
-%% Functions
- function [p1, p2]=getBackground(imagename)
-
-         %Load last image
-         %imagename=fluo_directory{i}(t).name;
-         im2=imread(imagename);
-
-         %Determine Background
-         figure,imshow(im2,[]), hold on, title('Select Background')
-         k=waitforbuttonpress;
-         set(gcf,'Pointer')
-         hold on
-         axis manual
-         point1=get(gca,'CurrentPoint');
-         finalRect=rbbox;
-         point2=get(gca,'CurrentPoint');
-         point1=point1(1,1:2);
-         point2=point2(1,1:2);
-         point1(point1<1)=1;
-         point2(point2<1)=1;
-         p1=min(point1,point2);%Calculate locations
-         p2=max(point1,point2);
-         offset = abs(point1-point2);%And dimensions
-         x = [p1(1) p1(1)+offset(1) p1(1)+offset(1) p1(1) p1(1)];
-         y = [p1(2) p1(2) p1(2)+offset(2) p1(2)+offset(2) p1(2)];
-         plot(x,y)
-         p1=round(p1);
-         p2=round(p2);  
- end 
-
- function bglevel = measureBackground(imagename, p1, p2)
-
-         %Load last image
-         %imagename=fluo_directory{i}(t).name;
-         im2=imread(imagename);
-
-         %Determine background
-         backim=im2(p1(2):p2(2),p1(1):p2(1));
-         [counts,bins]=imhist(backim);
-         [~,binnum]=max(counts);
-         maxpos=bins(binnum);
-         bglevel=mean(mean(backim));
-
- end 
