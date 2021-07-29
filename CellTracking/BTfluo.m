@@ -22,19 +22,16 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='05082021_Exp5';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_figures'];%Directory to save the output .mat file to.
-fluordir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05082021_reanalysis/' basename '_colony1/' basename '_FITCK/' basename '_aligned']; 
+basename='03312021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/' basename '_colony1/' basename '_FSS/' basename '_figures'];%Directory to save the output .mat file to.
+fluordir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/' basename '_colony1/' basename '_FSS/' basename '_aligned']; 
 recrunch=0;
-frameBg=85; %this is the frame that you'll pick the background area from
-frameInitial=14; %first FITC frame prelysis
-frameSwitch=188; %first FITC perfusion frame post-lysis
-frameAuto=[144:151]; %post lysis PBS perfusion (to calculate autofluorescence)
-multiScale=1;
+frameAuto=[20:31]; %post lysis PBS perfusion (to calculate autofluorescence)
+multiScale=0;
 troubleshoot=0;
-fluorFrames=[14:90,188:269,351:431,513:592]; %frames where FITC is perfused
-dotThresh=18000; %this is the lightest pixel value of the dot during FITC perfusion
+fluorFrames=[33:103]; %frames where FITC is perfused
+dotThresh=518; %this is the lightest pixel value of the dot during FITC perfusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
     
@@ -84,12 +81,14 @@ if recrunch==0;
             im2(pixels{n,t})=1;
             im2=imdilate(im2, nhood);
             im2(allPixels)=0;
-            bgPixels{n,t}=im(im2==1);
+            bgPixels{n,t}=find(im2==1);
+           
             if ismember(t,fluorFrames)==1
-                idx=find(bgPixels{n,t}>dotThresh);
+                idx=find(im(bgPixels{n,t})>dotThresh);
                 bgPixels{n,t}=bgPixels{n,t}(idx);
             end
-            bgIntensity(n,t)=mean(bgPixels{n,t}, 'omitnan');
+            bgIntensity(n,t)=mean(im(bgPixels{n,t}), 'omitnan');
+            %Cout(n,t)=mean(im(bgPixels{n,t}), 'omitnan');
             
             icell(n,t)=mean(im(pixels{n,t}));    
         end
@@ -119,7 +118,7 @@ stdIntensity = std(Cin, 0, 1, 'omitnan');
 
 %now, calculate the Cin/Cout ratio
 ratio = Cin ./ Cout;
-ratio(:,[1:frameInitial-1, frameAuto])=NaN; %note: 0/0 makes weird things happen
+%ratio(:,[1:frameInitial-1, frameAuto])=NaN; %note: 0/0 makes weird things happen
 
 avgRatio = mean(ratio, 1, 'omitnan');
 stdRatio = std(ratio, 0, 1, 'omitnan');
@@ -186,9 +185,20 @@ cd(fluordir);
           pause
           close all
       end
- else
+ elseif troubleshoot==3
+   for n=1:ncells
+      
+     im3=zeros(imM, imN);
+     
+     figure, hold on
+     for t=1:T
+        im3(bgPixels{n,t})=1;
+     end
+     imshow(im3), pause, close
+   end
+     
  end
-%% Plot FITCK data
+%% Plot FSS data
 cd(savedir)
 
 %Plot data
