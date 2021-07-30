@@ -22,16 +22,16 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='03312021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/' basename '_colony1/' basename '_FSS/' basename '_figures'];%Directory to save the output .mat file to.
-fluordir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/' basename '_colony1/' basename '_FSS/' basename '_aligned']; 
+basename='04222021_Exp1_colony1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/' basename '_figures'];%Directory to save the output .mat file to.
+fluordir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/' basename '_aligned']; 
 recrunch=0;
-frameAuto=[20:31]; %post lysis PBS perfusion (to calculate autofluorescence)
-multiScale=0;
-troubleshoot=0;
-fluorFrames=[33:103]; %frames where FITC is perfused
-dotThresh=518; %this is the lightest pixel value of the dot during FITC perfusion
+frameAuto=[185:200]; %post lysis PBS perfusion (to calculate autofluorescence)
+multiScale=1;
+troubleshoot=3;
+fluorFrames=[10:105, 204:251, 301:346, 396:441, 489:535, 584:629]; %frames where FSS is perfused
+dotThresh=600; %this is the lightest pixel value of the dot during FSS perfusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
     
