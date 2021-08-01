@@ -22,16 +22,15 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04222021_Exp1_colony1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/' basename '_figures'];%Directory to save the output .mat file to.
-fluordir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/04222021_analysis/' basename '/' basename '_FSS/' basename '_aligned']; 
+basename='03312021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/'  basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the BTphase.mat file is saved in
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/'  basename '_colony4/' basename '_FSS/' basename '_figures'];%Directory to save the output .mat file to.
+fluordir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/03312021_analysis/'  basename '_colony4/' basename '_FSS/' basename '_aligned']; 
 recrunch=0;
-frameAuto=[185:200]; %post lysis PBS perfusion (to calculate autofluorescence)
-multiScale=1;
-troubleshoot=3;
-fluorFrames=[10:105, 204:251, 301:346, 396:441, 489:535, 584:629]; %frames where FSS is perfused
-dotThresh=600; %this is the lightest pixel value of the dot during FSS perfusion
+%frameAuto=[185:200]; %post lysis *PBS perfusion (to calculate autofluorescence)
+troubleshoot=4;
+fluorFrames=[33:103]; %frames where FSS is perfused
+dotThresh=490; %this is the lightest pixel value of the dot during FSS perfusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==0;
     
@@ -48,8 +47,8 @@ if recrunch==0;
     ratio_av=nan(ncells, T);
 
     bgIntensity=nan(ncells, T);
-    bgAuto=[];
-    cellAuto=[];
+%     bgAuto=[];
+%     cellAuto=[];
     bgPixels=cell(ncells, T);
     Cin=nan(ncells, T);
     Cout=nan(ncells, T);
@@ -93,22 +92,22 @@ if recrunch==0;
             icell(n,t)=mean(im(pixels{n,t}));    
         end
          
-        if ismember(t, frameAuto)==1
-            bgAuto=[bgAuto bgIntensity(:, t)];
-            cellAuto=[cellAuto icell(:,t)];
-        end
+%         if ismember(t, frameAuto)==1
+%             bgAuto=[bgAuto bgIntensity(:, t)];
+%             cellAuto=[cellAuto icell(:,t)];
+%         end
         
     end
     
     %now take the mean of bgAuto
-    bgAuto_avg=mean(bgAuto,2, 'omitnan'); %take the temporal average
-    cellAuto_avg=mean(cellAuto,2, 'omitnan');
+%     bgAuto_avg=mean(bgAuto,2, 'omitnan'); %take the temporal average
+%     cellAuto_avg=mean(cellAuto,2, 'omitnan');
 
 for t=1:T
     
     %Subtract the autofluorescence from the raw intensity
-    Cout(:,t)=bgIntensity(:,t)-bgAuto_avg(:,1);
-    Cin(:,t)=icell(:,t)-cellAuto_avg(:,1);
+    Cout(:,t)=bgIntensity(:,t); %-bgAuto_avg(:,1);
+    Cin(:,t)=icell(:,t); %-cellAuto_avg(:,1);
     
 end
 
@@ -140,7 +139,9 @@ cd(savedir)
 save([basename '_BTfluo'])
 
 elseif recrunch==1
+    cd(savedir)
     load ([basename '_BTfluo'])
+    troubleshoot=0;
 end
 
 %% Troubleshooting
@@ -196,7 +197,22 @@ cd(fluordir);
      end
      imshow(im3), pause, close
    end
+   
+ elseif troubleshoot==4
+   cd(directory(T).folder)
+   
+   for n=1:ncells
+      
+    imagename=directory(T).name;
+    im3=imread(imagename);
      
+     figure, hold on
+     for t=1:T
+        im3(bgPixels{n,t})=max(max(im3));
+     end
+     imshow(im3, []), pause, close
+   end
+   
  end
 %% Plot FSS data
 cd(savedir)
@@ -210,7 +226,12 @@ end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-xline(240, '--', {'Membrane Lysis'})
+%xline(240, '--', {'Membrane Lysis'})
+xline(180, '--', {'*PBS'})
+xline(300, '--', {'*PBS + FSS'})
+xline(420, '--', {'*PBS + FSS + 6 mM Mg^{2+}'})
+% xline(420, '--', {'*PBS + FSS + 12.33 mM Mg^{2+}'})
+% xline(540, '--', {'*PBS + FSS + 20 mM Mg^{2+}'})
 ylim([-3 Inf])
 saveas(gcf, [basename,'_intensity.fig'])
 saveas(gcf, [basename,'_intensity.png'])
@@ -224,7 +245,12 @@ xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
 ylim([-3 Inf])
-xline(240, '--', {'Membrane Lysis'})
+%xline(240, '--', {'Membrane Lysis'})
+xline(180, '--', {'*PBS'})
+xline(300, '--', {'*PBS + FSS'})
+xline(420, '--', {'*PBS + FSS + 6 mM Mg^{2+}'})
+% xline(420, '--', {'*PBS + FSS + 12.33 mM Mg^{2+}'})
+% xline(540, '--', {'*PBS + FSS + 20 mM Mg^{2+}'})
 saveas(gcf, [basename,'_intensityAvg.fig'])
 saveas(gcf, [basename,'_intensityAvg.png'])
 
@@ -237,7 +263,12 @@ end
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
 fig2pretty
-xline(240, '--', {'Membrane Lysis'})
+%xline(240, '--', {'Membrane Lysis'})
+xline(180, '--', {'*PBS'})
+xline(300, '--', {'*PBS + FSS'})
+xline(420, '--', {'*PBS + FSS + 6 mM Mg^{2+}'})
+% xline(420, '--', {'*PBS + FSS + 12.33 mM Mg^{2+}'})
+% xline(540, '--', {'*PBS + FSS + 20 mM Mg^{2+}'})
 ylim([-3 Inf])
 saveas(gcf, [basename,'_Cout.fig'])
 saveas(gcf, [basename,'_Cout.png'])
@@ -247,8 +278,13 @@ figure, hold on, title('Cin-Cout vs Time')
 for n=1:ncells
     plot(time,Cin(n,:)-Cout(n,:))
 end
-xline(240, '--', {'Membrane Lysis'})
 %ylim([-3 Inf])
+%xline(240, '--', {'Membrane Lysis'})
+xline(180, '--', {'*PBS'})
+xline(300, '--', {'*PBS + FSS'})
+xline(420, '--', {'*PBS + FSS + 6 mM Mg^{2+}'})
+% xline(420, '--', {'*PBS + FSS + 12.33 mM Mg^{2+}'})
+% xline(540, '--', {'*PBS + FSS + 20 mM Mg^{2+}'})
 fig2pretty
 xlabel('Time (s)')
 ylabel('Intensity (A.U.)')
@@ -262,7 +298,12 @@ end
 xlabel('Time (s)')
 ylabel('Cellular Intensity/Background Intensity (A.U.)')
 fig2pretty
-xline(240, '--', {'Membrane Lysis'})
+%xline(240, '--', {'Membrane Lysis'})
+xline(180, '--', {'*PBS'})
+xline(300, '--', {'*PBS + FSS'})
+xline(420, '--', {'*PBS + FSS + 6 mM Mg^{2+}'})
+% xline(420, '--', {'*PBS + FSS + 12.33 mM Mg^{2+}'})
+% xline(540, '--', {'*PBS + FSS + 20 mM Mg^{2+}'})
 ylim([-3 Inf])
 saveas(gcf, [basename,'_ratio.fig'])
 saveas(gcf, [basename,'_ratio.png'])
@@ -274,7 +315,12 @@ ylabel('Cellular Intensity/Background Intensity (A.U.)')
 title('Average Intensity Ratio vs Time')
 fig2pretty
 ylim([-3 Inf])
-xline(240, '--', {'Membrane Lysis'})
+%xline(240, '--', {'Membrane Lysis'})
+xline(180, '--', {'*PBS'})
+xline(300, '--', {'*PBS + FSS'})
+xline(420, '--', {'*PBS + FSS + 6 mM Mg^{2+}'})
+% xline(420, '--', {'*PBS + FSS + 12.33 mM Mg^{2+}'})
+% xline(540, '--', {'*PBS + FSS + 20 mM Mg^{2+}'})
 saveas(gcf, [basename,'_ratioAvg.fig'])
 saveas(gcf, [basename,'_ratioAvg.png'])
 % 
