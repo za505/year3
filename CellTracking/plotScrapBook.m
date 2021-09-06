@@ -3,361 +3,223 @@
 
 clear, close all
 
-%% analysis of FITC-K diffusion into the cell
-% maindir=['/Users/zarina/Documents/MATLAB/MatlabReady/07232021_analysis'];
-% cd(maindir);
-% dataFiles=dir('*BTfluo.mat');
-% 
-% preRatio=[];
-% postRatio=[];
-% for f=1:height(dataFiles)
-%     load(dataFiles(f).name)
-%     preRatio=[preRatio; ratio{2}(:, 5:9)];
-%     postRatio=[postRatio; ratio{2}(:, 40:44)];
-% end
-% 
-% maxPre=max(preRatio,[],2);
-% maxPost=max(postRatio,[],2);
-% 
-% 
-% meanPre=mean(preRatio,2);
-% meanPost=mean(postRatio,2);
-% 
-% x=[zeros(1, height(maxPre)), ones(1, height(maxPost))];
-% y=[maxPre',maxPost'];
-% 
-% figure
-% scatter(x,y)
-% ylabel('Ratio');
-% xlim([-0.5, 1.5])
-% title('Intensity Ratio Pre- and Post-Proteinase K Treatment')
-% xticklabels({'', 'Pre-Proteinase Treatment', '', 'Post-Proteinase Treatment', ''});
-% 
-% cd(maindir);
-% saveas(gcf,gcf, 'maxRatios.png')
-% saveas(gcf,gcf, 'maxRatios.fig')
-% close
-% 
-% h1=histogram(maxPre'), hold on
-% h2=histogram(maxPost')
-% title('Intensity Ratio Pre- and Post-Proteinase K Treatment')
-% xlabel('Max Ratio')
-% cd(maindir);
-% saveas(gcf,gcf, 'maxHist.png')
-% saveas(gcf,gcf, 'maxHist.fig')
-% 
-% pause, close
-% 
-% h1=histogram(meanPre'), hold on
-% h2=histogram(meanPost')
-% pause, close
-% 
-% %% Separate analysis
-% %%User Input
-% basename='07222021_Exp2';%Name of the image stack, used to save file.
-% dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony1/' basename '_phase/' basename '_aligned'];%Directory that the image stack is saved in.
-% dirsave=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
-% cd(dirsave)
-% load([basename '_BTphase'], 'T', 'pixels', 'time', 'ncells')
-% 
-% tidx=17;
-% 
-% cd(dirname);
-% directory=dir('*.tif');
-% 
-% cell_temp=nan(ncells, T-tidx+1);
-% icell=[];
-%  for t=tidx:T       
-%     j=t-tidx+1;        
-%     imagename=directory(t).name;
-%     im=imread(imagename);
-% 
-%     for n=1:ncells
-%         cell_temp(n,j)=mean(im(pixels{n,t}));
-%     end
-% 
-%  end
-%  
-%  icell=[icell; cell_temp];
-%  
-% dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony2/' basename '_phase/' basename '_aligned'];
-% dirsave=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony2/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
-% cd(dirsave)
-% load([basename '_BTphase'], 'T', 'pixels', 'time', 'ncells')
-%  
-% cd(dirname);
-% directory=dir('*.tif');
-% 
-% cell_temp=nan(ncells, T-tidx+1);
-%  for t=tidx:T       
-%     j=t-tidx+1;         
-%     imagename=directory(t).name;
-%     im=imread(imagename);
-% 
-%     for n=1:ncells
-%         cell_temp(n,j)=mean(im(pixels{n,t}));
-%     end
-% 
-%  end
-%  
-% icell=[icell; cell_temp];
-% 
-% dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony3/' basename '_phase/' basename '_aligned'];
-% dirsave=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
-% cd(dirsave)
-% load([basename '_BTphase'], 'T', 'pixels', 'time', 'ncells')
-%  
-% cd(dirname);
-% directory=dir('*.tif');
-% 
-% cell_temp=nan(ncells, T-tidx+1);
-%  for t=tidx:T       
-%     j=t-tidx+1;         
-%     imagename=directory(t).name;
-%     im=imread(imagename);
-% 
-%     for n=1:ncells
-%         cell_temp(n,j)=mean(im(pixels{n,t}));
-%     end
-% 
-%  end
-%  
-% icell=[icell; cell_temp];
-% 
-% dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony4/' basename '_phase/' basename '_aligned'];
-% dirsave=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07222021_analysis/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
-% cd(dirsave)
-% load([basename '_BTphase'], 'T', 'pixels', 'time', 'ncells')
-%  
-% cd(dirname);
-% directory=dir('*.tif');
-% 
-% cell_temp=nan(ncells, T-tidx+1);
-%  for t=tidx:T       
-%     j=t-tidx+1;         
-%     imagename=directory(t).name;
-%     im=imread(imagename);
-% 
-%     for n=1:ncells
-%         cell_temp(n,j)=mean(im(pixels{n,t}));
-%     end
-% 
-%  end
-%  
-% icell=[icell; cell_temp];
-% 
-% figure, hold on
-% for n=1:height(icell)
-%     plot(time(tidx:end)-time(tidx), icell(n,:))
-% end
-% %xline(time(tidx), '--', {'post-lysis'})
-% ylim([0, Inf])
-% xlabel('Time (s)')
-% ylabel('Intensity (A.U.)')
-% title('Loss of Phase Contrast Post-Lysis')
-% saveas(gcf,gcf, '07222021_Exp2_phaseLoss.fig')
-% saveas(gcf,gcf, '07222021_Exp2_phaseLoss.png')
+%% user input
 datadir="/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis";
 dirsave="/Users/zarina/Downloads/NYU/Year3_2021_Fall/presentations/09062021";
-% %%
-% cd(datadir)
-% load("07162021_Exp3_colony2_dm.mat")
-% colony2_LBa=dataTable(dataTable.halfie==0, 3);
-% colony2_LBa=table2array(colony2_LBa);
-% 
-% load("07162021_Exp3_colony3_dm.mat")
-% colony3_LBa=dataTable(dataTable.halfie==0, 3);
-% colony3_LBa=table2array(colony3_LBa);
-% 
-% figure(1), hold on
-% plot(time, colony2_LBa, '-r')
-% plot(time, colony3_LBa, '-b')
-% xlabel('Time')
-% ylabel('Normalized Fluorescence')
-% title('LB, fr=2 min')
-% cd(dirsave)
-% saveas(gcf,'LBa_positions.png');
-% saveas(gcf,'LBa_positions.fig');
-% % close
-% % 
-% % norm_green=[colony2_LBa; colony3_LBa];
-% % fitScore_LBa=expFitting(norm_green, time);
-% %%
-% cd(datadir)
-% load("08262021_Exp1_colony1_dm.mat")
-% colony1_LBb=dataTable(dataTable.halfie==0, 3);
-% colony1_LBb=table2array(colony1_LBb);
-% 
-% load("08262021_Exp1_colony2_dm.mat")
-% colony2_LBb=dataTable(dataTable.halfie==0, 3);
-% colony2_LBb=table2array(colony2_LBb);
-% 
-% load("08262021_Exp1_colony3_dm.mat")
-% colony3_LBb=dataTable(dataTable.halfie==0, 3);
-% colony3_LBb=table2array(colony3_LBb);
-% 
-% load("08262021_Exp1_colony4_dm.mat")
-% colony4_LBb=dataTable(dataTable.halfie==0, 3);
-% colony4_LBb=table2array(colony4_LBb);
-% 
-% load("08262021_Exp1_colony5_dm.mat")
-% colony5_LBb=dataTable(dataTable.halfie==0, 3);
-% colony5_LBb=table2array(colony5_LBb);
-% 
-% load("08262021_Exp1_colony6_dm.mat")
-% colony6_LBb=dataTable(dataTable.halfie==0, 3);
-% colony6_LBb=table2array(colony6_LBb);
-% 
-% figure(2), hold on
-% plot(time, colony1_LBb, '-m')
-% plot(time, colony2_LBb, '-c')
-% plot(time, colony3_LBb, '-r')
-% plot(time, colony4_LBb, '-g')
-% plot(time, colony5_LBb, '-b')
-% plot(time, colony6_LBb, '-k')
-% xlabel('Time')
-% ylabel('Normalized Fluorescence')
-% title('LB, fr=1 min')
-% cd(dirsave)
-% saveas(gcf,'LBb_positions.png');
-% saveas(gcf,'LBb_positions.fig');
-% %%
-% cd(datadir)
-% load("07162021_Exp4_colony1_dm.mat")
-% colony1_EDTA=dataTable(dataTable.halfie==0, 3);
-% colony1_EDTA=table2array(colony1_EDTA);
-% 
-% load("07162021_Exp4_colony2_dm.mat")
-% colony2_EDTA=dataTable(dataTable.halfie==0, 3);
-% colony2_EDTA=table2array(colony2_EDTA);
-% 
-% load("07162021_Exp4_colony3_dm.mat")
-% colony3_EDTA=dataTable(dataTable.halfie==0, 3);
-% colony3_EDTA=table2array(colony3_EDTA);
-% 
-% load("07162021_Exp4_colony4_dm.mat")
-% colony4_EDTA=dataTable(dataTable.halfie==0, 3);
-% colony4_EDTA=table2array(colony4_EDTA);
-% 
-% figure(3), hold on
-% plot(time, colony1_EDTA, '-r')
-% plot(time, colony2_EDTA, '-g')
-% plot(time, colony3_EDTA, '-b')
-% plot(time, colony4_EDTA, '-c')
-% xlabel('Time')
-% ylabel('Normalized Fluorescence')
-% title('EDTA, fr=2 min')
-% cd(dirsave)
-% saveas(gcf,'EDTA_positions.png');
-% saveas(gcf,'EDTA_positions.fig');
-% 
-% cd(datadir)
-% load("07152021_Exp1_colony1_dm.mat")
-% colony1_Mg=dataTable(dataTable.halfie==0, 3);
-% colony1_Mg=table2array(colony1_Mg);
-% 
-% load("07152021_Exp1_colony2_dm.mat")
-% colony2_Mg=dataTable(dataTable.halfie==0, 3);
-% colony2_Mg=table2array(colony2_Mg);
-% 
-% load("07152021_Exp1_colony3_dm.mat")
-% colony3_Mg=dataTable(dataTable.halfie==0, 3);
-% colony3_Mg=table2array(colony3_Mg);
-% 
-% figure(4), hold on
-% plot(time, colony1_Mg, '-r')
-% plot(time, colony2_Mg, '-c')
-% plot(time, colony3_Mg, '-b')
-% xlabel('Time')
-% ylabel('Normalized Fluorescence')
-% title('Mg, fr=2 min')
-% cd(dirsave)
-% saveas(gcf,'Mg_positions.png');
-% saveas(gcf,'Mg_positions.fig');
 
-%%
+data = struct('experiment', [], 'colony', struct('norm_green', [], 'time', [], 'a', [], 'b', [], 'c', [], 'd', [], 'fitModel', []));
 cd(datadir)
-load("08272021_Exp1_colony1_dm.mat")
-colony1_PBS=dataTable(dataTable.halfie==0, 3);
-colony1_PBS=table2array(colony1_PBS);
+cutoff=13;
 
-load("08272021_Exp1_colony2_dm.mat")
-colony2_PBS=dataTable(dataTable.halfie==0, 3);
-colony2_PBS=table2array(colony2_PBS);
+%% LB, frame rate = 2
+data(1).experiment = '07162021_Exp3';
+load("07162021_Exp3_colony2_dm.mat", 'dataTable', 'time')
+norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(1).colony(1).norm_green = norm_green(:, cutoff:end);
+time = time-time(1);
+data(1).colony(1).time = time(cutoff:end);
 
-load("08272021_Exp1_colony3_dm.mat")
-colony3_PBS=dataTable(dataTable.halfie==0, 3);
-colony3_PBS=table2array(colony3_PBS);
+load("07162021_Exp3_colony3_dm.mat", 'dataTable')
+norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(1).colony(2).norm_green = norm_green(:, cutoff:end);
+data(1).colony(2).time = time(cutoff:end);
 
-figure(5), hold on
-plot(time, colony1_PBS, '-r')
-plot(time, colony2_PBS, '-c')
-plot(time, colony3_PBS, '-b')
-xlabel('Time')
-ylabel('Normalized Fluorescence')
-title('PBS, fr=1 min')
+%% LB, frame rate = 1
+data(2).experiment = '08262021_Exp1';
+load("08262021_Exp1_colony1_dm.mat", 'dataTable', 'time')
+data(2).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(2).colony(1).time = time;
+
+load("08262021_Exp1_colony2_dm.mat", 'dataTable', 'time')
+data(2).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(2).colony(2).time = time;
+ 
+load("08262021_Exp1_colony3_dm.mat", 'dataTable', 'time')
+data(2).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(2).colony(3).time = time;
+
+load("08262021_Exp1_colony4_dm.mat", 'dataTable', 'time')
+data(2).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(2).colony(4).time = time;
+
+load("08262021_Exp1_colony5_dm.mat", 'dataTable', 'time')
+data(2).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(2).colony(5).time = time;
+
+load("08262021_Exp1_colony6_dm.mat", 'dataTable', 'time')
+data(2).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(2).colony(6).time = time;
+
+%% EDTA
+data(3).experiment = '07162021_Exp4';
+load("07162021_Exp4_colony1_dm.mat", 'dataTable', 'time')
+data(3).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(3).colony(1).time = time-time(1);
+
+% load("07162021_Exp4_colony2_dm.mat", 'dataTable', 'time')
+% data(3).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+% data(3).colony(2).time = time;
+
+load("07162021_Exp4_colony3_dm.mat", 'dataTable', 'time')
+data(3).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(3).colony(3).time = time-time(1);
+
+load("07162021_Exp4_colony4_dm.mat", 'dataTable', 'time')
+data(3).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(3).colony(4).time = time-time(1);
+
+%% Mg2+
+data(4).experiment = '07152021_Exp1';
+load("07152021_Exp1_colony1_dm.mat", 'dataTable', 'time')
+data(4).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(4).colony(1).time = time-time(1);
+
+load("07152021_Exp1_colony2_dm.mat", 'dataTable', 'time')
+data(4).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(4).colony(2).time = time-time(1);
+
+load("07152021_Exp1_colony3_dm.mat", 'dataTable', 'time')
+data(4).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(4).colony(3).time = time-time(1);
+%% PBS, frame rate = 1
+data(5).experiment = '08272021_Exp1';
+
+load("08272021_Exp1_colony1_dm.mat", 'dataTable', 'time')
+data(5).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(5).colony(1).time = time;
+
+load("08272021_Exp1_colony2_dm.mat", 'dataTable', 'time')
+data(5).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(5).colony(2).time = time;
+
+load("08272021_Exp1_colony3_dm.mat", 'dataTable', 'time')
+data(5).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(5).colony(3).time = time;
+
+load("08272021_Exp1_colony4_dm.mat", 'dataTable', 'time')
+data(5).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(5).colony(4).time = time;
+
+load("08272021_Exp1_colony5_dm.mat", 'dataTable', 'time')
+data(5).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(5).colony(5).time = time;
+
+load("08272021_Exp1_colony6_dm.mat", 'dataTable', 'time')
+data(5).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(5).colony(6).time = time;
+
+%% fit curves
+for i=1:length(data)
+    for j=1:length(data(i).colony)
+        [data(i).colony(j).a, data(i).colony(j).b, data(i).colony(j).c, data(i).colony(j).d, data(i).colony(j).fitModel] = expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
+    end
+end
+
+%% plot data
+xdata = [0:180];
+for i=1:length(data)
+    for j=1:length(data(i).colony)
+%             figure(1), hold on
+%             histogram(data(i).colony(j).a),
+%             histogram(data(i).colony(j).c)
+%             legend({'a', 'c'})
+%             hold off 
+%             
+%             figure(2), hold on
+%             histogram(data(i).colony(j).b), 
+%             histogram(data(i).colony(j).d)
+%             legend({'b', 'd'})
+%             hold off
+            
+%             figure(3), hold on
+%             for k=1:length(data(i).colony(j).fitModel)
+%                 if isempty(data(i).colony(j).norm_green(k,:))==0 & isnan(data(i).colony(j).norm_green(k,:))==0
+%                     plot(data(i).colony(j).fitModel{k,1}, data(i).colony(j).time, data(i).colony(j).norm_green(k,:));
+%                     title([data(i).experiment, ', colony ', num2str(j)])
+%                     legend('off')
+%                 end
+%             end
+%             pause, close all
+%             
+              figure(4), hold on
+              for k=1:length(data(i).colony(j).fitModel)
+                if isnan(data(i).colony(j).norm_green(k,:))==0
+                  ydata = data(i).colony(j).fitModel{k,1}(xdata);
+                if i==1
+                  plot(xdata, ydata, '-r')
+                elseif i==2
+                  plot(xdata, ydata, '-b')
+                elseif i==3
+                    plot(xdata, ydata, '-m')
+                elseif i==4
+                    plot(xdata, ydata, '-c')
+                elseif i==5
+                    plot(xdata, ydata, '-g')
+                end
+                
+              title('Intensity vs Time, red=LB, blue=LB2, magenta=EDTA, cyan=Mg2+, green=PBS')
+              %pause, close all    
+                end
+              end
+              
+    end
+end
+%% save data
 cd(dirsave)
-saveas(gcf,'PBS_positions.png');
-saveas(gcf,'PBS_positions.fig');
+save('fitting.mat')
 
-%%
-%comparison
-% figure(6), hold on
-% plot(time, colony1_LBb(:,2:end), '-r')
-% plot(time, colony2_LBb(:, 2:end), '-r')
-% plot(time, colony3_LBb(:, 2:end), '-r')
-% plot(time, colony4_LBb(:, 2:end), '-r')
-% plot(time, colony5_LBb(:, 2:end), '-r')
-% plot(time, colony6_LBb(:, 2:end), '-r')
-% plot(time, colony1_PBS, '-b')
-% plot(time, colony2_PBS, '-b')
-% plot(time, colony3_PBS, '-b')
-% xlabel('Time')
-% ylabel('Normalized Fluorescence')
-% title('Diffusion of LB (red) and PBS (blue) treated cells, fr=1 min')
-% cd(dirsave)
-% saveas(gcf,'LB_PBS_compare.png');
-% saveas(gcf,'LB_PBS_compare.fig');
-
-%% Fit curves
-close all
-
-norm_green = [colony1_PBS; colony2_PBS; colony3_PBS];
-fitScore=expFitting(norm_green, time)
-
-% [iM, iN]=size(im);
-% canvas=zeros(iM, iN);
-% 
-% for n=1:ncells
-%     
-%     tiledlayout(1,2);
-%     frame=canvas;
-%     frame(pixels{n,T})=1;
-%     %frame=uint16(frame);
-%     
-%     nexttile
-%     imshow(frame)
-%     
-%     nexttile
-%     plot(time, norm_green(n,:))
-%     
-%     pause, close
-% end
-
+%% individual experiment plots
+for i=1 %1:length(data)
+    for j=1:length(data(i).colony)
+            figure(1), hold on
+            for k=1:length(data(i).colony(j).fitModel)
+                if isempty(data(i).colony(j).norm_green(k,:))==0 & isnan(data(i).colony(j).norm_green(k,:))==0
+                    %plot(data(i).colony(j).fitModel{k,1}, data(i).colony(j).time, data(i).colony(j).norm_green(k,:));
+                    plot(data(i).colony(j).time, data(i).colony(j).norm_green(k,:));
+                    title([data(i).experiment, ', colony ', num2str(j)])
+                    legend('off')
+                end
+            end
+            pause, close all
+    end
+end
 %% functions
-function [a, b, c, d] = expFitting(norm_green, time)
-    fitScore=nan(height(norm_green), 1);
+% [a, b, c, d, fitScore]=expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
+
+function [a, b, c, d, fitModel] = expFitting(norm_green, time)
+
+    fitModel=cell(height(norm_green), 1);
+    a=nan(height(norm_green), 1);
+    b=nan(height(norm_green), 1);
+    c=nan(height(norm_green), 1);
+    d=nan(height(norm_green), 1);
+    %fitScore=nan(height(norm_green), 1);
+    
     for n=1:height(norm_green)
         if isnan(norm_green(n, 1))==0
             [xData, yData]=prepareCurveData(time, norm_green(n,:));
-            figure
-            f=fit(xData, yData, 'exp2'); %fit to a linear exponential
-            plot(f, xData, yData)
-            prompt = 'Q1: Is this a good fit? 0=No, 1=Yes ';
-            fitScore(n) = input(prompt);
-            close
+            %figure
+            fitModel{n,1}=fit(xData, yData, 'exp2'); %fit to a linear exponential
+            
+            %if isnan(fitModel{n,1})==0    
+                a(n,1) = fitModel{n,1}.a;
+                b(n,1) = fitModel{n,1}.b;
+                c(n,1) = fitModel{n,1}.c;
+                d(n,1) = fitModel{n,1}.d;
+    %             plot(f{n,1}, xData, yData)
+    %             prompt = 'Q1: Is this a good fit? 0=No, 1=Yes ';
+    %             fitScore(n,1) = input(prompt);
+    %             close
+            %else
+             %   fitModel{n,1}=NaN;
+            %end
         else
-            fitScore(n)=NaN;
+            fitModel{n,1}=NaN;
+            %fitScore(n,1)=NaN;
+            a(n,1)=NaN;
+            b(n,1)=NaN;
+            c(n,1)=NaN;
+            d(n,1)=NaN;    
         end
     end
 end
