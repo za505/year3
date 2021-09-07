@@ -104,6 +104,16 @@ imN=imn;
 
 cim=nan(imM,imN);
 
+y=1:imM; %rows are the y direction
+x=1:imN; %columns are the x direction
+[X,Y] = meshgrid(x,y);
+
+total_pix=nan(ncells,T);
+A_xv=cell(ncells,T);
+A_yv=cell(ncells,T);
+A_in=cell(ncells,T);
+A_on=cell(ncells,T);
+
 percent_plas_cyto=cell(ncells,T);
 plasm_cyto=nan(ncells, T);
 percent_plasmolysis_cyto=nan(ncells,T);
@@ -125,7 +135,7 @@ for t=1:T
     img=norm16bit(img,ppix);
     
     if isempty(B{n,t})==0
-    %overlay TADA boundaries
+    %overlay TADA Bdaries
     figure
     imshow(img, [])
     hold on
@@ -137,7 +147,7 @@ for t=1:T
     pause, close
     
     %threshold so lower pixel values are set to 0
-    gfpThresh=42000;
+    gfpThresh=37000;
     
     for j=1:imN
         for i=1:imM
@@ -169,7 +179,10 @@ for t=1:T
     pause, close
     
     for n=1:ncells
-        
+        A_xv{n,t}=B{n,t}(:,1);%total B
+        A_yv{n,t}=B{n,t}(:,2);%total B
+        [A_in{n,t},A_on{n,t}] = inpolygon(X,Y,A_xv{n,t},A_yv{n,t});%total B
+        total_pix(n,t)=sum(sum(A_in{n,t}));%total number of pixels within boundary
         percent_plas_cyto{n,t}=double(cim)-A_in{n,t};
         
         for j=1:imN %x direction
@@ -182,7 +195,7 @@ for t=1:T
         
         for j=1:imN %x direction
             for i=1:imM %y direction
-                if percent_plas_cyto{n,t}(i,j)<0
+                if percent_plas_cyto{n,t}(i,j)<=0
                     percent_plas_cyto{n,t}(i,j)=NaN;
                 elseif percent_plas_cyto{n,t}(i,j)>0
                     percent_plas_cyto{n,t}(i,j)=1;   
@@ -195,7 +208,7 @@ for t=1:T
         plasm_cyto(n,t)=sum(nansum(percent_plas_cyto{n,t}(:,:)));
         percent_plasmolysis_cyto(n,t)=100-(plasm_cyto(n,t)/total_pix(n,t))*100;
     end
-
+  
     for n=1:ncells
         for j=1:imN %x direction
             for i=1:imM %y direction
@@ -207,6 +220,7 @@ for t=1:T
     end
     
     imshow(cyto{1,t}, []), pause
+    
     else
         continue
     end
@@ -217,14 +231,14 @@ cd(savedir)
 % % open(v);
 % 
 % for t=1:T
-%     intensity2{1,t}=ones(size(boun{1,t},1),2);
+%     intensity2{1,t}=ones(size(B{1,t},1),2);
 %     intensity2{1,t}=intensity{1,t}*2000;
 % end
 % 
 % figure
 % hold on
 % for t=1:T
-%     plot3(boun{1,t}(:,1),boun{1,t}(:,2),intensity2{1,t})
+%     plot3(B{1,t}(:,1),B{1,t}(:,2),intensity2{1,t})
 %     hold on
 %     t=surf(X,Y,cyto{1,t})
 %     rotate3d on;

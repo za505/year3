@@ -20,14 +20,14 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='07162021_Exp4';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07162021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07162021_analysis/' basename '/' basename '_colony4/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07162021_analysis/' basename '/' basename '_colony4/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='08272021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
 troubleshoot=2;
-tidx=9;
+tidx=12; %the first fluor image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
@@ -44,9 +44,17 @@ else
     load([basename '_BTphase'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
-    icell_green=nan(ncells, T-tidx+1);
-    norm_green=nan(ncells, T-tidx+1);
-    time=time(tidx:end)./60;
+    if tidx==1
+        icell_green=nan(ncells, T);
+        norm_green=nan(ncells, T);
+        time=time(tidx:end)./60;
+        time=time-time(1);
+    else
+        icell_green=nan(ncells, T-tidx+1);
+        norm_green=nan(ncells, T-tidx+1);
+        time=time(tidx:end)./60;
+        time=time-time(1);
+    end
     
     for i=1:length(channels)
         
@@ -100,7 +108,7 @@ elseif troubleshoot==2
     cd(channels{1});
      for k=1:ncells
             k
-            imagename=fluo_directory{1}(T).name;
+            imagename=fluo_directory{1}(tidx).name;
             im=imread(imagename);
 
 
@@ -121,7 +129,7 @@ end
 
 %% Does only half the cell lose fluor?
 %halfie=nan(ncells, 1);
-n_halfie=[1,2,3,5,6,9,12,16,17];
+n_halfie=[];
 halfie=ismember([1:ncells], n_halfie)';
 % cd(channels{1}); 
 % 
@@ -188,7 +196,7 @@ if replot==1
     end
     %xline(tpt, '--', {'Membrane Lysis'})
     title('Normalized Intensity of mNeonGreen vs Time')
-    subtitle('blue = halved','Color','blue')
+    %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
     saveas(gcf, [basename,'_normGreen.fig'])
@@ -210,7 +218,7 @@ if replot==1
     end
     %xline(tpt, '--', {'Membrane Lysis'})
     title('Cell Length vs Time')
-    subtitle('blue = halved','Color','blue')
+    %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Length (\mum)')
     saveas(gcf, [basename,'_LTGreen.fig'])
@@ -232,7 +240,7 @@ if replot==1
     end
     %xline(tpt, '--', {'Membrane Lysis'})
     title('Intensity of mNeonGreen vs Time')
-    subtitle('blue = halved','Color','blue')
+    %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
     saveas(gcf, [basename,'_fullGreen.fig'])

@@ -20,8 +20,8 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='07092021_Exp1';
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07092021_analysis/' basename '/' basename '_erased'];
+basename='08272021_Exp1';
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_erased'];
 %mirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/PlasmolysisTrack_test/' basename '_phase/'  basename '_erased'];
 split=0; %there is a break in the movie
 %split1=24; %first frame for segment 2
@@ -36,7 +36,7 @@ path(dirname,path)
 
 %Pick the regions to erase    
     %load image
-    imagename=directory(1).name;
+    imagename=directory(T).name;
     im1=imread(imagename);
     [imM,imN]=size(im1);
 
@@ -156,6 +156,8 @@ for t=1:T
         [imcounts,bins]=hist(double(nonzeros(im1)));
         [~,mpos]=max(imcounts);
         val=bins(mpos);
+        %maxval=bins(end-3);
+        %val=maxval;
         im(rp1(n,2):rp2(n,2),rp1(n,1):rp2(n,1))=val*ones(rp2(n,2)-rp1(n,2)+1,rp2(n,1)-rp1(n,1)+1);
         delete(imagename);
         imwrite(im,imagename);

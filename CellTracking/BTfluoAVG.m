@@ -29,12 +29,12 @@ B=length(basename);%number of main directories to analyze
 if recrunch==0
     
 %load the time variables
-base=char(basename(1))
+base=char(basename(2))
 cd([filename '/' base '/' base channel '/' base '_figures'])
 filelist{1}=dir([base '_BTfluo.mat']);
 T = cell2mat(struct2cell(load([filelist{1}.name],'T')));
 time = cell2mat(struct2cell(load([filelist{1}.name],'time')));
-time = cell2mat(struct2cell(load([filelist{1}.name],'tmid')));
+tmid = cell2mat(struct2cell(load([filelist{1}.name],'tmid')));
 frameAuto = cell2mat(struct2cell(load([filelist{1}.name],'frameAuto')));
 frameInitial = cell2mat(struct2cell(load([filelist{1}.name],'frameInitial')));
 xlabels = struct2cell(load([filelist{1}.name],'xlabels'));
@@ -73,8 +73,7 @@ for b=1:B
     temp=struct2cell(load([filelist{b}.name],'cellIntensity'));
     ratio_temp=struct2cell(load([filelist{b}.name],'ratio'));
     Iin_temp=struct2cell(load([filelist{b}.name],'Iin'));
-    Irate_temp=struct2cell(load([filelist{b}.name],'Irate'));
-    
+
     %let's get all the raw intensities, adj intensities, and ratios in one place
     temp=temp{1,1};
     cellIntensity=[cellIntensity; temp];
@@ -84,9 +83,6 @@ for b=1:B
     
     Iin_temp=Iin_temp{1,1};
     Iin=[Iin; Iin_temp];
-    
-    Irate_temp=Irate_temp{1,1};
-    Irate=[Irate; Irate_temp];
   
 end
     
@@ -106,8 +102,15 @@ avgRatio = mean(ratio, 'omitnan');
 stdRatio = std(ratio, 'omitnan');
 
 %let's calulcate the population average intensity rate 
-avgRate = mean(Irate, 'omitnan');
-stdRate = std(Irate, 'omitnan');
+%calculate Intencity Rate
+Irate=(ratio(:, 2:end)-ratio(:, 1:end-1))./((ratio(:, 1:end-1)+ratio(:, 2:end))/2);
+deltat=repelem(10, T-1);
+for i=1:height(Irate)
+    Irate(i, :)=Irate(i, :)./deltat;
+end
+
+avgIrate = mean(Irate, 1, 'omitnan');
+stdIrate = std(Irate, 0, 1, 'omitnan');
 
 %change directory
 cd(filename);
@@ -152,15 +155,15 @@ figure, hold on
 title('Intensity/Background vs Time')
 xlabel('Time (s)')
 ylabel('Intensity/Background')
-ylim([0 Inf])
+ylim([0 1])
 fig2pretty
-yline(1, '--k')
-for x=1:length(xlabels)
-    xline(xswitch(x), '--k', xlabels(x)) 
+%yline(1, '--k')
+for x=1:length(xswitch)
+   xline(xswitch(x), '--k') 
 end
 ciplot(avgRatio - stdRatio, avgRatio + stdRatio, time, [0.75 0.75 1])
 plot(time, avgRatio, '-r') 
-saveas(gcf, ['avgRatio' channel '.png'])
+%saveas(gcf, ['avgRatio' channel '.png'])
 
 %and finally average intensity rate
 figure, hold on
@@ -169,11 +172,10 @@ xlabel('Time (s)')
 ylabel('Intensity/Background')
 ylim([0 Inf])
 fig2pretty
-yline(1, '--k')
 for x=1:length(xlabels)
     xline(xswitch(x), '--k', xlabels(x)) 
 end
-ciplot(avgIrate - stdIrate, avgIrate + stdIrate, time, [0.75 0.75 1])
+ciplot(avgIrate - stdIrate, avgIrate + stdIrate, tmid, [0.75 0.75 1])
 plot(tmid, avgIrate, '-r') 
 saveas(gcf, ['avgRatio' channel '.png'])
 

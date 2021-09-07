@@ -15,14 +15,18 @@ cutoff=13;
 data(1).experiment = '07162021_Exp3';
 load("07162021_Exp3_colony2_dm.mat", 'dataTable', 'time')
 norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(1).colony(1).norm_green = norm_green(:, cutoff:end);
+%data(1).colony(1).norm_green = norm_green(:, cutoff:end);
+data(1).colony(1).norm_green = norm_green;
 time = time-time(1);
-data(1).colony(1).time = time(cutoff:end);
+%data(1).colony(1).time = time(cutoff:end);
+data(1).colony(1).time = time;
 
 load("07162021_Exp3_colony3_dm.mat", 'dataTable')
 norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(1).colony(2).norm_green = norm_green(:, cutoff:end);
-data(1).colony(2).time = time(cutoff:end);
+%data(1).colony(2).norm_green = norm_green(:, cutoff:end);
+data(1).colony(2).norm_green = norm_green;
+%data(1).colony(2).time = time(cutoff:end);
+data(1).colony(2).time = time;
 
 %% LB, frame rate = 1
 data(2).experiment = '08262021_Exp1';
@@ -146,18 +150,19 @@ for i=1:length(data)
                 if isnan(data(i).colony(j).norm_green(k,:))==0
                   ydata = data(i).colony(j).fitModel{k,1}(xdata);
                 if i==1
-                  plot(xdata, ydata, '-r')
+                  %plot(xdata, ydata, '-g')
                 elseif i==2
-                  plot(xdata, ydata, '-b')
+                  plot(xdata, ydata, '-r')
                 elseif i==3
-                    plot(xdata, ydata, '-m')
+                    %plot(xdata, ydata, '-m')
                 elseif i==4
-                    plot(xdata, ydata, '-c')
+                    %plot(xdata, ydata, '-c')
                 elseif i==5
-                    plot(xdata, ydata, '-g')
+                    plot(xdata, ydata, '-b')
                 end
                 
-              title('Intensity vs Time, red=LB, blue=LB2, magenta=EDTA, cyan=Mg2+, green=PBS')
+              %title('Intensity vs Time, red=LB, blue=LB2, magenta=EDTA, cyan=Mg2+, green=PBS')
+              title('Intensity vs Time, red=LB, blue=PBS')
               %pause, close all    
                 end
               end
@@ -180,7 +185,7 @@ for i=1 %1:length(data)
                     legend('off')
                 end
             end
-            pause, close all
+            %pause, close all
     end
 end
 %% functions

@@ -26,10 +26,9 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='03082021_Exp3_colony3';
-dirname={['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_647/'  basename '_full'];
-      ['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_phase/'  basename '_full']};
-regname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/PlasmolysisTrack_test/' basename '_647/'  basename '_crop']; 
+basename='08272021_Exp1';
+dirname={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_full']; ['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_mNeonGreen/' basename '_full']};
+regname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_crop']; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 workdir=pwd;
@@ -61,29 +60,29 @@ for i=1:ld
         count=count+1;
         pd=count/tf*100;
         pds=sprintf(['%4.1f'],pd);
-        [pds '%'] %not sure what this part of the code does, or what pds stands for
-        
+        [pds '%'] 
+
         imagename=directory(t).name;
         TestIm=imread([regname '/' imagename]);
-        
+
         [output NewImFT]=dftregistration(fft2(RefIm),fft2(TestIm),10);
         NewIm=abs(ifft2(NewImFT));
-        
+
         shft(t+1,1)=output(3);
         shft(t+1,2)=output(4);
-        
+
         imagename=directory2(t).name;
-        
+
         I=imread([dirname{i} '/' imagename]);
         [counts,bins]=imhist(I);
         [~,maxpos]=max(counts);
         padcolor=bins(maxpos);
-        
+
         I=imtranslate(I,shft(t+1,:),padcolor);
-      
+
         b=sprintf(['%4.4d'],t);  
         savename=[basename '_a' b '.tif'];
-        
+
         imwrite(I,savename);
     end
 end

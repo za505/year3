@@ -39,27 +39,30 @@
 
 clear
 close all
-cd /Users/dylanfitzmaurice/Documents/MATLAB/
+%cd /Users/dylanfitzmaurice/Documents/MATLAB/
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
 
 %File Parameters
-basename='FC1_062421_P4';%Name to save the file to
+basename='05262021_Exp1';%Name to save the file to
 skp=[];%frames to skip
-dirname=['/Users/dylanfitzmaurice/Documents/MATLAB//Matlab Ready/' basename '/' basename '_2_a_crop'];%directory where the imagestack is saved
-metaname=['/Matlab Ready/' basename '/' basename '.txt'];%full pathname of the metadata file
+dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_TADA'];%directory where the imagestack is saved
+imdir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_gfp'];%directory where the imagestack is saved
+savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_figures'];
+%metaname=['/Matlab Ready/' basename '/' basename '.txt'];%full pathname of the metadata file
 
 %Tracking Parameters
 ll=0.35;%parameter used to enhance contrast of image before performing edge detection % default=0.35
-ppix=0.9;%percent of pixels to saturate during normalization default=0.6, %0.26 FOR GFP
-cutL=0.7;%low threshold for edge detector default=0.7
+ppix=0.4;%percent of pixels to saturate during normalization default=0.6, %0.26 FOR GFP
+cutL=0.5;%low threshold for edge detector default=0.7
 cutH=1;%high threshold for edge detector default=1
 dr=1;%radius of structure element to perform morphological operations
 
 %Analysis Parameters
 lscale=0.08;%Microns per pixel
-tscale=10;%Time between frames %Default=30
+multiscale=0; 
+tscale=120;%Time between frames %Default=30
 minA=1;%Minimum cell area %Default=20
 maxI=70000;%Maximum cell intensity
 minW=0.1;%Minimum cell width
@@ -70,9 +73,11 @@ maxD=10;%Maximum cell width
 %Other Parameters
 recrunch=0;%whether or not to re-plot a file using new analysis parameters
 plotcells=1;%whether or not to visualize the tracking
+troubleshoot=1; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if recrunch==1
+    cd(savedir);
     load([basename '_WT'],'-regexp','^(?!lscale$|tscale$|minA$|maxI$|minW$|maxW$|minL$|maxD$).')
 else
 
@@ -95,15 +100,11 @@ l=zeros(1,T);
 w=zeros(1,T);
 boun=cell(1,T);
 
-if plotcells==1;
-    figure
-end
-
 %     % Initialize video
 % myVideo = VideoWriter('GFP_tracking'); %open video file
 % myVideo.FrameRate = 0.002;  %
 % open(myVideo)
-    
+
 for t=1:T
     t
     
@@ -115,7 +116,8 @@ for t=1:T
     [imm,imn]=size(im);
        
     %check image histogram, if necssary 
-    %figure,imhist(im),pause
+%     message=['raw image histogram']
+%     figure,imhist(im),pause, close
     
     %normalize images
     [imcounts,imbin]=imhist(im);
@@ -124,24 +126,32 @@ for t=1:T
     [~,mpos]=min(abs(pcsic-ppix/100));
     maxintensity=imbin(end-mpos);
     im=imadjust(im,[0 maxintensity/65535],[]);
-    %figure,imshow(im),pause
+
+    message=['normalized image']
+    figure,imshow(im),pause, close
+    message=['normalized histogram']
+    figure,imhist(im),pause, close
     %im=norm16bit(im,ppix);%color decode edit DF? 
         
     %enhance contrast
     im=imadjust(im,[ll 1],[]);
-    %figure,imshow(im),pause
+%     message=['adjusted image']
+%     figure,imshow(im),pause,close
     
     %perform edge detection
     im=medfilt2(im);
     bw=edge(im,'canny',cutL,cutH);
     bw=imcomplement(bw);
-    %figure,imshow(bw),pause
+%     message=['image edge detection']
+%     figure,imshow(bw),pause, close
     
     %identify cells
     se=strel('disk',dr);
     bw=imerode(bw,se);
     bwL=bwlabel(bw,8);
     bw(bwL==1)=0;
+%     message=['post erosion']
+%     figure,imshow(bw),pause, close
     
     %throw away cells that are too small, too bright, or too close to the
     %border
@@ -169,12 +179,18 @@ for t=1:T
     
     %watershed image
     im(bw2==1)=-Inf;
+%     message=['before watershed']
+%     imshow(im, []), pause, close
     ws=watershed(im);
-
+%     message=['watershed image']
+%     imshow(ws, []), pause, close
+    
     %throw away background watersheds
     stats=regionprops(ws,'Area');
     idx=find([stats.Area]<12000 & [stats.Area]>minA);
     ws=ismember(ws, idx);
+%     message=['without background watersheds?']
+%     imshow(ws, []), pause, close
     [L,n]=bwlabel(ws);
     labels(:,:,t)=L;
     
@@ -270,9 +286,11 @@ for t=1:T
         for k=1:length(P)
             cellboun=P{k};
             plot(cellboun(:,2),cellboun(:,1),'-r')
-            hold on
+            %hold on
             plot(centsx(:,1),centsy(:,1),'b*')
+            %pause(0.1)
         end
+        pause
 %          M(t) = getframe;
 %       pause(0.01) %Pause and grab frame
 %       frame = getframe(gcf); %get frame
@@ -308,8 +326,12 @@ if exist('metaname')==1
         time=tpoints(1,:);
     end
 else
-    tpoints=[0:T-1]*tscale;
-    time=tpoints(1,:);
+    if multiscale==0
+        tpoints=[0:T-1]*tscale;
+        time=tpoints(1,:);
+    else
+        time=[490 970 1300 1320];
+    end
 end
 
 %track cells frame to frame
@@ -347,7 +369,7 @@ end
 %throw away cells with only one or two time points
 delind=[];
 for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=2
+    if length(nonzeros(lcell(i,:)))<=2 & T>10
         delind=[delind;i];
     end
 end
@@ -434,6 +456,7 @@ for t=1:T
     wav(t)=mean(nonzeros(wt));
     wstd(t)=std(nonzeros(wt));
 end
+
 for t=1:T-1
     vt=v(:,t);
     vt2=vt;
@@ -443,9 +466,11 @@ for t=1:T-1
     vav(t)=mean(nonzeros(vt));
     vstd(t)=std(nonzeros(vt));
     vt(vt==0)=NaN;
-    vt2(abs(vt-vav(t))>=3*vstd(t))=NaN;
-    lt(abs(vt-vav(t))>=3*vstd(t))=NaN;
-    wt(abs(vt-vav(t))>=3*vstd(t))=NaN;
+    if vstd~=0 %I put this if statement in
+        vt2(abs(vt-vav(t))>=3*vstd(t))=NaN;
+        lt(abs(vt-vav(t))>=3*vstd(t))=NaN;
+        wt(abs(vt-vav(t))>=3*vstd(t))=NaN;
+    end
     v(:,t)=vt2;
     lcell(:,t)=lt;
     wcell(:,t)=wt;
@@ -455,6 +480,31 @@ for t=1:T-1
     vstd(t)=std(nonzeros(vt2));
     vste(t)=std(nonzeros(vt2))/sqrt(length(nonzeros(vt2)));
     ndp(t)=length(nonzeros(vt2));
+end
+
+if troubleshoot==1
+    cd(imdir);
+    imfiles=dir('*.tif');
+   
+    for t=1:T
+            t
+            imagename=imfiles(t).name;
+            im=imread(imagename);
+
+
+           figure
+           imshow(im, [])
+           hold on
+           for k=1:ncells
+                if isempty(B{k,t})==0
+                    plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+                else
+                    continue
+                end
+           end
+          pause
+          close all
+     end
 end
 
 %plot data
@@ -490,4 +540,5 @@ tmid=(time(2:end)+time(1:end-1))/2;
 
 %%
 
+cd(savedir)
 save([basename '_WT'])
