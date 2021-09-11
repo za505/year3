@@ -11,7 +11,7 @@ data = struct('experiment', [], 'colony', struct('norm_green', [], 'time', [], '
 cd(datadir)
 cutoff=13;
 
-%% LB, frame rate = 2
+%% LB, frame rate = 2, time = [0:2:180]
 data(1).experiment = '07162021_Exp3';
 load("07162021_Exp3_colony2_dm.mat", 'dataTable', 'time')
 norm_green = table2array(dataTable(dataTable.halfie==0, 3));
@@ -28,7 +28,8 @@ data(1).colony(2).norm_green = norm_green;
 %data(1).colony(2).time = time(cutoff:end);
 data(1).colony(2).time = time;
 
-%% LB, frame rate = 1
+time, pause
+%% LB, frame rate = 1, time = [0:91]
 data(2).experiment = '08262021_Exp1';
 load("08262021_Exp1_colony1_dm.mat", 'dataTable', 'time')
 data(2).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
@@ -54,15 +55,16 @@ load("08262021_Exp1_colony6_dm.mat", 'dataTable', 'time')
 data(2).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
 data(2).colony(6).time = time;
 
-%% EDTA
+time, pause
+%% EDTA, time = [0:2:180]
 data(3).experiment = '07162021_Exp4';
 load("07162021_Exp4_colony1_dm.mat", 'dataTable', 'time')
 data(3).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
 data(3).colony(1).time = time-time(1);
 
-% load("07162021_Exp4_colony2_dm.mat", 'dataTable', 'time')
-% data(3).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-% data(3).colony(2).time = time;
+load("07162021_Exp4_colony2_dm.mat", 'dataTable', 'time')
+data(3).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(3).colony(2).time = time - time(1);
 
 load("07162021_Exp4_colony3_dm.mat", 'dataTable', 'time')
 data(3).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
@@ -72,7 +74,8 @@ load("07162021_Exp4_colony4_dm.mat", 'dataTable', 'time')
 data(3).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
 data(3).colony(4).time = time-time(1);
 
-%% Mg2+
+time-time(1), pause
+%% Mg2+, time = [0:2:180]
 data(4).experiment = '07152021_Exp1';
 load("07152021_Exp1_colony1_dm.mat", 'dataTable', 'time')
 data(4).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
@@ -85,7 +88,9 @@ data(4).colony(2).time = time-time(1);
 load("07152021_Exp1_colony3_dm.mat", 'dataTable', 'time')
 data(4).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
 data(4).colony(3).time = time-time(1);
-%% PBS, frame rate = 1
+
+time-time(1), pause
+%% PBS, frame rate = 1, incubation = 2 min, time = [0:90]
 data(5).experiment = '08272021_Exp1';
 
 load("08272021_Exp1_colony1_dm.mat", 'dataTable', 'time')
@@ -112,6 +117,61 @@ load("08272021_Exp1_colony6_dm.mat", 'dataTable', 'time')
 data(5).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
 data(5).colony(6).time = time;
 
+time, pause
+
+%% PBS, frame rate = 1, incubation = 8 min, time = [0:1:45]
+data(6).experiment = '09092021_Exp1';
+
+load("09092021_Exp1_colony1_dm.mat", 'dataTable', 'time')
+data(6).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(6).colony(1).time = time;
+
+load("09092021_Exp1_colony2_dm.mat", 'dataTable', 'time')
+data(6).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(6).colony(2).time = time;
+
+load("09092021_Exp1_colony3_dm.mat", 'dataTable', 'time')
+data(6).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(6).colony(3).time = time;
+
+load("09092021_Exp1_colony4_dm.mat", 'dataTable', 'time')
+data(6).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(6).colony(4).time = time;
+
+load("09092021_Exp1_colony5_dm.mat", 'dataTable', 'time')
+data(6).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(6).colony(5).time = time;
+
+load("09092021_Exp1_colony6_dm.mat", 'dataTable', 'time')
+data(6).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(6).colony(6).time = time;
+
+time, pause
+
+%% PBS, frame rate = 1, incubation = 16 min, time = [0:1:45]
+data(7).experiment = '09092021_Exp2';
+
+load("09092021_Exp2_colony2_dm.mat", 'dataTable', 'time')
+data(7).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(7).colony(2).time = time;
+
+load("09092021_Exp2_colony3_dm.mat", 'dataTable', 'time')
+data(7).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(7).colony(3).time = time;
+
+load("09092021_Exp2_colony4_dm.mat", 'dataTable', 'time')
+data(7).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(7).colony(4).time = time;
+
+load("09092021_Exp2_colony5_dm.mat", 'dataTable', 'time')
+data(7).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(7).colony(5).time = time;
+
+load("09092021_Exp2_colony6_dm.mat", 'dataTable', 'time')
+data(7).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
+data(7).colony(6).time = time;
+
+time, pause
 %% fit curves
 for i=1:length(data)
     for j=1:length(data(i).colony)
@@ -185,11 +245,13 @@ for i=1 %1:length(data)
                     legend('off')
                 end
             end
-            %pause, close all
+            pause, close all
     end
 end
 %% functions
 % [a, b, c, d, fitScore]=expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
+%% create a gram object
+g = gramm('x', data(2).colony(:).time, 'y', data(2).colony(:).norm_green, 'color', data(2).colony);
 
 function [a, b, c, d, fitModel] = expFitting(norm_green, time)
 
