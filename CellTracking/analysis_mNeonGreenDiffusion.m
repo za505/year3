@@ -172,12 +172,19 @@ data(7).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
 data(7).colony(6).time = time;
 
 time, pause
-%% fit curves
+
+%% create a gramm object
 for i=1:length(data)
     for j=1:length(data(i).colony)
         [data(i).colony(j).a, data(i).colony(j).b, data(i).colony(j).c, data(i).colony(j).d, data(i).colony(j).fitModel] = expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
     end
 end
+%% fit curves
+% for i=1:length(data)
+%     for j=1:length(data(i).colony)
+%         [data(i).colony(j).a, data(i).colony(j).b, data(i).colony(j).c, data(i).colony(j).d, data(i).colony(j).fitModel] = expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
+%     end
+% end
 
 %% plot data
 xdata = [0:180];
