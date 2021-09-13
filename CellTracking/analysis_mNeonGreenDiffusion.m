@@ -46,8 +46,6 @@ for i=1:height(files)
     
 end
 
-%% Convert to a table
-
 %% Notes
 %Mg2+, time = [0:2:180]
 %LB, frame rate = 2, time = [0:2:180]
@@ -64,33 +62,63 @@ for i=1:length(data)
     [data(i).a, data(i).b, data(i).c, data(i).d, data(i).fitModel] = expFitting(data(i).norm_intensity, data(i).time);
 end
 
+%% Convert to a table
+% nrow=length(colonies);
+% times=nan(nrow, min);
+% lengths=nan(nrow, min);
+% intensities=nan(nrow, min);
+% norm_intensities=nan(nrow, min);
+% A=nan(nrow, 1);
+% B=nan(nrow, 1);
+% C=nan(nrow, 1);
+% D=nan(nrow, 1);
+
+times=[];
+lengths=[];
+intensities=[];
+norm_intensities=[];
+A=[];
+B=[];
+C=[];
+D=[];
+
+for i=1:length(data)
+    i
+    
+    time=repmat(data(i).time(1:min), height(data(i).length),1);
+    times=[times; time];
+    
+    lengths=[lengths; data(i).length(:,1:min)];
+    intensities=[intensities; data(i).intensity(:, 1:min)];
+    norm_intensities=[norm_intensities; data(i).norm_intensity(:, 1:min)];
+    A=[A; data(i).a(:, 1)];
+    B=[B; data(i).b(:, 1)];
+    C=[C; data(i).c(:, 1)];
+    D=[D; data(i).d(:, 1)];   
+end
+
+dataTable=table(experiments, colonies, times, lengths, intensities, norm_intensities, A, B, C, D, 'VariableNames', {'experiment', 'colony', 'time', 'length', 'intensity', 'norm_intensity','a', 'b', 'c', 'd'});
 %% plot data
 % figure(1), hold on
-% for i=16:21
-%     plot(data(i).time(1:min), data(i).norm_green(:,1:min), '-r')
+% for i=1:height(data)
+%     if strcmp(data(i).experiment, '07242021_Exp1')==1
+%         plot(data(i).time(1:min), data(i).norm_intensity(:, 1:min), '-m')
+%     elseif strcmp(data(i).experiment, '08172021_Exp1')==1
+%         plot(data(i).time(1:min), data(i).norm_intensity(:, 1:min), '-c')
+%     end
 % end
 % 
-% for i=22:27
-%     plot(data(i).time(1:min), data(i).norm_green(:,1:min), '-b')
-% end
-% 
-% for i=28:32
-%     plot(data(i).time(1:min), data(i).norm_green(:,1:min), '-c')
-% end
-
 % figure(2), hold on
-% for i=10:15
-% %     for j=1:height(data(i).norm_green)
-% %       plot(data(i).fitModel{j}, data(i).time, data(i).norm_green(j,:))
-% %     end
-% 
-%     histogram(data(i).a)
+% for i=1:height(data)
+%     if strcmp(data(i).experiment, '08172021_Exp1')==1
+%         plot(data(i).time(1:min), data(i).norm_intensity(:, 1:min), '-c')
+%     end
 % end
-
 
 %% save data
 cd(dirsave)
 save('fitting.mat')
+%writetable(dataTable, 'dataTable.csv')
 
 %% functions
 function [a, b, c, d, fitModel] = expFitting(norm_green, time)
