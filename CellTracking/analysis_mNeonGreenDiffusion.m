@@ -5,261 +5,94 @@ clear, close all
 
 %% user input
 datadir="/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis";
-dirsave="/Users/zarina/Downloads/NYU/Year3_2021_Fall/presentations/09062021";
+dirsave="/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/09142021_analysis";
 
-data = struct('experiment', [], 'colony', struct('norm_green', [], 'time', [], 'a', [], 'b', [], 'c', [], 'd', [], 'fitModel', []));
+data = struct('experiment', [], 'colony', [], 'length', [], 'intensity', [], 'norm_intensity', [], 'time', [], 'a', [], 'b', [], 'c', [], 'd', [], 'fitModel', []);
 cd(datadir)
-cutoff=13;
 
-%% LB, frame rate = 2, time = [0:2:180]
-data(1).experiment = '07162021_Exp3';
-load("07162021_Exp3_colony2_dm.mat", 'dataTable', 'time')
-norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-%data(1).colony(1).norm_green = norm_green(:, cutoff:end);
-data(1).colony(1).norm_green = norm_green;
-time = time-time(1);
-%data(1).colony(1).time = time(cutoff:end);
-data(1).colony(1).time = time;
+files=dir('*.mat');
 
-load("07162021_Exp3_colony3_dm.mat", 'dataTable')
-norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-%data(1).colony(2).norm_green = norm_green(:, cutoff:end);
-data(1).colony(2).norm_green = norm_green;
-%data(1).colony(2).time = time(cutoff:end);
-data(1).colony(2).time = time;
+experiments=[];
+colonies=[];
 
-time, pause
-%% LB, frame rate = 1, time = [0:91]
-data(2).experiment = '08262021_Exp1';
-load("08262021_Exp1_colony1_dm.mat", 'dataTable', 'time')
-data(2).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(2).colony(1).time = time;
-
-load("08262021_Exp1_colony2_dm.mat", 'dataTable', 'time')
-data(2).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(2).colony(2).time = time;
- 
-load("08262021_Exp1_colony3_dm.mat", 'dataTable', 'time')
-data(2).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(2).colony(3).time = time;
-
-load("08262021_Exp1_colony4_dm.mat", 'dataTable', 'time')
-data(2).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(2).colony(4).time = time;
-
-load("08262021_Exp1_colony5_dm.mat", 'dataTable', 'time')
-data(2).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(2).colony(5).time = time;
-
-load("08262021_Exp1_colony6_dm.mat", 'dataTable', 'time')
-data(2).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(2).colony(6).time = time;
-
-time, pause
-%% EDTA, time = [0:2:180]
-data(3).experiment = '07162021_Exp4';
-load("07162021_Exp4_colony1_dm.mat", 'dataTable', 'time')
-data(3).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(3).colony(1).time = time-time(1);
-
-load("07162021_Exp4_colony2_dm.mat", 'dataTable', 'time')
-data(3).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(3).colony(2).time = time - time(1);
-
-load("07162021_Exp4_colony3_dm.mat", 'dataTable', 'time')
-data(3).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(3).colony(3).time = time-time(1);
-
-load("07162021_Exp4_colony4_dm.mat", 'dataTable', 'time')
-data(3).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(3).colony(4).time = time-time(1);
-
-time-time(1), pause
-%% Mg2+, time = [0:2:180]
-data(4).experiment = '07152021_Exp1';
-load("07152021_Exp1_colony1_dm.mat", 'dataTable', 'time')
-data(4).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(4).colony(1).time = time-time(1);
-
-load("07152021_Exp1_colony2_dm.mat", 'dataTable', 'time')
-data(4).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(4).colony(2).time = time-time(1);
-
-load("07152021_Exp1_colony3_dm.mat", 'dataTable', 'time')
-data(4).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(4).colony(3).time = time-time(1);
-
-time-time(1), pause
-%% PBS, frame rate = 1, incubation = 2 min, time = [0:90]
-data(5).experiment = '08272021_Exp1';
-
-load("08272021_Exp1_colony1_dm.mat", 'dataTable', 'time')
-data(5).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(5).colony(1).time = time;
-
-load("08272021_Exp1_colony2_dm.mat", 'dataTable', 'time')
-data(5).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(5).colony(2).time = time;
-
-load("08272021_Exp1_colony3_dm.mat", 'dataTable', 'time')
-data(5).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(5).colony(3).time = time;
-
-load("08272021_Exp1_colony4_dm.mat", 'dataTable', 'time')
-data(5).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(5).colony(4).time = time;
-
-load("08272021_Exp1_colony5_dm.mat", 'dataTable', 'time')
-data(5).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(5).colony(5).time = time;
-
-load("08272021_Exp1_colony6_dm.mat", 'dataTable', 'time')
-data(5).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(5).colony(6).time = time;
-
-time, pause
-
-%% PBS, frame rate = 1, incubation = 8 min, time = [0:1:45]
-data(6).experiment = '09092021_Exp1';
-
-load("09092021_Exp1_colony1_dm.mat", 'dataTable', 'time')
-data(6).colony(1).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(6).colony(1).time = time;
-
-load("09092021_Exp1_colony2_dm.mat", 'dataTable', 'time')
-data(6).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(6).colony(2).time = time;
-
-load("09092021_Exp1_colony3_dm.mat", 'dataTable', 'time')
-data(6).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(6).colony(3).time = time;
-
-load("09092021_Exp1_colony4_dm.mat", 'dataTable', 'time')
-data(6).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(6).colony(4).time = time;
-
-load("09092021_Exp1_colony5_dm.mat", 'dataTable', 'time')
-data(6).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(6).colony(5).time = time;
-
-load("09092021_Exp1_colony6_dm.mat", 'dataTable', 'time')
-data(6).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(6).colony(6).time = time;
-
-time, pause
-
-%% PBS, frame rate = 1, incubation = 16 min, time = [0:1:45]
-data(7).experiment = '09092021_Exp2';
-
-load("09092021_Exp2_colony2_dm.mat", 'dataTable', 'time')
-data(7).colony(2).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(7).colony(2).time = time;
-
-load("09092021_Exp2_colony3_dm.mat", 'dataTable', 'time')
-data(7).colony(3).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(7).colony(3).time = time;
-
-load("09092021_Exp2_colony4_dm.mat", 'dataTable', 'time')
-data(7).colony(4).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(7).colony(4).time = time;
-
-load("09092021_Exp2_colony5_dm.mat", 'dataTable', 'time')
-data(7).colony(5).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(7).colony(5).time = time;
-
-load("09092021_Exp2_colony6_dm.mat", 'dataTable', 'time')
-data(7).colony(6).norm_green = table2array(dataTable(dataTable.halfie==0, 3));
-data(7).colony(6).time = time;
-
-time, pause
-
-%% create a gramm object
-for i=1:length(data)
-    for j=1:length(data(i).colony)
-        [data(i).colony(j).a, data(i).colony(j).b, data(i).colony(j).c, data(i).colony(j).d, data(i).colony(j).fitModel] = expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
+min=6000;
+for i=1:height(files)
+    
+    data(i).experiment=files(i).name(1:end-15);
+    data(i).colony=files(i).name(15:21);
+    load(files(i).name, 'dataTable', 'time')
+    data(i).length=table2array(dataTable(dataTable.halfie==0, 1));
+    data(i).intensity=table2array(dataTable(dataTable.halfie==0, 2));
+    data(i).norm_intensity=table2array(dataTable(dataTable.halfie==0, 3));
+    
+    if time(1)~=0 
+        time = time-time(1);
     end
+  
+    data(i).time=time;
+    
+    if length(time) < min
+        min=length(time);
+    end
+    
+    line1=convertCharsToStrings(data(i).experiment);
+    line2=convertCharsToStrings(data(i).colony);
+    
+    mat1=repmat(line1, height(data(i).length),1);
+    mat2=repmat(line2, height(data(i).length),1);
+    
+    experiments=[experiments; mat1];
+    colonies=[colonies;mat2];
+    
 end
-%% fit curves
-% for i=1:length(data)
-%     for j=1:length(data(i).colony)
-%         [data(i).colony(j).a, data(i).colony(j).b, data(i).colony(j).c, data(i).colony(j).d, data(i).colony(j).fitModel] = expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
-%     end
-% end
+
+%% Convert to a table
+
+%% Notes
+%Mg2+, time = [0:2:180]
+%LB, frame rate = 2, time = [0:2:180]
+%EDTA, time = [0:2:180]
+%LB + sodium azide, frame rate = 2, time = [0:2:180]
+%LB + sodium azide, frame rate = 2, time = [0:2:180]
+%LB, frame rate = 1, time = [0:91]
+%PBS, frame rate = 1, incubation = 2 min, time = [0:90]
+%PBS, frame rate = 1, incubation = 8 min, time = [0:1:45]
+%PBS, frame rate = 1, incubation = 16 min, time = [0:1:45]
+
+%% fit data to exp2
+for i=1:length(data)
+    [data(i).a, data(i).b, data(i).c, data(i).d, data(i).fitModel] = expFitting(data(i).norm_intensity, data(i).time);
+end
 
 %% plot data
-xdata = [0:180];
-for i=1:length(data)
-    for j=1:length(data(i).colony)
-%             figure(1), hold on
-%             histogram(data(i).colony(j).a),
-%             histogram(data(i).colony(j).c)
-%             legend({'a', 'c'})
-%             hold off 
-%             
-%             figure(2), hold on
-%             histogram(data(i).colony(j).b), 
-%             histogram(data(i).colony(j).d)
-%             legend({'b', 'd'})
-%             hold off
-            
-%             figure(3), hold on
-%             for k=1:length(data(i).colony(j).fitModel)
-%                 if isempty(data(i).colony(j).norm_green(k,:))==0 & isnan(data(i).colony(j).norm_green(k,:))==0
-%                     plot(data(i).colony(j).fitModel{k,1}, data(i).colony(j).time, data(i).colony(j).norm_green(k,:));
-%                     title([data(i).experiment, ', colony ', num2str(j)])
-%                     legend('off')
-%                 end
-%             end
-%             pause, close all
-%             
-              figure(4), hold on
-              for k=1:length(data(i).colony(j).fitModel)
-                if isnan(data(i).colony(j).norm_green(k,:))==0
-                  ydata = data(i).colony(j).fitModel{k,1}(xdata);
-                if i==1
-                  %plot(xdata, ydata, '-g')
-                elseif i==2
-                  plot(xdata, ydata, '-r')
-                elseif i==3
-                    %plot(xdata, ydata, '-m')
-                elseif i==4
-                    %plot(xdata, ydata, '-c')
-                elseif i==5
-                    plot(xdata, ydata, '-b')
-                end
-                
-              %title('Intensity vs Time, red=LB, blue=LB2, magenta=EDTA, cyan=Mg2+, green=PBS')
-              title('Intensity vs Time, red=LB, blue=PBS')
-              %pause, close all    
-                end
-              end
-              
-    end
-end
+% figure(1), hold on
+% for i=16:21
+%     plot(data(i).time(1:min), data(i).norm_green(:,1:min), '-r')
+% end
+% 
+% for i=22:27
+%     plot(data(i).time(1:min), data(i).norm_green(:,1:min), '-b')
+% end
+% 
+% for i=28:32
+%     plot(data(i).time(1:min), data(i).norm_green(:,1:min), '-c')
+% end
+
+% figure(2), hold on
+% for i=10:15
+% %     for j=1:height(data(i).norm_green)
+% %       plot(data(i).fitModel{j}, data(i).time, data(i).norm_green(j,:))
+% %     end
+% 
+%     histogram(data(i).a)
+% end
+
+
 %% save data
 cd(dirsave)
 save('fitting.mat')
 
-%% individual experiment plots
-for i=1 %1:length(data)
-    for j=1:length(data(i).colony)
-            figure(1), hold on
-            for k=1:length(data(i).colony(j).fitModel)
-                if isempty(data(i).colony(j).norm_green(k,:))==0 & isnan(data(i).colony(j).norm_green(k,:))==0
-                    %plot(data(i).colony(j).fitModel{k,1}, data(i).colony(j).time, data(i).colony(j).norm_green(k,:));
-                    plot(data(i).colony(j).time, data(i).colony(j).norm_green(k,:));
-                    title([data(i).experiment, ', colony ', num2str(j)])
-                    legend('off')
-                end
-            end
-            pause, close all
-    end
-end
 %% functions
-% [a, b, c, d, fitScore]=expFitting(data(i).colony(j).norm_green, data(i).colony(j).time);
-%% create a gram object
-g = gramm('x', data(2).colony(:).time, 'y', data(2).colony(:).norm_green, 'color', data(2).colony);
-
 function [a, b, c, d, fitModel] = expFitting(norm_green, time)
 
     fitModel=cell(height(norm_green), 1);
