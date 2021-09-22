@@ -65,17 +65,12 @@ tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
 basename='09182021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=1;
-tpoint1=[0:120:60*10];
-tpoint2=[tpoint1(end)+60:60:15*60];
-tpoint3=[tpoint2(end)+30:30:20*60];
-tpoint4=[tpoint3(end)+15:15:25*60];
-tpoint5=[tpoint4(end)+7.5:7.5:30*60];
-tpoint6=[tpoint5(end)+3.25:3.25:35*60];
+multiScale=0;
+tscale=60;
 thresh=0;%For default, enter zero.
 IntThresh=1000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -86,7 +81,7 @@ maxW=1.5;%Maximum cell width
 minA=50;%Minimum cell area. default 50
 maxA=1500; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
-recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
+recrunch=1;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -586,25 +581,25 @@ saveas(gcf,[basename,'_lTraces.png'])
 % ylabel('\epsilon_w')
 % fig2pretty
 
-figure(5), title('Elongation Rate vs. Time')
-hold on
-for i=1:ncells
-    plot(tmid,v(i,:))
-end
-plot(tmid,vav,'-r')
-xlabel('Time (s)')
-ylabel('Elongation Rate (s^{-1})')
-fig2pretty
-saveas(gcf, [basename,'_eTraces.png'])
-
-figure(6), title('Elongation Rate vs. Time')
-hold on
-ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-plot(tmid,vav*3600,'-r')
-xlabel('Time (s)')
-ylabel('Elongation (hr^{-1})')
-fig2pretty
-saveas(gcf, [basename,'_ET.png'])
+% figure(5), title('Elongation Rate vs. Time')
+% hold on
+% for i=1:ncells
+%     plot(tmid,v(i,:))
+% end
+% plot(tmid,vav,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation Rate (s^{-1})')
+% fig2pretty
+% saveas(gcf, [basename,'_eTraces.png'])
+% 
+% figure(6), title('Elongation Rate vs. Time')
+% hold on
+% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+% plot(tmid,vav*3600,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation (hr^{-1})')
+% fig2pretty
+% saveas(gcf, [basename,'_ET.png'])
 
 figure(7), title('Cell Length Average vs. Time')
 clf
