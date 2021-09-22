@@ -20,18 +20,18 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='08272021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='09182021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
-troubleshoot=2;
-tidx=12; %the first fluor image
+troubleshoot=0;
+tidx=31; %the first fluor image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_dm.mat'])
+    load([basename '_colony4_dm.mat'])
 else
     
     for i=1:length(channels)
@@ -45,13 +45,13 @@ else
 
     %pre-allocate variables
     if tidx==1
-        icell_green=nan(ncells, T);
-        norm_green=nan(ncells, T);
+        icell_intensity=nan(ncells, T);
+        norm_intensity=nan(ncells, T);
         time=time(tidx:end)./60;
         time=time-time(1);
     else
-        icell_green=nan(ncells, T-tidx+1);
-        norm_green=nan(ncells, T-tidx+1);
+        icell_intensity=nan(ncells, T-tidx+1);
+        norm_intensity=nan(ncells, T-tidx+1);
         time=time(tidx:end)./60;
         time=time-time(1);
     end
@@ -68,14 +68,14 @@ else
             im=imread(imagename);
             
             for n=1:ncells
-                icell_green(n,j)=mean(im(pixels{n,t}));
+                icell_intensity(n,j)=mean(im(pixels{n,t}));
             end
             
         end
         
         %normalize the intensity traces
         for n=1:ncells
-            norm_green(n,:) = icell_green(n,:)./icell_green(n,1);
+            norm_intensity(n,:) = icell_intensity(n,:)./icell_intensity(n,1);
         end    
        
     end
@@ -108,7 +108,7 @@ elseif troubleshoot==2
     cd(channels{1});
      for k=1:ncells
             k
-            imagename=fluo_directory{1}(tidx).name;
+            imagename=fluo_directory{1}(20).name;
             im=imread(imagename);
 
 
@@ -129,7 +129,7 @@ end
 
 %% Does only half the cell lose fluor?
 %halfie=nan(ncells, 1);
-n_halfie=[];
+n_halfie=[6,9,14,21]
 halfie=ismember([1:ncells], n_halfie)';
 % cd(channels{1}); 
 % 
@@ -171,8 +171,8 @@ halfie=ismember([1:ncells], n_halfie)';
 %      
 %  end
 
-%% combine these variables into a table
-dataTable=table(lcell, icell_green, norm_green, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity','halfie'});
+%combine these variables into a table
+dataTable=table(lcell, icell_intensity, norm_intensity, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity','halfie'});
 
 %% Plot data
 if replot==1
@@ -181,16 +181,16 @@ if replot==1
     
     %plot to see single traces of mNeonGreen cells
     figure(1), hold on
-    for i=1:height(norm_green)
+    for i=1:height(norm_intensity)
         if halfie(i)==0
-            plot(time, norm_green(i,:), '-r')
+            plot(time, norm_intensity(i,:), '-r')
             x=time(end);
-            y=norm_green(i,end);
+            y=norm_intensity(i,end);
             text(x,y, num2str(i));
         elseif halfie(i)==1
-            plot(time, norm_green(i,:), '-b')
+            plot(time, norm_intensity(i,:), '-b')
             x=time(end);
-            y=norm_green(i,end);
+            y=norm_intensity(i,end);
             text(x,y, num2str(i));
         end
     end
@@ -203,7 +203,7 @@ if replot==1
     saveas(gcf, [basename,'_normGreen.png'])
 
     figure(2), hold on
-    for n=1:height(norm_green)
+    for n=1:height(norm_intensity)
         if halfie(n)==0
             plot(time, lcell(n, tidx:end), '-r')
             x=time(end);
@@ -225,16 +225,16 @@ if replot==1
     saveas(gcf, [basename,'_LTGreen.png'])
 
     figure(3), hold on
-    for i=1:height(icell_green)
+    for i=1:height(icell_intensity)
         if halfie(i)==0
-            plot(time, icell_green(i,:), '-r')
+            plot(time, icell_intensity(i,:), '-r')
             x=time(end);
-            y=icell_green(i,end);
+            y=icell_intensity(i,end);
             text(x,y, num2str(i));
         elseif halfie(i)==1
-            plot(time, icell_green(i,:), '-b')
+            plot(time, icell_intensity(i,:), '-b')
             x=time(end);
-            y=icell_green(i,end);
+            y=icell_intensity(i,end);
             text(x,y, num2str(i));
         end
     end
@@ -247,9 +247,9 @@ if replot==1
     saveas(gcf, [basename,'_fullGreen.png'])
     
 %     %plot to see single traces of mNeonGreen cells
-%     for i=1:height(icell_green)
+%     for i=1:height(icell_intensity)
 %         figure('Name', num2str(i))
-%         plot(f{i}, time, icell_green(i,:))
+%         plot(f{i}, time, icell_intensity(i,:))
 %         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
 %         xlabel('Time (min)')
 %         ylabel('Cellular Intensity (A.U.)')
@@ -260,5 +260,5 @@ if replot==1
 end
 
 cd(savedir)
-save([basename '_dm.mat'])
+save([basename '_colony4_dm.mat'])
     
