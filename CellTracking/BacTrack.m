@@ -64,9 +64,9 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='09222021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09222021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09222021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='09232021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09232021_analysis/' basename '/' basename '_colony5/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09232021_analysis/' basename '/' basename '_colony5/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
@@ -179,6 +179,7 @@ for t=1:T
     cc=bwconncomp(ed2,8);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
     idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>IntThresh);
+    %idx=find([stats.Area]>minA&[stats.MeanIntensity]>IntThresh);
     ed2=ismember(labelmatrix(cc),idx);
     
     %Close gaps in edges
@@ -205,6 +206,7 @@ for t=1:T
     cc=bwconncomp(ed3,4);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
     idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>3e4);
+    %idx=find([stats.Area]>minA&[stats.MeanIntensity]>3e4);
     ed4=ismember(labelmatrix(cc),idx);
     %imshow(ed4), pause, close
      
