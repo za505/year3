@@ -64,13 +64,16 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='09222021_Exp2';%Name of the image stack, used to save file.
+basename='09222021_Exp1';%Name of the image stack, used to save file.
 dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09222021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
 savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09222021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=0;
-tscale=60;
+multiScale=1;
+tpoint1=[0:120:60*15];
+tpoint2=[tpoint1(end)+60:60:25*60];
+tpoint3=[tpoint2(end)+30:30:35*60];
+tpoint4=[tpoint3(end)+15:15:45.5*60];
 thresh=0;%For default, enter zero.
 IntThresh=1000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
