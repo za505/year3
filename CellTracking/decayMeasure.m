@@ -20,14 +20,14 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='09182021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09182021_analysis/' basename '/' basename '_colony4/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='09282021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony4/'  basename '_mCherry/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony4/' basename '_mCherry/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
-troubleshoot=0;
-tidx=31; %the first fluor image
+troubleshoot=2;
+tidx=1; %the first fluor image or the first post-lysis image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
@@ -129,7 +129,7 @@ end
 
 %% Does only half the cell lose fluor?
 %halfie=nan(ncells, 1);
-n_halfie=[6,9,14,21]
+n_halfie=[]
 halfie=ismember([1:ncells], n_halfie)';
 % cd(channels{1}); 
 % 
@@ -137,7 +137,7 @@ halfie=ismember([1:ncells], n_halfie)';
 %     
 %     %tL=max(find(cellfun(@isempty, B(k,:))==0)); %where is the last time point with cells?
 %     
-% %     v = VideoWriter(strcat('mNeonGreen_', num2str(k), '_intensity'),'MPEG-4');
+% %     v = VideoWriter(strcat('mCherry_', num2str(k), '_intensity'),'MPEG-4');
 % %     open(v);
 %     
 %     for t=T
@@ -179,7 +179,7 @@ if replot==1
     
     cd(savedir)
     
-    %plot to see single traces of mNeonGreen cells
+    %plot to see single traces of mCherry cells
     figure(1), hold on
     for i=1:height(norm_intensity)
         if halfie(i)==0
@@ -195,7 +195,7 @@ if replot==1
         end
     end
     %xline(tpt, '--', {'Membrane Lysis'})
-    title('Normalized Intensity of mNeonGreen vs Time')
+    title('Normalized Intensity of mCherry vs Time')
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
@@ -239,18 +239,18 @@ if replot==1
         end
     end
     %xline(tpt, '--', {'Membrane Lysis'})
-    title('Intensity of mNeonGreen vs Time')
+    title('Intensity of mCherry vs Time')
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
     saveas(gcf, [basename,'_fullGreen.fig'])
     saveas(gcf, [basename,'_fullGreen.png'])
     
-%     %plot to see single traces of mNeonGreen cells
+%     %plot to see single traces of mCherry cells
 %     for i=1:height(icell_intensity)
 %         figure('Name', num2str(i))
 %         plot(f{i}, time, icell_intensity(i,:))
-%         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
+%         title(['Cellular Intensity of mCherry vs Time, ' '#' num2str(i)])
 %         xlabel('Time (min)')
 %         ylabel('Cellular Intensity (A.U.)')
 %         saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
@@ -260,5 +260,8 @@ if replot==1
 end
 
 cd(savedir)
+save([basename '_colony4_dm.mat'])
+
+cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis')
 save([basename '_colony4_dm.mat'])
     
