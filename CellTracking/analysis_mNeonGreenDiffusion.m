@@ -68,16 +68,44 @@ segment1=data_norm_intensity(:, 1:11);
 segment2=data_norm_intensity(:, 12:32);
 segment3=data_norm_intensity(:, 33:end);
 
-beta=0.99;
+beta=0.5;
 modelfun=@(coeff,x)(1-beta)*exp(-x./coeff)+beta;
 
-coeff0=0.1;
+%segment 1
+coeff0=1;
 time=intensity_time(1:11);
 for i=1:height(segment1)
-    mdl1=fitnlm(time, segment1(i,:), modelfun, coeff0);
-    y_hat=modelfun(mdl1.Coefficients, time)
+    mdl1=nlinfit(time, segment1(i,:), modelfun, coeff0);
+    y_hat=modelfun(mdl1, time);
     figure
     plot(time, segment1(i,:),...
         time, y_hat)
+    title('1 min frame rate')
+    pause, close
+end
+
+%segment2
+coeff0=0.1;
+time=intensity_time(12:32)-intensity_time(12);
+for i=1:height(segment2)
+    mdl1=nlinfit(time, segment2(i,:), modelfun, coeff0);
+    y_hat=modelfun(mdl1, time);
+    figure
+    plot(time, segment2(i,:),...
+        time, y_hat)
+    title('30 s frame rate')
+    pause, close
+end
+
+%segment3
+coeff0=0.01;
+time=intensity_time(33:end)-intensity_time(33);
+for i=1:height(segment3)
+    mdl1=nlinfit(time, segment3(i,:), modelfun, coeff0);
+    y_hat=modelfun(mdl1, time);
+    figure
+    plot(time, segment3(i,:),...
+        time, y_hat)
+    title('15 s frame rate')
     pause, close
 end
