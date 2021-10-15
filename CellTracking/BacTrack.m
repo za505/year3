@@ -64,22 +64,26 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='09282021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='10102021_Exp6';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10102021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10102021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
 tscale=30;
+% tpoint1=[0:120:60*16];
+% tpoint2=[tpoint1(end)+60:60:26*60];
+% tpoint3=[tpoint2(end)+30:30:36*60];
+% tpoint4=[tpoint3(end)+15:15:46.5*60];
 thresh=0;%For default, enter zero.
-IntThresh=1000;%Threshold used to enhance contrast. Default:35000
+IntThresh=200;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width
 maxW=1.5;%Maximum cell width
 minA=50;%Minimum cell area. default 50
-maxA=1500; %maximum cell area. default 2000
+maxA=2000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
