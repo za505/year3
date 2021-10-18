@@ -20,18 +20,18 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='09282021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony4/'  basename '_mCherry/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09282021_analysis/' basename '/' basename '_colony4/' basename '_mCherry/' basename '_aligned']}; 
+basename='10152021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10152021_analysis/' basename '/' basename '_colony5/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10152021_analysis/'  basename '/' basename '_colony5/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10152021_analysis/' basename '/' basename '_colony5/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
 troubleshoot=2;
-tidx=1; %the first fluor image or the first post-lysis image
+tidx=9; %the first fluor image or the first post-lysis image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony4_dm.mat'])
+    load([basename '_colony5_dm.mat'])
 else
     
     for i=1:length(channels)
@@ -95,7 +95,7 @@ if troubleshoot==1
            hold on
            for k=1:ncells
                 if isempty(B{k,t})==0
-                    plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+                    plot(B{k,t}(:,1),B{k,t}(:,2),'-g')
                 else
                     continue
                 end
@@ -117,7 +117,7 @@ elseif troubleshoot==2
            hold on
            for t=tidx:T
                 if isempty(B{k,t})==0
-                    plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+                    plot(B{k,t}(:,1),B{k,t}(:,2),'-g')
                 else
                     continue
                 end
@@ -137,7 +137,7 @@ halfie=ismember([1:ncells], n_halfie)';
 %     
 %     %tL=max(find(cellfun(@isempty, B(k,:))==0)); %where is the last time point with cells?
 %     
-% %     v = VideoWriter(strcat('mCherry_', num2str(k), '_intensity'),'MPEG-4');
+% %     v = VideoWriter(strcat('mNeonGreen_', num2str(k), '_intensity'),'MPEG-4');
 % %     open(v);
 %     
 %     for t=T
@@ -150,7 +150,7 @@ halfie=ismember([1:ncells], n_halfie)';
 %         hold on
 %        
 %         if isempty(B{k,t})==0
-%             plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+%             plot(B{k,t}(:,1),B{k,t}(:,2),'-g')
 %         end
 %         
 % %         frame = getframe(gcf);
@@ -179,11 +179,11 @@ if replot==1
     
     cd(savedir)
     
-    %plot to see single traces of mCherry cells
+    %plot to see single traces of mNeonGreen cells
     figure(1), hold on
     for i=1:height(norm_intensity)
         if halfie(i)==0
-            plot(time, norm_intensity(i,:), '-r')
+            plot(time, norm_intensity(i,:), '-g')
             x=time(end);
             y=norm_intensity(i,end);
             text(x,y, num2str(i));
@@ -195,7 +195,7 @@ if replot==1
         end
     end
     %xline(tpt, '--', {'Membrane Lysis'})
-    title('Normalized Intensity of mCherry vs Time')
+    title('Normalized Intensity of mNeonGreen vs Time')
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
@@ -205,7 +205,7 @@ if replot==1
     figure(2), hold on
     for n=1:height(norm_intensity)
         if halfie(n)==0
-            plot(time, lcell(n, tidx:end), '-r')
+            plot(time, lcell(n, tidx:end), '-g')
             x=time(end);
             y=lcell(n,end);
             text(x,y, num2str(n));
@@ -227,7 +227,7 @@ if replot==1
     figure(3), hold on
     for i=1:height(icell_intensity)
         if halfie(i)==0
-            plot(time, icell_intensity(i,:), '-r')
+            plot(time, icell_intensity(i,:), '-g')
             x=time(end);
             y=icell_intensity(i,end);
             text(x,y, num2str(i));
@@ -239,18 +239,18 @@ if replot==1
         end
     end
     %xline(tpt, '--', {'Membrane Lysis'})
-    title('Intensity of mCherry vs Time')
+    title('Intensity of mNeonGreen vs Time')
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
     saveas(gcf, [basename,'_fullGreen.fig'])
     saveas(gcf, [basename,'_fullGreen.png'])
     
-%     %plot to see single traces of mCherry cells
+%     %plot to see single traces of mNeonGreen cells
 %     for i=1:height(icell_intensity)
 %         figure('Name', num2str(i))
 %         plot(f{i}, time, icell_intensity(i,:))
-%         title(['Cellular Intensity of mCherry vs Time, ' '#' num2str(i)])
+%         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
 %         xlabel('Time (min)')
 %         ylabel('Cellular Intensity (A.U.)')
 %         saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
@@ -260,8 +260,8 @@ if replot==1
 end
 
 cd(savedir)
-save([basename '_colony4_dm.mat'])
+save([basename '_colony5_dm.mat'])
 
 cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis')
-save([basename '_colony4_dm.mat'])
+save([basename '_colony5_dm.mat'])
     
