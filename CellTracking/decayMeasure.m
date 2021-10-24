@@ -22,18 +22,18 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='10222021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10222021_analysis/' basename '_ZA2'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10222021_analysis/'  basename '_ZA2/' basename '_mNeonGreen'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10222021_analysis/' basename '_ZA2/']}; 
+basename='10232021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10232021_analysis/' basename '/' basename '_p002_colony6/' basename '_p002_phase/' basename '_p002_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10232021_analysis/'  basename '/' basename '_p002_colony6/'  basename '_p002_mNeonGreen/' basename '_p002_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10232021_analysis/' basename '/' basename '_p002_colony6/' basename '_p002_mNeonGreen/' basename '_p002_aligned']}; 
 recrunch=0;
 replot=1;
-troubleshoot=4;
-tidx=1; %the first fluor image or the first post-lysis image
+troubleshoot=2;
+tidx=6; %the first fluor image or the first post-lysis image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_dm.mat'])
+    load([basename '_colony6_dm2.mat'])
 else
     
     for i=1:length(channels)
@@ -110,7 +110,7 @@ elseif troubleshoot==2
     cd(channels{1});
      for k=1:ncells
             k
-            imagename=fluo_directory{1}(20).name;
+            imagename=fluo_directory{1}(T).name;
             im=imread(imagename);
 
 
@@ -131,7 +131,7 @@ end
 
 %% Does only half the cell lose fluor?
 %halfie=nan(ncells, 1);
-n_halfie=[]
+n_halfie=[3]
 halfie=ismember([1:ncells], n_halfie)';
 % cd(channels{1}); 
 % 
@@ -177,91 +177,92 @@ halfie=ismember([1:ncells], n_halfie)';
 dataTable=table(lcell, icell_intensity, norm_intensity, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity','halfie'});
 
 %% Plot data
-% if replot==1
-%     
-%     cd(savedir)
-%     
+if replot==1
+    
+    cd(savedir)
+    
+    %plot to see single traces of mNeonGreen cells
+    figure(1), hold on
+    for i=1:height(norm_intensity)
+        if halfie(i)==0
+            plot(time, norm_intensity(i,:), '-g')
+            x=time(end);
+            y=norm_intensity(i,end);
+            text(x,y, num2str(i));
+        elseif halfie(i)==1
+            plot(time, norm_intensity(i,:), '-b')
+            x=time(end);
+            y=norm_intensity(i,end);
+            text(x,y, num2str(i));
+        end
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Normalized Intensity of mNeonGreen vs Time')
+    %subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Cellular Intensity (A.U.)')
+    saveas(gcf, [basename,'_normGreen.fig'])
+    saveas(gcf, [basename,'_normGreen.png'])
+
+    figure(2), hold on
+    for n=1:height(norm_intensity)
+        if halfie(n)==0
+            plot(time, lcell(n, tidx:end), '-g')
+            x=time(end);
+            y=lcell(n,end);
+            text(x,y, num2str(n));
+        elseif halfie(n)==1
+            plot(time, lcell(n, tidx:end), '-b')
+            x=time(end);
+            y=lcell(n,end);
+            text(x,y, num2str(n));
+        end
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Cell Length vs Time')
+    %subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Length (\mum)')
+    saveas(gcf, [basename,'_LTGreen.fig'])
+    saveas(gcf, [basename,'_LTGreen.png'])
+
+    figure(3), hold on
+    for i=1:height(icell_intensity)
+        if halfie(i)==0
+            plot(time, icell_intensity(i,:), '-g')
+            x=time(end);
+            y=icell_intensity(i,end);
+            text(x,y, num2str(i));
+        elseif halfie(i)==1
+            plot(time, icell_intensity(i,:), '-b')
+            x=time(end);
+            y=icell_intensity(i,end);
+            text(x,y, num2str(i));
+        end
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Intensity of mNeonGreen vs Time')
+    %subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Cellular Intensity (A.U.)')
+    saveas(gcf, [basename,'_fullGreen.fig'])
+    saveas(gcf, [basename,'_fullGreen.png'])
+    
 %     %plot to see single traces of mNeonGreen cells
-%     figure(1), hold on
-%     for i=1:height(norm_intensity)
-%         if halfie(i)==0
-%             plot(time, norm_intensity(i,:), '-g')
-%             x=time(end);
-%             y=norm_intensity(i,end);
-%             text(x,y, num2str(i));
-%         elseif halfie(i)==1
-%             plot(time, norm_intensity(i,:), '-b')
-%             x=time(end);
-%             y=norm_intensity(i,end);
-%             text(x,y, num2str(i));
-%         end
-%     end
-%     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Normalized Intensity of mNeonGreen vs Time')
-%     %subtitle('blue = halved','Color','blue')
-%     xlabel('Time (min)')
-%     ylabel('Cellular Intensity (A.U.)')
-%     saveas(gcf, [basename,'_normGreen.fig'])
-%     saveas(gcf, [basename,'_normGreen.png'])
-% 
-%     figure(2), hold on
-%     for n=1:height(norm_intensity)
-%         if halfie(n)==0
-%             plot(time, lcell(n, tidx:end), '-g')
-%             x=time(end);
-%             y=lcell(n,end);
-%             text(x,y, num2str(n));
-%         elseif halfie(n)==1
-%             plot(time, lcell(n, tidx:end), '-b')
-%             x=time(end);
-%             y=lcell(n,end);
-%             text(x,y, num2str(n));
-%         end
-%     end
-%     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Cell Length vs Time')
-%     %subtitle('blue = halved','Color','blue')
-%     xlabel('Time (min)')
-%     ylabel('Length (\mum)')
-%     saveas(gcf, [basename,'_LTGreen.fig'])
-%     saveas(gcf, [basename,'_LTGreen.png'])
-% 
-%     figure(3), hold on
 %     for i=1:height(icell_intensity)
-%         if halfie(i)==0
-%             plot(time, icell_intensity(i,:), '-g')
-%             x=time(end);
-%             y=icell_intensity(i,end);
-%             text(x,y, num2str(i));
-%         elseif halfie(i)==1
-%             plot(time, icell_intensity(i,:), '-b')
-%             x=time(end);
-%             y=icell_intensity(i,end);
-%             text(x,y, num2str(i));
-%         end
+%         figure('Name', num2str(i))
+%         plot(f{i}, time, icell_intensity(i,:))
+%         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
+%         xlabel('Time (min)')
+%         ylabel('Cellular Intensity (A.U.)')
+%         saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
+%         saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
+%         close
 %     end
-%     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Intensity of mNeonGreen vs Time')
-%     %subtitle('blue = halved','Color','blue')
-%     xlabel('Time (min)')
-%     ylabel('Cellular Intensity (A.U.)')
-%     saveas(gcf, [basename,'_fullGreen.fig'])
-%     saveas(gcf, [basename,'_fullGreen.png'])
-%     
-% %     %plot to see single traces of mNeonGreen cells
-% %     for i=1:height(icell_intensity)
-% %         figure('Name', num2str(i))
-% %         plot(f{i}, time, icell_intensity(i,:))
-% %         title(['Cellular Intensity of mNeonGreen vs Time, ' '#' num2str(i)])
-% %         xlabel('Time (min)')
-% %         ylabel('Cellular Intensity (A.U.)')
-% %         saveas(gcf, [basename '_' num2str(i) '_fitGreen.fig'])
-% %         saveas(gcf, [basename '_' num2str(i) '_fitGreen.png'])
-% %         close
-% %     end
-% end
+end
 
 cd(savedir)
-save([basename '_dm.mat'])
+save([basename '_colony6_dm2.mat'])
 
-    
+cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10242021_analysis')
+save([basename '_colony6_dm2.mat'])
