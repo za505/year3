@@ -64,9 +64,9 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='10152021_Exp3';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10152021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10152021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='10222021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10222021_analysis/' basename '_ZA002/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10222021_analysis/' basename '_ZA002'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
@@ -82,9 +82,9 @@ sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width
 maxW=1.5;%Maximum cell width
-minA=50;%Minimum cell area. default 50
-maxA=2000; %maximum cell area. default 2000
-cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
+minA=100;%Minimum cell area. default 50
+maxA=5000; %maximum cell area. default 2000
+cellLink=0;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
@@ -351,13 +351,13 @@ time=tpoints(1,1:T);
 time2=tpoints(end,1:T);
 
 %Fix bug where micromanager screws up its timing
-dtime=diff(time);
-fdt=find(dtime>2*(dtime(1)));
-if isempty(fdt)~=1
-    fdt=fdt(1);
-    time(fdt+1:end)=time(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
-    time2(fdt+1:end)=time2(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
-end
+% dtime=diff(time);
+% fdt=find(dtime>2*(dtime(1)));
+% if isempty(fdt)~=1
+%     fdt=fdt(1);
+%     time(fdt+1:end)=time(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
+%     time2(fdt+1:end)=time2(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
+% end
 
 %Track cells frame to frame
 tracks=zeros(size(im));
@@ -395,7 +395,7 @@ end
 %we want in general
 delind=[];
 for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1
+    if length(nonzeros(lcell(i,:)))<=0|sum(cellfun(@isempty, B(i,:)))/T>0.1
         delind=[delind;i];
     end
 end
@@ -551,75 +551,75 @@ end
 % save([basename '_BTphase'])
 % 
 %% Plot data
-cd(savedir);
-
-figure(1), title('Cell Length vs. Time')
-clf
-hold on
-for i=1:ncells  
-    lcell(i,:)=movingaverage(lcell(i,:),3);
-    %indx=isnan(lcell(i,:))~=1;
-    %indx=find(indx);
-    %plot(time(indx),lcell(i,indx))
-    plot(time./60,lcell(i,:)) 
-end
-xlabel('Time (min)')
-ylabel('Length (\mum)')
-fig2pretty
-saveas(gcf,[basename,'_lTraces.png'])
-
-% figure(2), title('Cell Width vs. Time')
-% hold on
-% for i=1:ncells
-%     plot(time,wcell(i,:)) 
-% end
-% plot(time,wav,'-r','LineWidth',2)
-% xlabel('Time (s)')
-% ylabel('Width (/mum)')
-% fig2pretty
-
-% figure(4), title('Circumferential Strain vs. Time')
-% hold on
-% for i=1:ncells
-%     plot(time,ew(i,:)) 
-% end
-% plot(time,ewav,'-r','LineWidth',2)
-% xlabel('t (s)')
-% ylabel('\epsilon_w')
-% fig2pretty
-
-% figure(5), title('Elongation Rate vs. Time')
-% hold on
-% for i=1:ncells
-%     plot(tmid,v(i,:))
-% end
-% plot(tmid,vav,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation Rate (s^{-1})')
-% fig2pretty
-% saveas(gcf, [basename,'_eTraces.png'])
+% cd(savedir);
 % 
-% figure(6), title('Elongation Rate vs. Time')
+% figure(1), title('Cell Length vs. Time')
+% clf
 % hold on
-% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-% plot(tmid,vav*3600,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation (hr^{-1})')
-% fig2pretty
-% saveas(gcf, [basename,'_ET.png'])
-
-figure(7), title('Cell Length Average vs. Time')
-clf
-lcellAVG=mean(lcell,1, 'omitnan');
-lcellSTD=std(lcell, 0,1,'omitnan');
-lcellAVG=movingaverage2(lcellAVG,10);
-ciplot((lcellAVG-lcellSTD),(lcellAVG+lcellSTD),time,[0.75 0.75 1])
-plot(time,lcellAVG,'-r')
-xlabel('Time (s)')
-ylabel('Length (\mum)')
-ylim([0 inf])
-fig2pretty
-% for x=1:length(xlabels)
-%     xline(xswitch(x), '--k', xlabels(x)) 
+% for i=1:ncells  
+%     lcell(i,:)=movingaverage(lcell(i,:),3);
+%     %indx=isnan(lcell(i,:))~=1;
+%     %indx=find(indx);
+%     %plot(time(indx),lcell(i,indx))
+%     plot(time./60,lcell(i,:)) 
 % end
-saveas(gcf,[basename,'_lTracesAVG.png'])
+% xlabel('Time (min)')
+% ylabel('Length (\mum)')
+% fig2pretty
+% saveas(gcf,[basename,'_lTraces.png'])
+% 
+% % figure(2), title('Cell Width vs. Time')
+% % hold on
+% % for i=1:ncells
+% %     plot(time,wcell(i,:)) 
+% % end
+% % plot(time,wav,'-r','LineWidth',2)
+% % xlabel('Time (s)')
+% % ylabel('Width (/mum)')
+% % fig2pretty
+% 
+% % figure(4), title('Circumferential Strain vs. Time')
+% % hold on
+% % for i=1:ncells
+% %     plot(time,ew(i,:)) 
+% % end
+% % plot(time,ewav,'-r','LineWidth',2)
+% % xlabel('t (s)')
+% % ylabel('\epsilon_w')
+% % fig2pretty
+% 
+% % figure(5), title('Elongation Rate vs. Time')
+% % hold on
+% % for i=1:ncells
+% %     plot(tmid,v(i,:))
+% % end
+% % plot(tmid,vav,'-r')
+% % xlabel('Time (s)')
+% % ylabel('Elongation Rate (s^{-1})')
+% % fig2pretty
+% % saveas(gcf, [basename,'_eTraces.png'])
+% % 
+% % figure(6), title('Elongation Rate vs. Time')
+% % hold on
+% % ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+% % plot(tmid,vav*3600,'-r')
+% % xlabel('Time (s)')
+% % ylabel('Elongation (hr^{-1})')
+% % fig2pretty
+% % saveas(gcf, [basename,'_ET.png'])
+% 
+% figure(7), title('Cell Length Average vs. Time')
+% clf
+% lcellAVG=mean(lcell,1, 'omitnan');
+% lcellSTD=std(lcell, 0,1,'omitnan');
+% lcellAVG=movingaverage2(lcellAVG,10);
+% ciplot((lcellAVG-lcellSTD),(lcellAVG+lcellSTD),time,[0.75 0.75 1])
+% plot(time,lcellAVG,'-r')
+% xlabel('Time (s)')
+% ylabel('Length (\mum)')
+% ylim([0 inf])
+% fig2pretty
+% % for x=1:length(xlabels)
+% %     xline(xswitch(x), '--k', xlabels(x)) 
+% % end
+% saveas(gcf,[basename,'_lTracesAVG.png'])
