@@ -22,18 +22,18 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='10082021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10082021_analysis/' basename '/' basename '_colony5/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10082021_analysis/'  basename '/' basename '_colony5/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10082021_analysis/' basename '/' basename '_colony5/' basename '_mNeonGreen/' basename '_aligned']}; 
-recrunch=1;
+basename='09092021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09092021_analysis/' basename '/' basename '_colony6/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09092021_analysis/'  basename '/' basename '_colony6/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09092021_analysis/' basename '/' basename '_colony6/' basename '_mNeonGreen/' basename '_aligned']}; 
+recrunch=0;
 replot=1;
-%troubleshoot=2;
-%tidx=30; %the first fluor image or the first post-lysis image
+troubleshoot=2;
+tidx=26; %the first fluor image or the first post-lysis image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony5_dm1.mat'])
+    load([basename '_colony6_dm.mat'])
 else
     
     for i=1:length(channels)
@@ -81,7 +81,7 @@ else
         end    
        
     end    
-
+end
 %% Troubleshooting
 if troubleshoot==1
     cd(channels{1}); 
@@ -130,7 +130,7 @@ end
 
 %% Does only half the cell lose fluor?
 %halfie=nan(ncells, 1);
-n_halfie=[4]
+n_halfie=[1]
 halfie=ismember([1:ncells], n_halfie)';
 % cd(channels{1}); 
 % 
@@ -174,8 +174,6 @@ halfie=ismember([1:ncells], n_halfie)';
 
 %combine these variables into a table
 dataTable=table(lcell, icell_intensity, norm_intensity, halfie, 'VariableNames', {'cell length', 'intensity', 'normalized intensity','halfie'});
-
-end
 %% Plot data
 if replot==1
     
@@ -201,8 +199,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_normGreen_dm1.fig'])
-    saveas(gcf, [basename,'_normGreen_dm1.png'])
+    saveas(gcf, [basename,'_normGreen_dm.fig'])
+    saveas(gcf, [basename,'_normGreen_dm.png'])
 
     figure(2), hold on
     for n=1:height(norm_intensity)
@@ -223,8 +221,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Length (\mum)')
-    saveas(gcf, [basename,'_LTGreen_dm1.fig'])
-    saveas(gcf, [basename,'_LTGreen_dm1.png'])
+    saveas(gcf, [basename,'_LTGreen_dm.fig'])
+    saveas(gcf, [basename,'_LTGreen_dm.png'])
 
     figure(3), hold on
     for i=1:height(icell_intensity)
@@ -245,8 +243,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_fullGreen_dm1.fig'])
-    saveas(gcf, [basename,'_fullGreen_dm1.png'])
+    saveas(gcf, [basename,'_fullGreen_dm.fig'])
+    saveas(gcf, [basename,'_fullGreen_dm.png'])
     
 %     %plot to see single traces of mNeonGreen cells
 %     for i=1:height(icell_intensity)
@@ -262,7 +260,7 @@ if replot==1
 end
 
 cd(savedir)
-save([basename '_colony5_dm1.mat'])
+save([basename '_colony6_dm.mat'])
 
 cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10242021_analysis')
-save([basename '_colony5_dm1.mat'])
+save([basename '_colony6_dm.mat'])
