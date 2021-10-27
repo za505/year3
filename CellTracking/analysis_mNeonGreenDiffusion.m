@@ -5,261 +5,298 @@
 
 clear, close all
 
-%% Compare sodium azide controls
-datadir="/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis";
-dirsave="/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10182021_analysis";
-basename={'07242021_Exp1', '08172021_Exp1', '09222021_Exp1_colony', '10022021_Exp1_colony'};
-
-%concerted = one frame rate, stepwise = multiple frame rates
-cd(datadir)
-concerted_files1=dir([basename{1} '*dm.mat']);
-concerted_files2=dir([basename{2} '*dm.mat']);
-stepwisefiles_noIPTG=dir([basename{3} '*dm.mat']);
-stepwisefiles_IPTG=dir([basename{4} '*dm.mat']);
-
-%% Stepwise Controls
-%1 = noIPTG, 2 = IPTG
-
-%pre-allocate matrices
-stepwise_length1=[];
-stepwise_intensity1=[];
-stepwise_normintensity1=[];
-
-stepwise_length2=[];
-stepwise_intensity2=[];
-stepwise_normintensity2=[];
-
-cd(datadir)
-%populate matrices
-for i=1:height(stepwisefiles_noIPTG)
-    
-    load(stepwisefiles_noIPTG(i).name, 'dataTable', 'time', 'tidx')
-    
-    stepwise_length1=[stepwise_length1; table2array(dataTable(dataTable.halfie==0, 1))];
-    stepwise_intensity1=[stepwise_intensity1; table2array(dataTable(dataTable.halfie==0, 2))];
-    stepwise_normintensity1=[stepwise_normintensity1; table2array(dataTable(dataTable.halfie==0, 3))];
-
-    stepwise_time1=time;
-end
-
-for i=1:height(stepwisefiles_IPTG)
-    
-    load(stepwisefiles_IPTG(i).name, 'dataTable', 'time', 'tidx')
-    
-    stepwise_length2=[stepwise_length2; table2array(dataTable(dataTable.halfie==0, 1))];
-    stepwise_intensity2=[stepwise_intensity2; table2array(dataTable(dataTable.halfie==0, 2))];
-    stepwise_normintensity2=[stepwise_normintensity2; table2array(dataTable(dataTable.halfie==0, 3))];
-
-    stepwise_time2=time;
-end
-
-% plot length and intensity
+dirsave="/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10242021_analysis";
+%% Make mock plot for 10/10/2021 Exp6 expected results for Group Meeting
 cd(dirsave)
 
-pretime=[0:2:15];
-figure(1), hold on
-for i=1:height(stepwise_length1)
-    plot([pretime stepwise_time1+15], stepwise_length1(i,:), '-r')
-end
-for i=1:height(stepwise_length2)
-    plot([pretime stepwise_time2+16], stepwise_length2(i,:), '-b')
-end
-xlabel('Time (min)')
-ylabel('Length \mum')
-title('Length vs Time')
-saveas(gcf,'stepwise_length.png')
-saveas(gcf, 'stepwise_length.fig')
+% x = [0:23];
+% y = [repelem(0, 5), repelem(-5, 5), repelem(0,4), [-5,-3.5, -2.5, -1, 0], [0:-0.5:-2]];
+% 
+% figure(1)
+% plot(x,y)
+% xlabel('Time (minutes)')
+% ylabel('C_{in}-C_{out} (A.U.)')
+% title('Predicted C_{in}-C_{out} Profile')
+% ylim([-10,5])
+% xline(5, '--k', 'dextran')
+% xline(10, '--k', 'detergent')
+% xline(14, '--k', 'dextran')
+% xline(19, '--k', 'dextran + Mg_{2+}')
+% saveas(gcf,'10102021_Exp6_mock.png')
+% saveas(gcf, '10102021_Exp6_mock.fig')
 
-figure(2), hold on
-for i=1:height(stepwise_length1)
-    plot(stepwise_time1, stepwise_intensity1(i,:), '-r')
+%% Perform analysis of 10/10/2021 Exp6 data
+% datadir=dir('*BTfluo.mat');
+% 
+% diffC_total=[];
+% for i=1:length(datadir)
+%     load(datadir(i).name, 'diffC', 'time')
+%     diffC_total=[diffC_total; diffC];
+% end
+% 
+% figure(2), hold on
+% for i=1:height(diffC_total)
+%     plot(time./60, diffC_total(i, :))
+% end
+% xlabel('Time (minutes)')
+% ylabel('C_{in}-C_{out} (A.U.)')
+% title('C_{in}-C_{out} vs Time')
+% xline(6, '--k', 'dextran')
+% xline(10, '--k', 'detergent')
+% xline(14, '--k', 'dextran')
+% xline(19, '--k', 'dextran + Mg_{2+}')
+% saveas(gcf,'10102021_Exp6_diffC.png')
+% saveas(gcf, '10102021_Exp6_diffC.fig')
+
+%% Perform analysis of 08/26/2021 Exp1 and 10/23/2021 Exp1 
+datadir1=dir(['08262021' '*dm.mat']);
+datadir2=dir(['10232021_Exp1' '*dm2.mat']);
+datadir3=dir(['09092021_Exp2' '*dm.mat']);
+datadir4=dir(['10232021_Exp2' '*dm2.mat']);
+
+intensity1=[];
+normintensity1=[];
+for i=1:length(datadir1)
+    load(datadir1(i).name, 'icell_green', 'norm_green', 'time')
+    intensity1=[intensity1; icell_green];
+    normintensity1=[normintensity1; norm_green];
 end
-for i=1:height(stepwise_length2)
-    plot(stepwise_time2, stepwise_intensity2(i,:), '-b')
+time1=time;
+
+intensity2=[];
+normintensity2=[];
+for i=1:length(datadir2)
+    load(datadir2(i).name, 'icell_intensity', 'norm_intensity', 'time')
+    intensity2=[intensity2; icell_intensity];
+    normintensity2=[normintensity2; norm_intensity];
 end
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-title('Intensity vs Time')
-saveas(gcf,'stepwise_intensity.png')
-saveas(gcf, 'stepwise_intensity.fig')
+time2=time;
+
+intensity3=[];
+normintensity3=[];
+for i=1:length(datadir3)
+    load(datadir3(i).name, 'icell_intensity', 'norm_intensity', 'time')
+    intensity3=[intensity3; icell_intensity];
+    normintensity3=[normintensity3; norm_intensity];
+end
+time3=time;
+
+intensity4=[];
+normintensity4=[];
+for i=1:length(datadir4)
+    load(datadir4(i).name, 'icell_intensity', 'norm_intensity', 'time')
+    intensity4=[intensity4; icell_intensity];
+    normintensity4=[normintensity4; norm_intensity];
+end
+time4=time;
 
 figure(3), hold on
-for i=1:height(stepwise_length1)
-    plot(stepwise_time1, stepwise_normintensity1(i,:), '-r')
+for i=1:height(intensity1)
+    plot(time1, intensity1(i,:))
 end
-for i=1:height(stepwise_length2)
-    plot(stepwise_time2, stepwise_normintensity2(i,:), '-b')
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+title('Diffusion in LB Without IPTG')
+saveas(gcf,'08262021_Exp1_intensity.png')
+saveas(gcf, '08262021_Exp1_intensity.fig')
+
+figure(4), hold on
+for i=1:height(intensity2)
+    plot(time2, intensity2(i,:))
 end
-xlabel('Time (min)')
-ylabel('Normalized Intensity (A.U.)')
-title('Normalized Intensity vs Time')
-saveas(gcf,'stepwise_normintensity.png')
-saveas(gcf, 'stepwise_normintensity.fig')
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+title('Diffusion in LB With IPTG')
+saveas(gcf,'10232021_Exp1_intensity.png')
+saveas(gcf, '10232021_Exp1_intensity.fig')
 
-%combine intensity plots and segment by frame rate
-stepwise_normintensity = [stepwise_normintensity1; stepwise_normintensity2];
+figure(5), hold on
+for i=1:height(intensity3)
+    plot(time3, intensity3(i,:))
+end
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+title('Diffusion in LB After 16-minute PBS Incubation')
+saveas(gcf,'09092021_Exp2_intensity.png')
+saveas(gcf, '09092021_Exp2_intensity.fig')
 
-% fit data to exponential function
-cd(dirsave)
+figure(6), hold on
+for i=1:height(intensity4)
+    plot(time4, intensity4(i,:))
+end
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+title('Diffusion in LB After 1-hour PBS Incubation')
+saveas(gcf,'10232021_Exp2_intensity.png')
+saveas(gcf, '10232021_Exp2_intensity.fig')
 
-segment1=stepwise_normintensity(:, 1:11);
-segment2=stepwise_normintensity(:, 12:32);
-segment3=stepwise_normintensity(:, 33:end);
+figure(7), hold on
+for i=1:height(normintensity1)
+    plot(time1, normintensity1(i,:))
+end
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+title('Diffusion in LB Without IPTG')
+saveas(gcf,'08262021_Exp1_norm.png')
+saveas(gcf, '08262021_Exp1_norm.fig')
 
-%% fit to an exponential model to determine tau for each segment
-beta=0.3;
+figure(8), hold on
+for i=1:height(normintensity2)
+    plot(time2, normintensity2(i,:))
+end
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+title('Diffusion in LB With IPTG')
+saveas(gcf,'10232021_Exp1_norm.png')
+saveas(gcf, '10232021_Exp1_norm.fig')
 
-%segment 1
-mdl1=[];
-y_hat1=segment1;
+figure(9), hold on
+for i=1:height(normintensity3)
+    plot(time3, normintensity3(i,:))
+end
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+title('Diffusion in LB After 16-minute PBS Incubation')
+saveas(gcf,'09092021_Exp2_norm.png')
+saveas(gcf, '09092021_Exp2_norm.fig')
+
+figure(10), hold on
+for i=1:height(normintensity4)
+    plot(time4, normintensity4(i,:))
+end
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+title('Diffusion in LB After 1-hour PBS Incubation')
+saveas(gcf,'10232021_Exp2_norm.png')
+saveas(gcf, '10232021_Exp2_norm.fig')
+
+%% Modeling
+beta=0.25;
+modelfun=@(coeff,x)(1-beta)*exp(-x./coeff)+beta;
 coeff0=1;
-time=stepwise_time1(1:11);
-for i=1:height(segment1)
-    modelfun1=@(coeff,x)(segment1(i,1)-beta)*exp(-x./coeff)+beta;
-    mdl1(i)=nlinfit(time, segment1(i,:), modelfun1, coeff0);
-    y_hat1(i,:)=modelfun1(mdl1(i), time);   
+
+%08262021_Exp1
+coeff1=[];
+y_hat1=normintensity1;
+for i=1:height(normintensity1)
+    coeff1(i)=nlinfit(time1, normintensity1(i,:), modelfun, coeff0);
+    y_hat1(i,:)=modelfun(coeff1(i), time1);   
 end
 
 figure, hold on
-for i=1:height(segment1)
-    plot(time, segment1(i,:),'-g',...
-        time, y_hat1(i,:), '--k')
+for i=1:height(normintensity1)
+    plot(time1, normintensity1(i,:),'-g',...
+        time1, y_hat1(i,:), '--k')
 end
 legend({'data', 'model'})
-title('1 min frame rate')
+title('Diffusion in LB Without IPTG')
 xlabel('Time (min)')
 ylabel('Normalized Intensity (A.U.)')
-saveas(gcf,'stepwise_segment1.png')
-saveas(gcf, 'stepwise_segment1.fig')
-    
-%segment 2
-mdl2=[];
-y_hat2=segment2;
-coeff0=1;
-time=stepwise_time1(12:32)-stepwise_time1(12);
-for i=1:height(segment2)
-    modelfun2=@(coeff,x)(segment2(i,1)-beta)*exp(-x./coeff)+beta;
-    mdl2(i)=nlinfit(time, segment2(i,:), modelfun2, coeff0);
-    y_hat2(i,:)=modelfun2(mdl2(i), time);   
+saveas(gcf,'08262021_Exp1_fit.png')
+saveas(gcf, '08262021_Exp1_fit.fig')
+
+%10232021_Exp1
+coeff2=[];
+y_hat2=normintensity2;
+for i=1:height(normintensity2)
+    if isnan(normintensity2(i,:))==0
+    coeff2(i)=nlinfit(time2, normintensity2(i,:), modelfun, coeff0);
+    y_hat2(i,:)=modelfun(coeff2(i), time2);   
+    else
+    end
 end
 
 figure, hold on
-for i=1:height(segment2)
-    plot(time, segment2(i,:),'-g',...
-        time, y_hat2(i,:), '--k')
+for i=1:height(normintensity2)
+    plot(time2, normintensity2(i,:),'-g',...
+        time2, y_hat2(i,:), '--k')
 end
 legend({'data', 'model'})
-title('30 s frame rate')
+title('Diffusion in LB With IPTG')
 xlabel('Time (min)')
 ylabel('Normalized Intensity (A.U.)')
-saveas(gcf,'stepwise_segment2.png')
-saveas(gcf, 'stepwise_segment2.fig')
+saveas(gcf,'10232021_Exp1_fit.png')
+saveas(gcf, '10232021_Exp1_fit.fig')
 
-%segment 3
-mdl3=[];
-y_hat3=segment3;
-coeff0=1;
-time=stepwise_time1(33:end)-stepwise_time1(33);
-for i=1:height(segment3)
-    modelfun3=@(coeff,x)(segment3(i,1)-beta)*exp(-x./coeff)+beta;
-    mdl3(i)=nlinfit(time, segment3(i,:), modelfun3, coeff0);
-    y_hat3(i,:)=modelfun3(mdl3(i), time);   
+%09092021_Exp2
+coeff3=[];
+y_hat3=normintensity3;
+for i=1:height(normintensity3)
+    coeff3(i)=nlinfit(time3, normintensity3(i,:), modelfun, coeff0);
+    y_hat3(i,:)=modelfun(coeff3(i), time3);   
 end
 
 figure, hold on
-for i=1:height(segment3)
-    plot(time, segment3(i,:),'-g',...
-        time, y_hat3(i,:), '--k')
+for i=1:height(normintensity3)
+    plot(time3, normintensity3(i,:),'-g',...
+        time3, y_hat3(i,:), '--k')
 end
 legend({'data', 'model'})
-title('15 s frame rate')
+title('Diffusion in LB After 16-minute PBS Incubation')
 xlabel('Time (min)')
 ylabel('Normalized Intensity (A.U.)')
-saveas(gcf,'stepwise_segment3.png')
-saveas(gcf, 'stepwise_segment3.fig')
+saveas(gcf,'09092021_Exp2_fit.png')
+saveas(gcf, '09092021_Exp2_fit.fig')
 
-%plot tau as a histogram
+%10232021_Exp2
+coeff4=[];
+y_hat4=normintensity4;
+for i=1:height(normintensity4)
+    coeff4(i)=nlinfit(time4, normintensity4(i,:), modelfun, coeff0);
+    y_hat4(i,:)=modelfun(coeff4(i), time4);   
+end
+
 figure, hold on
-histogram(mdl1(mdl1<1000), 'BinWidth', 20)
-histogram(mdl2, 'BinWidth', 20)
-histogram(mdl3, 'BinWidth', 20)
-legend({'1 min', '30 s', '15 s'})
-saveas(gcf,['stepwise_tau.png'])
-saveas(gcf,['stepwise_tau.fig'])
-
-%% Concentrated Controls
-%pre-allocate matrices
-concerted_length1=[];
-concerted_intensity1=[];
-concerted_normintensity1=[];
-
-concerted_length2=[];
-concerted_intensity2=[];
-concerted_normintensity2=[];
-
-%populate matrices
-for i=1:height(concerted_files1)
-    
-    load(concerted_files1(i).name, 'dataTable', 'time', 'tidx')
-    
-    concerted_length1=[concerted_length1; table2array(dataTable(dataTable.halfie==0, 1))];
-    concerted_intensity1=[concerted_intensity1; table2array(dataTable(dataTable.halfie==0, 2))];
-    concerted_normintensity1=[concerted_normintensity1; table2array(dataTable(dataTable.halfie==0, 3))];
-
-    concerted_time1=time;
+for i=1:height(normintensity4)
+    plot(time4, normintensity4(i,:),'-g',...
+        time4, y_hat4(i,:), '--k')
 end
+legend({'data', 'model'})
+title('Diffusion in LB After 1-hour PBS Incubation')
+xlabel('Time (min)')
+ylabel('Normalized Intensity (A.U.)')
+saveas(gcf,'10232021_Exp2_fit.png')
+saveas(gcf, '10232021_Exp2_fit.fig')
 
-for i=1:height(concerted_files2)
-    
-    load(concerted_files2(i).name, 'dataTable', 'time', 'tidx')
-    
-    concerted_length2=[concerted_length2; table2array(dataTable(dataTable.halfie==0, 1))];
-    concerted_intensity2=[concerted_intensity2; table2array(dataTable(dataTable.halfie==0, 2))];
-    concerted_normintensity2=[concerted_normintensity2; table2array(dataTable(dataTable.halfie==0, 3))];
+figure, hold on
+histogram(coeff1, 'BinWidth', 5)
+histogram(coeff2, 'BinWidth', 5)
+histogram(coeff3(coeff3<500), 'BinWidth', 5)
+histogram(coeff4, 'BinWidth', 5)
+legend({'LB without induction', 'LB with induction', '16-minute PBS incubation', '1-hour PBS incubation'})
+title('Time Constants')
+xlabel('\tau (min^{-1})')
+ylabel('Count')
+saveas(gcf,'timescale_hist.png')
+saveas(gcf, 'timescale_hist.fig')
 
-    concerted_time2=time;
+figure, hold on
+histogram(coeff1, 'BinWidth', 5)
+histogram(coeff2, 'BinWidth', 5)
+legend({'LB without induction', 'LB with induction'})
+title('Time Constants')
+xlabel('\tau (min^{-1})')
+ylabel('Count')
+saveas(gcf,'timescale_hist_LB.png')
+saveas(gcf, 'timescale_hist_LB.fig')
+
+%% Check
+cellLength3=[];
+for i=1:length(datadir3)
+    load(datadir3(i).name, 'lcell', 'T')
+    cellLength3=[cellLength3; lcell];
 end
+timeL3=[0:T-1];
 
-%what is the lowest fluorescent intensity the cells reach?
-cd(dirsave)
-
-pretime=[0:1:15];
 figure(1), hold on
-for i=1:height(concerted_length1)
-    plot([pretime concerted_time1+16], concerted_length1(i,:), '-r')
+for i=1:height(cellLength3)
+    plot(timeL3, cellLength3(i,:))
 end
-for i=1:height(concerted_length2)
-    plot([pretime concerted_time2+16], concerted_length2(i,:), '-b')
-end
-xlabel('Time (min)')
-ylabel('Length \mum')
-title('Length vs Time')
-saveas(gcf,'concerted_length.png')
-saveas(gcf, 'concerted_length.fig')
 
 figure(2), hold on
-for i=1:height(concerted_intensity1)
-    plot(concerted_time1, concerted_intensity1(i,:), '-r')
+for i=1:height(normintensity3)
+    plot(time3, normintensity3(i,:))
 end
-for i=1:height(concerted_intensity2)
-    plot(concerted_time2, concerted_intensity2(i,:), '-b')
-end
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-title('Intensity vs Time')
-saveas(gcf,'concerted_intensity.png')
-saveas(gcf, 'concerted_intensity.fig')
-
-figure(3), hold on
-for i=1:height(concerted_normintensity1)
-    plot(concerted_time1, concerted_normintensity1(i,:), '-r')
-end
-for i=1:height(concerted_normintensity2)
-    plot(concerted_time2, concerted_normintensity2(i,:), '-b')
-end
-xlabel('Time (min)')
-ylabel('Normalized Intensity (A.U.)')
-title('Normalized Intensity vs Time')
-saveas(gcf,'concerted_normintensity.png')
-saveas(gcf, 'concerted_normintensity.fig')
-
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+title('Diffusion in LB After 16-minute PBS Incubation')
