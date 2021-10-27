@@ -22,10 +22,10 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='10262021_Exp2_p002';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp2/' basename '_colony6/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp2/' basename '_colony6/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp2/' basename '_colony6/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='10262021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp1/' basename '_colony5/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp1/' basename '_colony5/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp1/' basename '_colony5/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
 troubleshoot=0;
@@ -33,7 +33,7 @@ tidx=10; %the first fluor image or the first post-lysis image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony6_dm.mat'])
+    load([basename '_colony5_dm2.mat'])
 else
     
     for i=1:length(channels)
@@ -138,38 +138,8 @@ if replot==1
     
     cd(savedir)
     
-    %plot to see single traces of mNeonGreen cells
-    figure(1), hold on
-    for i=1:height(norm_intensity)
-        plot(time, norm_intensity(i,:), '-g')
-        x=time(end);
-        y=norm_intensity(i,end);
-        text(x,y, num2str(i));
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Normalized Intensity of mNeonGreen vs Time')
-    %subtitle('blue = halved','Color','blue')
-    xlabel('Time (min)')
-    ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_normGreen_dm.fig'])
-    saveas(gcf, [basename,'_normGreen_dm.png'])
-
-    figure(2), hold on
-    for n=1:height(norm_intensity)
-        plot(time, lcell(n, tidx:end), '-g')
-        x=time(end);
-        y=lcell(n,end);
-        text(x,y, num2str(n));
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Cell Length vs Time')
-    %subtitle('blue = halved','Color','blue')
-    xlabel('Time (min)')
-    ylabel('Length (\mum)')
-    saveas(gcf, [basename,'_LTGreen_dm.fig'])
-    saveas(gcf, [basename,'_LTGreen_dm.png'])
-
-    figure(3), hold on
+    %plot mNeonGreen fluorescence traces
+        figure(1), hold on
     for i=1:height(icell_intensity)
         plot(time, icell_intensity(i,:), '-g')
         x=time(end);
@@ -181,10 +151,10 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_fullGreen_dm.fig'])
-    saveas(gcf, [basename,'_fullGreen_dm.png'])
+    saveas(gcf, [basename,'_fullGreen_dm2.fig'])
+    saveas(gcf, [basename,'_fullGreen_dm2.png'])
     
-    figure(4), hold on
+    figure(2), hold on
     for i=1:height(adj_intensity)
         plot(time, adj_intensity(i,:), '-g')
         x=time(end);
@@ -196,14 +166,47 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_adjGreen_dm.fig'])
-    saveas(gcf, [basename,'_adjGreen_dm.png'])
+    saveas(gcf, [basename,'_adjGreen_dm2.fig'])
+    saveas(gcf, [basename,'_adjGreen_dm2.png'])
+    
+    %plot to see single traces of mNeonGreen cells
+    figure(3), hold on
+    for i=1:height(norm_intensity)
+        plot(time, norm_intensity(i,:), '-g')
+        x=time(end);
+        y=norm_intensity(i,end);
+        text(x,y, num2str(i));
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Normalized Intensity of mNeonGreen vs Time')
+    %subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Cellular Intensity (A.U.)')
+    saveas(gcf, [basename,'_normGreen_dm2.fig'])
+    saveas(gcf, [basename,'_normGreen_dm2.png'])
+
+    figure(4), hold on
+    for n=1:height(norm_intensity)
+        plot(time, lcell(n, tidx:end), '-g')
+        x=time(end);
+        y=lcell(n,end);
+        text(x,y, num2str(n));
+    end
+    %xline(tpt, '--', {'Membrane Lysis'})
+    title('Cell Length vs Time')
+    %subtitle('blue = halved','Color','blue')
+    xlabel('Time (min)')
+    ylabel('Length (\mum)')
+    saveas(gcf, [basename,'_LTGreen_dm2.fig'])
+    saveas(gcf, [basename,'_LTGreen_dm2.png'])
+
+
     
 
 end
 
 cd(savedir)
-save([basename '_colony6_dm.mat'])
+save([basename '_colony5_dm2.mat'])
 
 cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10272021_analysis')
-save([basename '_colony6_dm.mat'])
+save([basename '_colony5_dm2.mat'])
