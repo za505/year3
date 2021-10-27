@@ -22,18 +22,18 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='10232021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10232021_analysis/' basename '/' basename '_p002_colony6/' basename '_p002_phase/' basename '_p002_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10232021_analysis/'  basename '/' basename '_p002_colony6/'  basename '_p002_mNeonGreen/' basename '_p002_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10232021_analysis/' basename '/' basename '_p002_colony6/' basename '_p002_mNeonGreen/' basename '_p002_aligned']}; 
+basename='10262021_Exp2_p002';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp2/' basename '_colony6/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp2/' basename '_colony6/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp2/' basename '_colony6/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
 troubleshoot=0;
-tidx=8; %the first fluor image or the first post-lysis image
+tidx=10; %the first fluor image or the first post-lysis image
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony6_dm3.mat'])
+    load([basename '_colony6_dm.mat'])
 else
     
     for i=1:length(channels)
@@ -151,8 +151,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_normGreen_dm3.fig'])
-    saveas(gcf, [basename,'_normGreen_dm3.png'])
+    saveas(gcf, [basename,'_normGreen_dm.fig'])
+    saveas(gcf, [basename,'_normGreen_dm.png'])
 
     figure(2), hold on
     for n=1:height(norm_intensity)
@@ -166,8 +166,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Length (\mum)')
-    saveas(gcf, [basename,'_LTGreen_dm3.fig'])
-    saveas(gcf, [basename,'_LTGreen_dm3.png'])
+    saveas(gcf, [basename,'_LTGreen_dm.fig'])
+    saveas(gcf, [basename,'_LTGreen_dm.png'])
 
     figure(3), hold on
     for i=1:height(icell_intensity)
@@ -181,8 +181,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_fullGreen_dm3.fig'])
-    saveas(gcf, [basename,'_fullGreen_dm3.png'])
+    saveas(gcf, [basename,'_fullGreen_dm.fig'])
+    saveas(gcf, [basename,'_fullGreen_dm.png'])
     
     figure(4), hold on
     for i=1:height(adj_intensity)
@@ -196,14 +196,14 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_adjGreen_dm3.fig'])
-    saveas(gcf, [basename,'_adjGreen_dm3.png'])
+    saveas(gcf, [basename,'_adjGreen_dm.fig'])
+    saveas(gcf, [basename,'_adjGreen_dm.png'])
     
 
 end
 
 cd(savedir)
-save([basename '_colony6_dm3.mat'])
+save([basename '_colony6_dm.mat'])
 
 cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10272021_analysis')
-save([basename '_colony6_dm3.mat'])
+save([basename '_colony6_dm.mat'])
