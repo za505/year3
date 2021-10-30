@@ -73,18 +73,16 @@ multiScale=1;
 tscale1=60;
 tscale2=300;
 tpoint1=[0:tscale1:6*60];
-tpoint2=[tpoint1(end)+tscale2:tscale2:86*60];
-tpoint3=[5221.02:15:5407.68];
-tpoint4=[tpoint3(end)+tscale2:tscale2:20100];
+tpoint2=[tpoint1(end)+tscale2:tscale2:23460];
 thresh=0;%For default, enter zero.
-IntThresh=200;%Threshold used to enhance contrast. Default:35000
+IntThresh=2000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
-minW=0.2;%Minimum cell width
+minW=0.2;%Minimum cell width, default 0.2
 maxW=1.5;%Maximum cell width
-minA=50;%Minimum cell area. default 50
-maxA=2000; %maximum cell area. default 2000
+minA=100;%Minimum cell area. default 50
+maxA=5000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
@@ -175,7 +173,7 @@ for t=1:T
         thresh1=thresh;
     end
     imc=imadjust(imc,[thresh1/65535 1],[]);   
-    
+
     %Find edges
     [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
     %imshow(ed2),pause, close
@@ -344,7 +342,7 @@ else
     if multiScale==0
         tpoints=[0:T-1]*tscale;
      elseif multiScale==1
-        tpoints=[tpoint1, tpoint2, tpoint3, tpoint4];
+        tpoints=[tpoint1, tpoint2];
     end
 end
 
@@ -502,10 +500,10 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_BTlab'],'labels','labels2','-v7.3')
+save([basename '_BTlab2'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_BTphase'])
+save([basename '_BTphase2'])
 end
 
 %% Troubleshooting
@@ -567,7 +565,7 @@ end
 xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_lTraces.png'])
+saveas(gcf,[basename,'_lTraces2.png'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
