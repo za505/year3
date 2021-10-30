@@ -64,17 +64,18 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='10262021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp1/' basename '_colony5/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10262021_analysis/10262021_Exp1/' basename '_colony5/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='10282021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10282021_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10282021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=0;
-tscale=60;
-% tscale1=120;
-% tscale2=10.5;
-% tpoint1=[0:tscale1:16*60];
-% tpoint2=[tpoint1(end):tscale2:46*60];
+multiScale=1;
+tscale1=60;
+tscale2=300;
+tpoint1=[0:tscale1:6*60];
+tpoint2=[tpoint1(end)+tscale2:tscale2:86*60];
+tpoint3=[5221.02:15:5407.68];
+tpoint4=[tpoint3(end)+tscale2:tscale2:20100];
 thresh=0;%For default, enter zero.
 IntThresh=200;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -343,7 +344,7 @@ else
     if multiScale==0
         tpoints=[0:T-1]*tscale;
      elseif multiScale==1
-        tpoints=[tpoint1, tpoint2];
+        tpoints=[tpoint1, tpoint2, tpoint3, tpoint4];
     end
 end
 
