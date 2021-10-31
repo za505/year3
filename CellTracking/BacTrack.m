@@ -64,16 +64,16 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='10282021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10282021_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10282021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='10302021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10302021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10302021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
 tscale1=60;
-tscale2=300;
+tscale2=30;
 tpoint1=[0:tscale1:6*60];
-tpoint2=[tpoint1(end)+tscale2:tscale2:23460];
+tpoint2=[tpoint1(end)+tscale2:tscale2:66.5*60];
 thresh=0;%For default, enter zero.
 IntThresh=2000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -87,6 +87,7 @@ cellLink=4;%Number of frames to ignore missing cells when tracking frame to fram
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
+troubleshooting=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
@@ -500,13 +501,14 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_BTlab2'],'labels','labels2','-v7.3')
+save([basename '_BTlab'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_BTphase2'])
+save([basename '_BTphase'])
 end
 
 %% Troubleshooting
+if troubleshooting == 1
 for k=1:ncells
    k
    figure
@@ -524,7 +526,8 @@ for k=1:ncells
   pause
   close all
 end
-
+else
+end
 %% clean up
 % keep=[];
 % for n=1:height(B)
@@ -565,7 +568,7 @@ end
 xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_lTraces2.png'])
+saveas(gcf,[basename,'_lTraces.png'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
