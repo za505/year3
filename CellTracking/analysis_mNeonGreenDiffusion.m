@@ -6,17 +6,17 @@
 clear, close all
 
 %inputs
-lengthTraces=0;
-intensityTraces=0;
-adjTraces=0;
-normTraces=0;
+lengthTraces=1;
+intensityTraces=1;
+adjTraces=1;
+normTraces=1;
 compTraces=0;
 positionCheck=0;
 modelFit=1;
 modelCheck=1;
 modelInterp=1;
 %% load the data
-dirsave='/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10312021_analysis';
+dirsave='/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/11032021_analysis';
 cd([dirsave '/MatFiles'])
 
 datadir1=dir(['10232021_Exp1' '*dm.mat']); %LB, frame rate=1 min, replicate 1
@@ -28,14 +28,14 @@ datadir5b=dir(['10282021_Exp1' '*dm2.mat']); %LB, frame rate=5 min, unadjusted
 datadir6=dir(['10302021_Exp1' '*dm.mat']); %LB, frame rate=30 s
 datadir7=dir(['10302021_Exp2' '*dm.mat']); %LB, frame rate=15 s
 
-[intensity1, adjintensity1, normintensity1, positions1, lCell1, time1]=dataInput(datadir1);
-[intensity2, adjintensity2, normintensity2, positions2, lCell2, time2]=dataInput(datadir2);
-[intensity3, adjintensity3, normintensity3, positions3, lCell3, time3]=dataInput(datadir3);
-[intensity4, adjintensity4, normintensity4, positions4, lCell4, time4]=dataInput(datadir4);
-[intensity5a, adjintensity5a, normintensity5a, positions5a, lCell5a, time5a]=dataInput(datadir5a);
-[intensity5b, adjintensity5b, normintensity5b, positions5b, lCell5b, time5b]=dataInput(datadir5b);
-[intensity6, adjintensity6, normintensity6, positions6, lCell6, time6]=dataInput(datadir6);
-[intensity7, adjintensity7, normintensity7, positions7, lCell7, time7]=dataInput(datadir7);
+[intensity1, adjintensity1, normintensity1, positions1, lCell1, time1, t1, lidx1]=dataInput(datadir1);
+[intensity2, adjintensity2, normintensity2, positions2, lCell2, time2, t2, lidx2]=dataInput(datadir2);
+[intensity3, adjintensity3, normintensity3, positions3, lCell3, time3, t3, lidx3]=dataInput(datadir3);
+[intensity4, adjintensity4, normintensity4, positions4, lCell4, time4, t4, lidx4]=dataInput(datadir4);
+[intensity5a, adjintensity5a, normintensity5a, positions5a, lCell5a, time5a, t5a, lidx5a]=dataInput(datadir5a);
+[intensity5b, adjintensity5b, normintensity5b, positions5b, lCell5b, time5b, t5b, lidx5b]=dataInput(datadir5b);
+[intensity6, adjintensity6, normintensity6, positions6, lCell6, time6, t6, lidx6]=dataInput(datadir6);
+[intensity7, adjintensity7, normintensity7, positions7, lCell7, time7, t7, lidx7]=dataInput(datadir7);
 
 %% sanity check: length traces
 if lengthTraces==1
@@ -81,14 +81,14 @@ end
 %% normalized fluorescence traces
 if normTraces==1
     cd([dirsave '/NormTraces'])
-    [normintensity_avg1, normintensity_std1]=normintensityPlot(time1, normintensity1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
-    [normintensity_avg2, normintensity_std2]=normintensityPlot(time2, normintensity2, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
-    [normintensity_avg3, normintensity_std3]=normintensityPlot(time3, normintensity3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
-    [normintensity_avg4, normintensity_std4]=normintensityPlot(time4, normintensity4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
-    [normintensity_avg5a, normintensity_std5a]=normintensityPlot(time5a, normintensity5a, 'LB perfusion, frame rate = 5 min, adjusted', 1, '10282021_Exp1_adj');
-    [normintensity_avg5b, normintensity_std5b]=normintensityPlot(time5b, normintensity5b, 'LB perfusion, frame rate = 5 min, unadjusted', 1, '10282021_Exp1_unadj');
-    [normintensity_avg6, normintensity_std6]=normintensityPlot(time6, normintensity6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
-    [normintensity_avg7, normintensity_std7]=normintensityPlot(time7, normintensity7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
+    [normintensity_avg1, normintensity_std1]=normintensityPlot(t1, normintensity1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
+    [normintensity_avg2, normintensity_std2]=normintensityPlot(t2, normintensity2, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
+    [normintensity_avg3, normintensity_std3]=normintensityPlot(t3, normintensity3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
+    [normintensity_avg4, normintensity_std4]=normintensityPlot(t4, normintensity4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
+    [normintensity_avg5a, normintensity_std5a]=normintensityPlot(t5a, normintensity5a, 'LB perfusion, frame rate = 5 min, adjusted', 1, '10282021_Exp1_adj');
+    [normintensity_avg5b, normintensity_std5b]=normintensityPlot(t5b, normintensity5b, 'LB perfusion, frame rate = 5 min, unadjusted', 1, '10282021_Exp1_unadj');
+    [normintensity_avg6, normintensity_std6]=normintensityPlot(t6, normintensity6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
+    [normintensity_avg7, normintensity_std7]=normintensityPlot(t7, normintensity7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
 end
 
 %% compare fluorescence traces
@@ -229,32 +229,28 @@ end
 if modelFit==1
 
     cd([dirsave '/ModelFit'])
-    [fit1, tau1, yhat1]=expModel(time1, normintensity1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
-    [fit2, tau2, yhat2]=expModel(time2, normintensity2,  'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
-    [fit3, tau3, yhat3]=expModel(time3, normintensity3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
-    [fit4, tau4, yhat4]=expModel(time4, normintensity4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
-    [fit5a, tau5a, yhat5a]=expModel(time5a(1:24), normintensity5a(:, 1:24), 'LB perfusion, frame rate = 5 min, adjusted', 1, '10282021_Exp1_adj');
-    [fit5b, tau5b, yhat5b]=expModel(time5b, normintensity5b, 'LB perfusion, frame rate = 5 min, unadjusted', 1, '10282021_Exp1_unadj');
-    [fit6, tau6, yhat6]=expModel(time6, normintensity6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
-    [fit7, tau7, yhat7]=expModel(time7, normintensity7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
+    [fit1, tau1, yhat1]=expModel(t1, normintensity1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
+    [fit2, tau2, yhat2]=expModel(t2, normintensity2,  'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
+    [fit3, tau3, yhat3]=expModel(t3, normintensity3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
+    [fit4, tau4, yhat4]=expModel(t4, normintensity4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
+    [fit5a, tau5a, yhat5a]=expModel(t5a(1:17), normintensity5a(:, 1:17), 'LB perfusion, frame rate = 5 min, adjusted', 1, '10282021_Exp1_adj');
+    [fit5b, tau5b, yhat5b]=expModel(t5b, normintensity5b, 'LB perfusion, frame rate = 5 min, unadjusted', 1, '10282021_Exp1_unadj');
+    [fit6, tau6, yhat6]=expModel(t6, normintensity6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
+    [fit7, tau7, yhat7]=expModel(t7, normintensity7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
     
 end
 %% determine the quality of the fit
 if modelCheck==1
-    cd([dirsave '/ModelCheck'])
-
-    [residuals1, est1]=residualPlot(normintensity1, yhat1, time1, ['LB perfusion, frame rate = 1 min, replicate 1'], 1, ['10232021_Exp1']);
-   [residuals2, est2]=residualPlot(normintensity2, yhat2, time2, ['PBS 1-hour Incubation, frame rate = 1 min, replicate 1'], 1, ['10232021_Exp2']);
-   [residuals3, est3]=residualPlot(normintensity3, yhat3, time3, ['LB perfusion, frame rate = 1 min, replicate 2'], 1, ['10262021_Exp1']);
-   [residuals4, est4]=residualPlot(normintensity4, yhat4, time4, ['PBS 1-hour Incubation, frame rate = 1 min, replicate 2'], 1, ['10262021_Exp2']);
-
-   [residuals5a, est5a]=residualPlot(normintensity5a(:, 1:24), yhat5a, time5a(1:24), ['LB perfusion, frame rate = 5 minutes, adjusted'], 1, ['10282021_Exp1_adj']);
-
-   [residuals5b, est5b]=residualPlot(normintensity5b, yhat5b, time5b, ['LB perfusion, frame rate = 5 minutes, unadjusted'], 1, ['10282021_Exp1_unadj']);
-
-   [residuals6, est6]=residualPlot(normintensity6, yhat6, time6, ['LB perfusion, frame rate = 30 s'], 1, ['10302021_Exp1']);
-
-   [residuals7, est7]=residualPlot(normintensity7, yhat7, time7, ['LB perfusion, frame rate = 15 s'], 1, ['10302021_Exp2']);
+    
+   cd([dirsave '/ModelCheck'])
+   [residuals1, est1]=residualPlot(normintensity1, yhat1, t1, fit1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
+   [residuals2, est2]=residualPlot(normintensity2, yhat2, t2, fit2, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
+   [residuals3, est3]=residualPlot(normintensity3, yhat3, t3, fit3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
+   [residuals4, est4]=residualPlot(normintensity4, yhat4, t4, fit4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
+   [residuals5a, est5a]=residualPlot(normintensity5a(:, 1:17), yhat5a, t5a(1:17), fit5a, 'LB perfusion, frame rate = 5 minutes, adjusted', 1, '10282021_Exp1_adj');
+   [residuals5b, est5b]=residualPlot(normintensity5b, yhat5b, t5b, fit5b, 'LB perfusion, frame rate = 5 minutes, unadjusted', 1, '10282021_Exp1_unadj');
+   [residuals6, est6]=residualPlot(normintensity6, yhat6, t6, fit6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
+   [residuals7, est7]=residualPlot(normintensity7, yhat7, t7, fit7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
 
 %     % compare the time constants
 %     figure, hold on
@@ -328,20 +324,60 @@ title('Distribution of t_{1/2} Values')
 % saveas(gcf, 'thalf.fig')
 
 %% Functions
-function [intensity, adjintensity, normintensity, positions, lCell, time]=dataInput(datadir)
+function [intensity, adjintensity, normintensity, positions, lCell, time, t, lidx]=dataInput(datadir)
+    
+    %to determine the initial lysis frame, go to the 647 image stack of
+    %colony 1, which is usually to the right-most part of the chip
+    cd(datadir(1).folder)
+    load(datadir(1).name, 'channels')
+
+    for t=5:9
+
+        %to determine the lysis frame, go to the 647 image stack
+        new_channel = strrep(channels,'mNeonGreen','647');
+        cd(new_channel{1}); 
+        fluo_directory=dir('*.tif');
+
+        imagename=fluo_directory(t).name;
+        im=imread(imagename);
+        nim=imbinarize(im);
+
+        if mean(mean(nim))<1 %frames without 647 will have a mean of 1
+            lidx=t;
+            break
+        end
+    end
+
+    %pre-allocate variables
     intensity=[];
-    adjintensity=[];
-    normintensity=[];
     lCell=[];
     positions=[0];
+    
     for i=1:length(datadir)
-        load(datadir(i).name, 'icell_intensity', 'adj_intensity', 'norm_intensity', 'lcell', 'time')
-        intensity=[intensity; icell_intensity];
-        adjintensity=[adjintensity; adj_intensity];
-        normintensity=[normintensity; norm_intensity];
-        lCell=[lCell; lcell];
-        positions(i+1)=height(norm_intensity)+positions(i);
+        cd(datadir(i).folder)
+        load(datadir(i).name, 'icell_intensity', 'lcell', 'time')
+        count=0;
+        
+        for n=1:height(icell_intensity)
+            if ~isnan(icell_intensity(n, lidx-1))&~isnan(icell_intensity(n, end))
+                intensity=[intensity; icell_intensity(n, :)];
+                lCell=[lCell; lcell(n, :)];
+                count=count+1;
+            end
+        end
+        
+        positions(i+1)=count+positions(i); %this is to distinguish which rows are from which colony
+     
     end
+    
+        adjintensity = intensity-intensity(:, end);
+ 
+        %normalize to pre-lysis frame instead of initial frame. The
+        %earliest lysis frame is lidx
+        normintensity=adjintensity(:, lidx-1:end)./adjintensity(:,lidx-1);
+        
+        t=time(lidx-1:end)-time(lidx-1);
+        
 end
 
 function [l_avg, l_std]=lengthPlot(time, lCell, text, save, saveAs)
@@ -387,6 +423,7 @@ function [intensity_avg, intensity_std]=intensityPlot(time, intensity, text, sav
         for i=1:height(intensity)
             plot(time, intensity(i, :), 'Color', '#77AC30')
         end
+        ylim([0 Inf])
         xlabel('Time (minutes)')
         ylabel('Fluorescence (A.U.)')
         title(text)
@@ -398,6 +435,7 @@ function [intensity_avg, intensity_std]=intensityPlot(time, intensity, text, sav
         figure(2), hold on
         ciplot((intensity_avg-intensity_std),(intensity_avg+intensity_std),time,[0.75 0.75 1])
         plot(time,intensity_avg,'-r')
+        ylim([0 Inf])
         xlabel('Time (minutes)')
         ylabel('Average Fluorescence (A.U.)')
         title(text)
@@ -421,6 +459,7 @@ function [adjintensity_avg, adjintensity_std]=adjintensityPlot(time, adjintensit
     end
     xlabel('Time (minutes)')
     ylabel('Adjusted Fluorescence (A.U.)')
+    ylim([0 Inf])
     title(text)
     if save==1
         saveas(gcf, [saveAs '_adjintensityTraces.png'])
@@ -430,6 +469,7 @@ function [adjintensity_avg, adjintensity_std]=adjintensityPlot(time, adjintensit
     figure(2), hold on
     ciplot((adjintensity_avg-adjintensity_std),(adjintensity_avg+adjintensity_std),time,[0.75 0.75 1])
     plot(time,adjintensity_avg,'-r')
+    ylim([0 Inf])
     xlabel('Time (minutes)')
     ylabel('Adjusted Fluorescence (A.U.)')
     title(text)
@@ -451,6 +491,7 @@ function [normintensity_avg, normintensity_std]=normintensityPlot(time, norminte
     for i=1:height(normintensity)
         plot(time, normintensity(i, :), 'Color', '#77AC30')
     end
+    ylim([0 Inf])
     xlabel('Time (minutes)')
     ylabel('Normalized Fluorescence (A.U.)')
     title(text)
@@ -462,6 +503,7 @@ function [normintensity_avg, normintensity_std]=normintensityPlot(time, norminte
     figure(2), hold on
     ciplot((normintensity_avg-normintensity_std),(normintensity_avg+normintensity_std),time,[0.75 0.75 1])
     plot(time,normintensity_avg,'-r')
+    ylim([0 Inf])
     xlabel('Time (minutes)')
     ylabel('Normalized Fluorescence (A.U.)')
     title(text)
@@ -477,22 +519,29 @@ end
 function [fit, tau, yhat]=expModel(time, normintensity, text, save, saveAs)
   
     modelfun=@(tau,x)exp(-x./tau);
-    tau0=0.1;
+    tau0=1;
 
     fit=[];
     tau=[];
-    yhat=normintensity;
+    yhat=[];
     for i=1:height(normintensity)
-        if ~isnan(normintensity(i,:))
-            fit=[fit, i];
-            tau(i)=nlinfit(time, normintensity(i,:), modelfun, tau0);
-            yhat(i,:)=modelfun(tau(i), time);   
-        end
+            tau_temp=nlinfit(time, normintensity(i,:), modelfun, tau0);
+            y_hat=modelfun(tau_temp, time);   
+            
+            residuals=abs(normintensity(i,:)-y_hat);
+            est=residuals./normintensity(i,:);
+            est(est==Inf)=0;
+            
+            if max(est)<5
+                fit=[fit, i];
+                tau=[tau, tau_temp];
+                yhat=[yhat; y_hat]; 
+            end
     end
 
     figure, hold on
-    for i=1:height(normintensity)
-        plot(time, normintensity(i,:),'Color', '#77AC30')
+    for i=1:length(fit)
+        plot(time, normintensity(fit(i),:),'Color', '#77AC30')
         plot(time, yhat(i,:), '--k')
     end
     ylim([0 Inf])
@@ -508,16 +557,16 @@ function [fit, tau, yhat]=expModel(time, normintensity, text, save, saveAs)
     pause, close all
 end
 
-function [residuals, est]=residualPlot(normintensity, yhat, time, text, save, saveAs)
+function [residuals, est]=residualPlot(normintensity, yhat, time, fit, text, save, saveAs)
 
-    residuals=abs(normintensity-yhat);
-    est=residuals./normintensity;
+    residuals=abs(normintensity(fit,:)-yhat);
+    est=residuals./normintensity(fit, :);
     est(est==Inf)=0;
 
 
     figure, hold on
-    for i=1:height(residuals)
-        plot(time, residuals(i,:), 'Color', '#7E2F8E')
+    for i=1:height(est)
+        plot(time, est(i,:), 'Color', '#7E2F8E')
     end
     xlabel('Time (minutes)')
     ylabel('$\frac{|y-\hat{y}|}{y}$','Interpreter','latex', 'FontSize', 20)
@@ -525,8 +574,8 @@ function [residuals, est]=residualPlot(normintensity, yhat, time, text, save, sa
 
     
     if save==1
-        saveas(gcf, [saveAs '_residuals.png'])
-        saveas(gcf, [saveAs '_residuals.fig'])
+        saveas(gcf, [saveAs '_est.png'])
+        saveas(gcf, [saveAs '_est.fig'])
     end
 
     pause, close all
