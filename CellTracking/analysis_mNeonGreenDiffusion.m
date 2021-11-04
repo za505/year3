@@ -276,14 +276,14 @@ end
 %% interpolate t_{1/2}
 if modelInterp==1
     cd([dirsave '/ModelInterp'])
-    [xq1, vq1, thalf1]=interpPlot(normintensity1, time1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
-    [xq2, vq2, thalf2]=interpPlot(normintensity2, time2, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
-    [xq3, vq3, thalf3]=interpPlot(normintensity3, time3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
-    [xq4, vq4, thalf4]=interpPlot(normintensity4, time4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
-    [xq5a, vq5a, thalf5a]=interpPlot(normintensity5a(:, 1:24), time5a(1:24), 'LB perfusion, frame rate = 5 minutes, adjusted', 1, '10282021_Exp1_adj');
-    [xq5b, vq5b, thalf5b]=interpPlot(normintensity5b, time5b, 'LB perfusion, frame rate = 5 minutes, unadjusted', 1, '10282021_Exp1_unadj');
-    [xq6, vq6, thalf6]=interpPlot(normintensity6, time6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
-    [xq7, vq7, thalf7]=interpPlot(normintensity7, time7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
+    [xq1, vq1, thalf1]=interpPlot(normintensity1, t1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
+    [xq2, vq2, thalf2]=interpPlot(normintensity2, t2, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
+    [xq3, vq3, thalf3]=interpPlot(normintensity3, t3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
+    [xq4, vq4, thalf4]=interpPlot(normintensity4, t4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
+    [xq5a, vq5a, thalf5a]=interpPlot(normintensity5a(:, 1:17), t5a(1:17), 'LB perfusion, frame rate = 5 minutes, adjusted', 1, '10282021_Exp1_adj');
+    [xq5b, vq5b, thalf5b]=interpPlot(normintensity5b, t5b, 'LB perfusion, frame rate = 5 minutes, unadjusted', 1, '10282021_Exp1_unadj');
+    [xq6, vq6, thalf6]=interpPlot(normintensity6, t6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
+    [xq7, vq7, thalf7]=interpPlot(normintensity7, t7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
 end
 
 %% plots
@@ -318,11 +318,54 @@ xlim([0 9])
 ylim([0 Inf])
 xticklabels([' ', groups, ' '])
 xlabel('Experiment')
-ylabel('t_{1/2} (min^{-1})')
+ylabel('t_{1/2} (min)')
 title('Distribution of t_{1/2} Values')
 % saveas(gcf, 'thalf.png')
 % saveas(gcf, 'thalf.fig')
 
+% plot tau and thalf as a function of frame rate
+%there are three frames rates tested for LB perfusion:1 min, 30 s, and 15s
+frameRate = [repelem(15, length(tau7)), repelem(30, length(tau6)), repelem(60, length([tau1, tau3]))];
+frameRate_tau = [tau7, tau6, tau1, tau3];
+frameRate_thalf = [thalf7, thalf6, thalf1, thalf3];
+
+linearCoef_tau = polyfit(frameRate,frameRate_tau,1);
+linearFit_tau = polyval(linearCoef_tau,[0 frameRate]);
+
+linearCoef_thalf = polyfit(frameRate,frameRate_thalf,1);
+linearFit_thalf = polyval(linearCoef_thalf,[0 frameRate]);
+
+figure, hold on
+for i=1:length(frameRate_tau)
+    a=scatter(frameRate, frameRate_tau, 'MarkerEdgeColor', '#0072BD');
+    b=errorbar(15, mean(tau7), -std(tau7), std(tau7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    c=errorbar(30, mean(tau6), -std(tau6), std(tau6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    d=errorbar(60, mean([tau1, tau3]), -std([tau1, tau3]), std([tau1, tau3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+end
+plot([0 frameRate], linearFit_tau, '-r')
+ylim([0 Inf])
+xlim([0, 65])
+xlabel('Frame Rate (s)')
+ylabel('\tau (min^{-1})')
+title('\tau as a function of frame rate')
+saveas(gcf, 'frameRate_tau.png')
+saveas(gcf, 'frameRate_tau.fig')
+
+figure, hold on
+for i=1:length(frameRate_thalf)
+    a=scatter(frameRate, frameRate_thalf, 'MarkerEdgeColor', '#0072BD');
+    b=errorbar(15, mean(thalf7), -std(thalf7), std(thalf7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    c=errorbar(30, mean(thalf6), -std(thalf6), std(thalf6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    d=errorbar(60, mean([thalf1, thalf3]), -std([thalf1, thalf3]), std([thalf1, thalf3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+end
+plot([0 frameRate], linearFit_thalf, '-r')
+ylim([0 Inf])
+xlim([0, 65])
+xlabel('Frame Rate (s)')
+ylabel('t_{1/2} (min)')
+title('t_{1/2} as a function of frame rate')
+saveas(gcf, 'frameRate_thalf.png')
+saveas(gcf, 'frameRate_thalf.fig')
 %% Functions
 function [intensity, adjintensity, normintensity, positions, lCell, time, t, lidx]=dataInput(datadir)
     
@@ -375,6 +418,7 @@ function [intensity, adjintensity, normintensity, positions, lCell, time, t, lid
         %normalize to pre-lysis frame instead of initial frame. The
         %earliest lysis frame is lidx
         normintensity=adjintensity(:, lidx-1:end)./adjintensity(:,lidx-1);
+        normintensity(normintensity<0)=0;
         
         t=time(lidx-1:end)-time(lidx-1);
         
@@ -525,18 +569,19 @@ function [fit, tau, yhat]=expModel(time, normintensity, text, save, saveAs)
     tau=[];
     yhat=[];
     for i=1:height(normintensity)
-            tau_temp=nlinfit(time, normintensity(i,:), modelfun, tau0);
+            idx=find(normintensity(i,:)<=1);
+            tau_temp=nlinfit(time(idx), normintensity(i,idx), modelfun, tau0);
             y_hat=modelfun(tau_temp, time);   
             
             residuals=abs(normintensity(i,:)-y_hat);
             est=residuals./normintensity(i,:);
             est(est==Inf)=0;
             
-            if max(est)<5
+            %if max(est)<5
                 fit=[fit, i];
                 tau=[tau, tau_temp];
                 yhat=[yhat; y_hat]; 
-            end
+            %end
     end
 
     figure, hold on
