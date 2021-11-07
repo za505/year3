@@ -92,6 +92,30 @@ if normTraces==1
 end
 
 %% compare fluorescence traces
+cd(dirsave)
+
+LB_combo = [normintensity1(:, 1:93); normintensity3];
+PBS_combo = [normintensity2; normintensity4(:, 1:48)];
+
+LB_avg = mean(LB_combo, 1, 'omitnan');
+LB_std = std(LB_combo, 0, 1, 'omitnan');
+
+PBS_avg = mean(PBS_combo, 1, 'omitnan');
+PBS_std = std(PBS_combo, 0, 1, 'omitnan');
+
+figure, hold on
+ciplot((LB_avg-LB_std),(LB_avg+LB_std),t3,[0.75 0.75 1])
+plot(t3,LB_avg,'Color', [0.00 0.45 0.74], 'LineWidth', 2)
+ciplot((PBS_avg-PBS_std),(PBS_avg+PBS_std),t2,[0.99 0.76 0.93])
+plot(t2,PBS_avg,'Color', [0.64 0.08 0.18], 'LineWidth', 2)
+ylim([0 Inf])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+legend({ 'LB Standard Deviation', 'LB Average','PBS Standard Deviation', 'PBS Average'})
+saveas(gcf, 'LB_PBS_comp.png')
+saveas(gcf, 'LB_PBS_comp.fig')
+
+    
 if compTraces==1
     %set the color for the traces
     colorcode={'#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'};
@@ -323,9 +347,9 @@ title('Distribution of t_{1/2} Values')
 % saveas(gcf, 'thalf.png')
 % saveas(gcf, 'thalf.fig')
 
-% plot tau and thalf as a function of frame rate
+%% plot tau and thalf as a function of frame rate
 %there are three frames rates tested for LB perfusion:1 min, 30 s, and 15s
-frameRate = [repelem(15, length(tau7)), repelem(30, length(tau6)), repelem(60, length([tau1, tau3]))];
+frameRate = [repelem(0.25, length(tau7)), repelem(0.5, length(tau6)), repelem(1, length([tau1, tau3]))];
 frameRate_tau = [tau7, tau6, tau1, tau3];
 frameRate_thalf = [thalf7, thalf6, thalf1, thalf3];
 
@@ -338,34 +362,335 @@ linearFit_thalf = polyval(linearCoef_thalf,[0 frameRate]);
 figure, hold on
 for i=1:length(frameRate_tau)
     a=scatter(frameRate, frameRate_tau, 'MarkerEdgeColor', '#0072BD');
-    b=errorbar(15, mean(tau7), -std(tau7), std(tau7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-    c=errorbar(30, mean(tau6), -std(tau6), std(tau6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-    d=errorbar(60, mean([tau1, tau3]), -std([tau1, tau3]), std([tau1, tau3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    b=errorbar(0.25, mean(tau7), -std(tau7), std(tau7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    c=errorbar(0.5, mean(tau6), -std(tau6), std(tau6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    d=errorbar(1, mean([tau1, tau3]), -std([tau1, tau3]), std([tau1, tau3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
 end
 plot([0 frameRate], linearFit_tau, '-r')
-ylim([0 Inf])
-xlim([0, 65])
-xlabel('Frame Rate (s)')
+ylim([0 35])
+xlim([0, 1.1])
+xlabel('Frame Rate (min)')
 ylabel('\tau (min^{-1})')
 title('\tau as a function of frame rate')
-saveas(gcf, 'frameRate_tau.png')
-saveas(gcf, 'frameRate_tau.fig')
+% saveas(gcf, 'frameRate_tau.png')
+% saveas(gcf, 'frameRate_tau.fig')
 
 figure, hold on
 for i=1:length(frameRate_thalf)
     a=scatter(frameRate, frameRate_thalf, 'MarkerEdgeColor', '#0072BD');
-    b=errorbar(15, mean(thalf7), -std(thalf7), std(thalf7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-    c=errorbar(30, mean(thalf6), -std(thalf6), std(thalf6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-    d=errorbar(60, mean([thalf1, thalf3]), -std([thalf1, thalf3]), std([thalf1, thalf3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    b=errorbar(0.25, mean(thalf7), -std(thalf7), std(thalf7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    c=errorbar(0.5, mean(thalf6), -std(thalf6), std(thalf6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+    d=errorbar(1, mean([thalf1, thalf3]), -std([thalf1, thalf3]), std([thalf1, thalf3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
 end
 plot([0 frameRate], linearFit_thalf, '-r')
-ylim([0 Inf])
-xlim([0, 65])
-xlabel('Frame Rate (s)')
+ylim([0 30])
+xlim([0, 1.1])
+xlabel('Frame Rate (min)')
 ylabel('t_{1/2} (min)')
 title('t_{1/2} as a function of frame rate')
-saveas(gcf, 'frameRate_thalf.png')
-saveas(gcf, 'frameRate_thalf.fig')
+% saveas(gcf, 'frameRate_thalf.png')
+% saveas(gcf, 'frameRate_thalf.fig')
+
+%% Mock Photobleach Correction Model
+N = 100; %number of minutes
+dt1 = 1; %increment in minutes, frame rate = 1 minute
+T1 = [0:dt1:N]; %time vector in minutes
+
+%frame rate = 30 seconds
+dt2 = 0.5;
+T2 = [0:dt2:N];
+
+%frame rate = 15 seconds
+dt3 = 0.25; 
+T3 = [0:dt3:N];
+
+%mock vector for 'true' fluorescence + noise. These will be the same
+%regardless of frame rate 
+F1 = ones(1, length(T1)) + (randn(1, length(T1))./50); 
+F2 = ones(1, length(T2)) + (randn(1, length(T2))./50);
+F3 = ones(1, length(T3)) + (randn(1, length(T3))./50);
+
+%plot true fluorescence vs time, are all the same, regardless of
+%frame rate (as expected)
+figure(1), hold on
+plot(T1, F1, '-red')
+plot(T2, F2, '-blue')
+plot(T3, F3, '-cyan')
+ylim([0 Inf])
+legend({'60 s', '30 s', '15 s'})
+
+%I hypothesize that fluorescence decreases according to the following
+%equation: dC/dt = -beta * C + gamma * C, where C is the measured
+%fluorescence, beta is the rate of photobleaching, and gamma is the
+%permeability coefficient
+gamma = -0.01; %permeability coefficient
+beta1 = 1/16.4592; %photobleaching coefficient, beta=1/tau
+beta2 = 1/8.7189; 
+beta3 = 1/4.3229; 
+
+%pre-allocte 'measured' fluorescence variables
+%assume that our initial measured fluorescence is equal to the initial 'true' fluorescence
+C1 = F1; 
+C2 = F2;
+C3 = F3;
+
+%using the following Newton Method, we expect to generate exponential decay
+for i=1:length(F1)-1
+    c1 = -(beta1 * C1(i)) + (gamma * C1(i)); 
+    dC1 = c1*dt1; 
+    C1(i+1) = C1(i) + dC1;
+end
+
+for i=1:length(F2)-1
+    c2 = -(beta2 * C2(i)) + (gamma * C2(i)); 
+    dC2 = c2*dt2; 
+    C2(i+1) = C2(i) + dC2;
+end
+
+for i=1:length(F3)-1
+    c3 = -(beta3 * C3(i)) + (gamma * C3(i)); 
+    dC3 = c3*dt3; 
+    C3(i+1) = C3(i) + dC3;
+end
+
+%plot measured fluorescence vs time; generate exponential traces 
+figure(2), hold on
+plot(T1, C1, '-red')
+plot(T2, C2, '-blue')
+plot(T3, C3, '-cyan')
+%ylim([0 Inf])
+legend({'60 s', '30 s', '15 s'})
+
+%what about what the traces look like with only gamma?
+M1 = F1; 
+M2 = F2;
+M3 = F3;
+
+%using the following Newton Method, we expect to generate exponential
+%decay. This is what we expect to see after correcting for photobleaching,
+%when there is only the effect of the permeability coeffecient 
+for i=1:length(M1)-1
+    m = gamma * M1(i); 
+    dM1 = m*dt1; 
+    M1(i+1) = M1(i) + dM1;
+end
+
+for i=1:length(M2)-1
+    m = gamma * M2(i); 
+    dM2 = m*dt2; 
+    M2(i+1) = M2(i) + dM2;
+end
+
+for i=1:length(M3)-1
+    m = gamma * M3(i); 
+    dM3 = m*dt3; 
+    M3(i+1) = M3(i) + dM3;
+end
+
+%plot fluorescence vs time; generate exponential traces 
+figure(3), hold on
+plot(T1, M1, '-red')
+plot(T2, M2, '-blue')
+plot(T3, M3, '-cyan')
+plot(T1, C1, '--r')
+plot(T2, C2, '--b')
+plot(T3, C3, '--c')
+%ylim([0 Inf])
+legend({'60 s', '30 s', '15 s'})
+
+%now that I'm able to generate exponentials, can I work in the reverse
+%direction and get M and F using alpha?
+
+%first, plot tau vs time and fit to a linear. The slope is alpha (dtau/dt,
+%so 1/alpha = dbeta/dt?) I am not sure why this slope is useful or what the
+%units are or exactly how it stands in place for beta?
+linearCoef = polyfit([dt3, dt2, dt1],[1/beta3, 1/beta2, 1/beta1],1);
+alpha = linearCoef(1); 
+
+%assume that the initial 'measured' fluorescence values and corrected
+%fluor. values will be equal
+Cnew1=nan(1, length(C1));
+Cnew2=nan(1, length(C2));
+Cnew3=nan(1, length(C3));
+
+Cnew1(1)=C1(1);
+Cnew2(1)=C2(1);
+Cnew3(1)=C3(1);
+
+%this is the dCP, or loss attributable to permeability
+dCP1=nan(1, length(C1)-1);
+
+%this correction should work regardless of the frame rate
+for i=1:length(C1)-1
+    
+    dCB = C1(i)/alpha; %this is the amount of photobleaching that occured in our measured value
+    dCT = C1(i+1) - C1(i); %this is the total fluor. loss for the measured value
+    dCP1(i) = dCT + dCB; %this is the amount of loss attributable to permeability
+    %Cnew1(i+1) = Cnew1(i) + dCP;
+    
+end
+
+for i=1:length(C2)-1
+    
+    dC2(i) = (-C2(i)/alpha)*dt2;
+    
+end
+
+for i=1:length(C3)-1
+    
+    dC3(i) = (-C3(i)/alpha)*dt3;
+    
+end
+
+%calculate the cumulative sum of dC. This shall be referred to as dCT
+%the first measured fluorescence value should not need to undergo a
+%correction. Furthermore, take the abs of dCT in order to 'add' back fluor.
+dCT1 = [0 abs(cumsum(dC1))];
+dCT2 = [0 abs(cumsum(dC2))];
+dCT3 = [0 abs(cumsum(dC3))];
+
+%calculate the corrected fluor value
+Cnew1 = C1 + dCT1;
+Cnew2 = C2 + dCT2;
+Cnew3 = C3 + dCT3;
+
+%plot these values. there should be a bit of a decrease compared to the
+%true value since gamma wasn't taken into account
+figure, hold on
+plot(T1, Cnew1, '-r')
+% plot(T2, Cnew2, '-b')
+% plot(T3, Cnew3, '-k')
+plot(T1, M1, '--m')
+% plot(T2, M2, '--c')
+% plot(T3, M3, '--g')
+
+%% Modeling Photobleach Correction, 1 minute frame rate
+
+%set variables
+N = 100; %number of minutes
+dt1 = 1; %increment in minutes, frame rate = 1 minute
+T1 = [0:dt1:N]; %time vector in minutes
+
+%mock vector for 'no diffusion/no bleaching' fluorescence + noise. These will be the same
+%regardless of frame rate 
+F1 = ones(1, length(T1)) + (randn(1, length(T1))./50); 
+
+%plot true fluorescence vs time; all the same, regardless of
+%frame rate (not shown here)
+figure(1), hold on
+plot(T1, F1, '-red')
+ylim([0 Inf])
+
+%I hypothesize that fluorescence decreases according to the following
+%equation: dC/dt = -beta * C + gamma * C, where C is the measured
+%fluorescence, beta is the rate of photobleaching, and gamma is the
+%permeability coefficient
+gamma = -0.01; %permeability coefficient
+beta1 = 1/16.4592; %photobleaching coefficient, beta=1/tau
+beta2 = 1/8.7189; %frame rate = 30 s
+beta3 = 1/4.3229; %frame rate = 15 s
+
+dt2=0.5; %30 s
+dt3=0.25; %15 s
+%pre-allocte 'measured' fluorescence variables
+%assume that our initial measured fluorescence is equal to the initial 'no diffusion' fluorescence
+C1 = F1; 
+
+%using the following Newton Method, I expect to generate an exponential
+%decay curve
+for i=1:length(F1)-1
+    c1 = -(beta1 * C1(i)) + (gamma * C1(i)); 
+    dC1 = c1*dt1; 
+    C1(i+1) = C1(i) + dC1;
+end
+
+%plot measured fluorescence vs time; generate exponential traces 
+figure(2), hold on
+plot(T1, C1, '-red')
+
+%what about what the traces look like with only gamma? (aka corrected for
+%photobleaching)
+M1 = F1;
+
+%using the following Newton Method, we expect to generate exponential
+%decay. This is what we expect to see after correcting for photobleaching,
+%when there is only the effect of the permeability coeffecient 
+for i=1:length(M1)-1
+    m = gamma * M1(i); 
+    dM1 = m*dt1; 
+    M1(i+1) = M1(i) + dM1;
+end
+
+%plot fluorescence vs time; generate exponential traces for corrected and
+%uncorrected traces
+figure(3), hold on
+plot(T1, M1, '-red')
+plot(T1, C1, '--r')
+legend({'corrected', 'measured/uncorrected'})
+
+%now that I'm able to generate exponentials, can I work in the reverse
+%direction and get M and F using alpha?
+
+%first, plot tau vs time and fit to a linear. The slope is alpha (dtau/dt,
+%so 1/alpha = dbeta/dt?) I am not sure why this slope is useful or what the
+%units are or exactly how it stands in place for beta?
+linearCoef = polyfit([dt3, dt2, dt1],[1/beta3, 1/beta2, 1/beta1],1);
+alpha = linearCoef(1); 
+
+%assume that the initial 'measured' fluorescence values and corrected
+%fluor. values will be equal
+Cnew1=nan(1, length(C1));
+Cnew1(1)=C1(1);
+
+%this is the dCP, or loss attributable to permeability
+dCP1=nan(1, length(C1)-1);
+
+%this correction should work regardless of the frame rate
+for i=1:length(C1)-1
+    
+    dCB = C1(i)/alpha; %this is the amount of photobleaching that occured in our measured value
+    dCT = C1(i+1) - C1(i); %this is the total fluor. loss for the measured value
+    dCP1(i) = dCT + dCB; %this is the amount of loss attributable to permeability
+    Cnew1(i+1) = Cnew1(i) + dCP1(i);
+    
+end
+
+%plot these values. The Cnew1 vector and M vector should look the same, but
+%they don't. What went wrong with the correction? 
+figure, hold on
+plot(T1, Cnew1, '-r')
+plot(T1, M1, '--m')
+
+%the goal is for dCP1 to equal diff(M1)
+x=abs(diff(M1));
+y=abs(diff(C1));
+
+z=C1/alpha;
+%%
+diffT1 = diff(t1);
+
+diffCT1 = diff(normintensity1, 1, 2);
+dCT1 = diffCT1./diffT1;
+
+dCB1 = (-normintensity1./alpha)./diffT1; 
+
+dCBsum1 = [zeros(height(normintensity1), 1), cumsum(dCB1, 2, 'omitnan')]; 
+Cnew1 = normintensity1 + abs(dCBsum1(:, 1:end-1)); 
+dCP1 = diff(Cnew1); 
+
+figure, hold on
+for n=1:height(normintensity1)
+    plot(t1, normintensity1(n, :), '-r')
+    scatter(t1, [0 dCT1(n,:)], 'black');
+end
+
+
+figure, hold on
+for n=1:height(Cnew1)
+    plot(t1, Cnew1(n,:))
+end
+
+%% Correct for photobleaching
 %% Functions
 function [intensity, adjintensity, normintensity, positions, lCell, time, t, lidx]=dataInput(datadir)
     
@@ -531,33 +856,33 @@ function [normintensity_avg, normintensity_std]=normintensityPlot(time, norminte
     normintensity_avg=mean(normintensity, 1, 'omitnan');
     normintensity_std=std(normintensity, 0, 1, 'omitnan');
     
-    figure, hold on
-    for i=1:height(normintensity)
-        plot(time, normintensity(i, :), 'Color', '#77AC30')
-    end
-    ylim([0 Inf])
-    xlabel('Time (minutes)')
-    ylabel('Normalized Fluorescence (A.U.)')
-    title(text)
-    if save==1
-        saveas(gcf, [saveAs '_normintensityTraces.png'])
-        saveas(gcf, [saveAs '_normintensityTraces.fig'])
-    end
-
-    figure(2), hold on
-    ciplot((normintensity_avg-normintensity_std),(normintensity_avg+normintensity_std),time,[0.75 0.75 1])
-    plot(time,normintensity_avg,'-r')
-    ylim([0 Inf])
-    xlabel('Time (minutes)')
-    ylabel('Normalized Fluorescence (A.U.)')
-    title(text)
-
-    if save==1
-        saveas(gcf, [saveAs '_normintensityAvg.png'])
-        saveas(gcf, [saveAs '_normintensityAvg.fig'])
-    end
-        
-    pause, close all
+%     figure, hold on
+%     for i=1:height(normintensity)
+%         plot(time, normintensity(i, :), 'Color', '#77AC30')
+%     end
+%     ylim([0 Inf])
+%     xlabel('Time (minutes)')
+%     ylabel('Normalized Fluorescence (A.U.)')
+%     title(text)
+%     if save==1
+%         saveas(gcf, [saveAs '_normintensityTraces.png'])
+%         saveas(gcf, [saveAs '_normintensityTraces.fig'])
+%     end
+% 
+%     figure(2), hold on
+%     ciplot((normintensity_avg-normintensity_std),(normintensity_avg+normintensity_std),time,[0.75 0.75 1])
+%     plot(time,normintensity_avg,'-r')
+%     ylim([0 Inf])
+%     xlabel('Time (minutes)')
+%     ylabel('Normalized Fluorescence (A.U.)')
+%     title(text)
+% 
+%     if save==1
+%         saveas(gcf, [saveAs '_normintensityAvg.png'])
+%         saveas(gcf, [saveAs '_normintensityAvg.fig'])
+%     end
+%         
+%     pause, close all
 end
 
 function [fit, tau, yhat]=expModel(time, normintensity, text, save, saveAs)
@@ -584,22 +909,22 @@ function [fit, tau, yhat]=expModel(time, normintensity, text, save, saveAs)
             %end
     end
 
-    figure, hold on
-    for i=1:length(fit)
-        plot(time, normintensity(fit(i),:),'Color', '#77AC30')
-        plot(time, yhat(i,:), '--k')
-    end
-    ylim([0 Inf])
-    legend({'data', 'model'})
-    title(text)
-    xlabel('Time (min)')
-    ylabel('Normalized Intensity (A.U.)')
-    if save==1
-        saveas(gcf, [saveAs '_expFit.png'])
-        saveas(gcf, [saveAs '_expFit.fig'])
-    end
-        
-    pause, close all
+%     figure, hold on
+%     for i=1:length(fit)
+%         plot(time, normintensity(fit(i),:),'Color', '#77AC30')
+%         plot(time, yhat(i,:), '--k')
+%     end
+%     ylim([0 Inf])
+%     legend({'data', 'model'})
+%     title(text)
+%     xlabel('Time (min)')
+%     ylabel('Normalized Intensity (A.U.)')
+%     if save==1
+%         saveas(gcf, [saveAs '_expFit.png'])
+%         saveas(gcf, [saveAs '_expFit.fig'])
+%     end
+%         
+%     pause, close all
 end
 
 function [residuals, est]=residualPlot(normintensity, yhat, time, fit, text, save, saveAs)
@@ -609,21 +934,21 @@ function [residuals, est]=residualPlot(normintensity, yhat, time, fit, text, sav
     est(est==Inf)=0;
 
 
-    figure, hold on
-    for i=1:height(est)
-        plot(time, est(i,:), 'Color', '#7E2F8E')
-    end
-    xlabel('Time (minutes)')
-    ylabel('$\frac{|y-\hat{y}|}{y}$','Interpreter','latex', 'FontSize', 20)
-    title(text)
-
-    
-    if save==1
-        saveas(gcf, [saveAs '_est.png'])
-        saveas(gcf, [saveAs '_est.fig'])
-    end
-
-    pause, close all
+%     figure, hold on
+%     for i=1:height(est)
+%         plot(time, est(i,:), 'Color', '#7E2F8E')
+%     end
+%     xlabel('Time (minutes)')
+%     ylabel('$\frac{|y-\hat{y}|}{y}$','Interpreter','latex', 'FontSize', 20)
+%     title(text)
+% 
+%     
+%     if save==1
+%         saveas(gcf, [saveAs '_est.png'])
+%         saveas(gcf, [saveAs '_est.fig'])
+%     end
+% 
+%     pause, close all
 end
 
 function [xq, vq, thalf]=interpPlot(normintensity,time, text, save, saveAs)
@@ -635,25 +960,26 @@ function [xq, vq, thalf]=interpPlot(normintensity,time, text, save, saveAs)
         vq(i,:)=interp1(time,normintensity(i,:),xq);
     end
     
-    figure, hold on
-    for i=1:height(normintensity)
-        plot(xq,vq(i,:),':.', 'Color', '#D95319');
-        plot(time,normintensity(i,:),'o', 'Color','#0072BD');
-    end
-    ylim([0 Inf])
-    xlabel('Time (minutes)')
-    ylabel('Normalized Fluoresence (A.U.)')
-    legend({'interpolation', 'data'})
-    title([text ', Linear Interpolation']);
+%     figure, hold on
+%     for i=1:height(normintensity)
+%         plot(xq,vq(i,:),':.', 'Color', '#D95319');
+%         plot(time,normintensity(i,:),'o', 'Color','#0072BD');
+%     end
+%     ylim([0 Inf])
+%     xlabel('Time (minutes)')
+%     ylabel('Normalized Fluoresence (A.U.)')
+%     legend({'interpolation', 'data'})
+%     title([text ', Linear Interpolation']);
+
     [~, tidx]=min(abs(vq-0.5), [], 2);
     thalf=xq(tidx);
-    
-    if save==1
-        saveas(gcf, [saveAs '_interp.png'])
-        saveas(gcf, [saveAs '_interp.fig'])
-    end
-    
-    close all
+%     
+%     if save==1
+%         saveas(gcf, [saveAs '_interp.png'])
+%         saveas(gcf, [saveAs '_interp.fig'])
+%     end
+%     
+%     close all
 end
 
 function ciplot(lower,upper,x,colour,Trans);
