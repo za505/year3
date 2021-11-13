@@ -1,44 +1,122 @@
 %% Modeling Photobleach Correction
-%Rico's de-bugging
+%Authors: Enrique Rojas and Zarina Akbary
+%Date: 11/07/2021
+%Purpose: to model the photobleach correction
+
 clear, close all
-%% Modeling Photobleach Correction, 1 minute frame rate
 
-%set variables
-N = 100; %number of minutes
-dt1 = 1; %increment in minutes, frame rate = 1 minute
-T1 = [0:dt1:N]; %time vector in minutes
+% %Let's add some noise to our measured fluor. to see how robust the
+% %adjustment is
+% Cunb = Cunb + randn(1, length(Cunb));
+%% Inputs
+check1=0;
+check2=0;
+check3=1;
 
+colorcode={'#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'};
+%% Modeling Photobleach Correction
+%bounds: 0 <= gamma <= 1
+%        0 < dt
 
-%I hypothesize that fluorescence decreases according to the following
+%inputs: N (number of time steps), dt, gamma
+%LB control, frame rate = 1 min
+[T1, Cbl1, Cunb1, Ctot1, M1, beta1] = simRun(100, 1, 0.01);
+
+%LB control, frame rate = 30 s
+[T2, Cbl2, Cunb2, Ctot2, M2, beta2] = simRun(100, 0.5, 0.01);
+
+%LB control, frame rate = 15 s
+[T3, Cbl3, Cunb3, Ctot3, M3, beta3] = simRun(100, 0.25, 0.01);
+
+%PBS incubation, frame rate = 1 min
+[T4, Cbl4, Cunb4, Ctot4, M4, beta4] = simRun(100, 1, 0.8);
+
+%% how much does the 'actual' differ from C total?
+if check1==1
+    figure, hold on
+    plot(T1, M1, 'Color', colorcode{1}, 'LineStyle', '-') 
+    plot(T1, Ctot1, 'Color', colorcode{1}, 'LineStyle', '--') 
+    plot(T2, M2, 'Color', colorcode{2}, 'LineStyle', '-') 
+    plot(T2, Ctot2, 'Color', colorcode{2}, 'LineStyle', '--') 
+    plot(T3, M3, 'Color', colorcode{3}, 'LineStyle', '-') 
+    plot(T3, Ctot3, 'Color', colorcode{3}, 'LineStyle', '--') 
+    plot(T4, M4, 'Color', colorcode{4}, 'LineStyle', '-') 
+    plot(T4, Ctot4, 'Color', colorcode{4}, 'LineStyle', '--') 
+% legend({'LB, frame rate = 1 min, actual', 'LB, frame rate = 1 min, measured', 'LB, frame rate = 30 s, actual', 'LB, frame rate = 30 s, measured', 'LB, frame rate = 15 s, actual', 'LB, frame rate = 15 s, measured', 'PBS, frame rate = 1 min, actual', 'PBS, frame rate = 1 min, measured'})
+end
+% Observation: they do not differ, which is what we expect
+
+%% how much does the 'actual' differ from the measured?
+if check2==1
+    figure, hold on
+    plot(T1, M1, 'Color', colorcode{1}, 'LineStyle', '-') 
+    plot(T1, Cunb1, 'Color', colorcode{1}, 'LineStyle', '--') 
+    plot(T2, M2, 'Color', colorcode{2}, 'LineStyle', '-') 
+    plot(T2, Cunb2, 'Color', colorcode{2}, 'LineStyle', '--') 
+    plot(T3, M3, 'Color', colorcode{3}, 'LineStyle', '-') 
+    plot(T3, Cunb3, 'Color', colorcode{3}, 'LineStyle', '--') 
+    plot(T4, M4, 'Color', colorcode{4}, 'LineStyle', '-') 
+    plot(T4, Cunb4, 'Color', colorcode{4}, 'LineStyle', '--') 
+end
+
+%Observation: For gamma = 0.8, the fluorphores leak out of the cell faster
+%than they can be bleached. In this case, gamma is greater than beta, which
+%may indicate why correction would be difficult, or perhaps even
+%unnecessary
+
+%% Can we obtain the 'actual' fluorescence value given only the measured values?
+[Cnew1, dCB1, dCU1, dCP1, tau1, gamma1] = simReverse(Cunb1, T1, 1, beta1);
+[Cnew2, dCB2, dCU2, dCP2, tau2, gamma2] = simReverse(Cunb2, T2, 0.5, beta2);
+[Cnew3, dCB3, dCU3, dCP3, tau3, gamma3] = simReverse(Cunb3, T3, 0.25, beta3);
+[Cnew4, dCB4, dCU4, dCP4, tau4, gamma4] = simReverse(Cunb4, T4, 1, beta4);
+
+%% how close are the photocorrected values and the 'actual' fluor?
+if check3==1
+    figure, hold on
+    plot(T1, M1, 'Color', colorcode{1}, 'LineStyle', 'none', 'Marker', 'o') 
+    plot(T1, Cnew1, 'Color', colorcode{1}, 'LineStyle', '-') 
+    plot(T2, M2, 'Color', colorcode{2}, 'LineStyle', 'none', 'Marker', 'o') 
+    plot(T2, Cnew2, 'Color', colorcode{2}, 'LineStyle', '-') 
+    plot(T3, M3, 'Color', colorcode{3}, 'LineStyle', 'none', 'Marker', 'o') 
+    plot(T3, Cnew3, 'Color', colorcode{3}, 'LineStyle', '-') 
+    plot(T4, M4, 'Color', colorcode{4}, 'LineStyle', 'none', 'Marker', 'o') 
+    plot(T4, Cnew4, 'Color', colorcode{4}, 'LineStyle', '-') 
+end
+%% Functions
+function [T, Cbl, Cunb, Ctot, M, beta] = simRun(N, dt, gamma)
+
+% N = number of minutes
+% dt = increment in minutes, frame rate 
+% gamma = permeability coefficient
+
+T = [0:dt:N]; %time vector in minutes
+tau = (16.0806)*dt + 0.4234;
+beta = 1/tau;
+
+%I hypothesize that measured fluorescence decreases according to the following
 %equation: dC/dt = -beta * C + gamma * C, where C is the measured
 %fluorescence, beta is the rate of photobleaching, and gamma is the
-%permeability coefficient
-gamma = 0.01; %permeability coefficient (I made gamma positive)
-beta1 = 1/16.4592; %photobleaching coefficient, beta=1/tau
-beta2 = 1/8.7189; %frame rate = 30 s
-beta3 = 1/4.3229; %frame rate = 15 s
-
-dt2=0.5; %30 s
-dt3=0.25; %15 s
+%permeability coefficient. However, the true decrease in fluorophore
+%concentration only varies by gamma. 
 
 %pre-allocte 'measured' fluorescence variables
 %assume that our initial measured fluorescence is equal to the initial 'no diffusion' fluorescence
 
-Cbl=zeros(size(T1));%Normalized concentration of bleached fluorophores
-Cunb=zeros(size(T1));%Normalized concentration of unbleached fluorophores
-Ctot=zeros(size(T1));%Normalized concentration of total fluorophores
+Cbl=zeros(size(T));%Normalized concentration of bleached fluorophores
+Cunb=zeros(size(T));%Normalized concentration of unbleached fluorophores
+Ctot=zeros(size(T));%Normalized concentration of total fluorophores
 Cunb(1)=1;%Initial concentration of unbleached fluorophores is 1
 Cbl(1)=0;%Initial concentration of unbleached fluorophores is 0
 Ctot(1)=1;
 
 %using the following Newton Method, I expect to generate an exponential
 %decay curve
-for i=1:length(T1)-1
-    dCunb= -beta1 * Cunb(i) - gamma * Cunb(i);
-    dCbl=beta1 * Cunb(i) - gamma * Cbl(i);
+for i=1:length(T)-1
+    dCunb= -beta * Cunb(i) - gamma * Cunb(i);
+    dCbl= beta * Cunb(i) - gamma * Cbl(i);
     
-    dCunb=dCunb*dt1;
-    dCbl=dCbl*dt1;
+    dCunb=dCunb*dt;
+    dCbl=dCbl*dt;
     
     Cunb(i+1)=Cunb(i)+dCunb;
     Cbl(i+1)=Cbl(i)+dCbl;
@@ -47,80 +125,95 @@ for i=1:length(T1)-1
    
 end
 
-figure, hold on
-plot(T1, Cunb, '-r') %this should be a decay
-plot(T1, Cbl, '-b') %this should increase exponentially? 
-plot(T1, Ctot, '-g') %this should also be an exponential decay, but less steep than Cunb
-legend({'Unbleached', 'Bleached', 'Total'})
-%at some point, all the fluor. are bleached and no unbleached are left, but
-%that does not mean there are no fluor. in the cell
-
 %what about what the traces look like with only gamma? (aka corrected for
 %photobleaching)
-M1 = zeros(size(T1));
-M1(1)=1;
+M = zeros(size(T));
+M(1)=1;
 
 %using the following Newton Method, we expect to generate exponential
 %decay. This is what we expect to see after correcting for photobleaching,
 %when there is only the effect of the permeability coeffecient 
-for i=1:length(T1)-1
-    m = - gamma * M1(i); 
-    dM1 = m*dt1; 
-    M1(i+1) = M1(i) + dM1;
+for i=1:length(T)-1
+    m = - gamma * M(i); 
+    dM = m*dt; 
+    M(i+1) = M(i) + dM;
 end
 
-figure, hold on
-plot(T1, M1, '-r')
-plot(T1, Ctot, '--g')
-legend({'M1', 'Ctot'}) %the traces completely overlap
+end
 
-%now that I'm able to generate exponentials, can I work in the reverse
-%direction and get M and F using alpha?
+function [Cnew, dCB, dCU, dCP, tau, gamma] = simReverse(Cunb, T, dt, beta)
 
-%first, plot tau vs time and fit to a linear. The slope is alpha (dtau/dt,
-%so 1/alpha = dbeta/dt?) I am not sure why this slope is useful or what the
-%units are or exactly how it stands in place for beta?
-% linearCoef = polyfit([dt3, dt2, dt1],[1/beta3, 1/beta2, 1/beta1],1);
-% alpha = linearCoef(1); 
+    %first, let's fit the measured fluor. values to an exponential to calculate
+    %tau
 
-alpha=1/beta1/dt1;%Here I just used the alpha that would result from just using beta1 for my measured time constant
-%this would be the same as tau though??
+    modelfun1=@(tau,x)exp(-x./tau);
+    tau0=1;
+
+    tau=nlinfit(T, Cunb, modelfun1, tau0);
+
+
+%can I work in the reverse direction and get M using alpha (the slope of tau vs frame rate)?
+alpha=1/beta/dt; %the proportion of photobleaching
 
 %assume that the initial 'measured' fluorescence values and corrected
 %fluor. values will be equal
-Cnew1=nan(1, length(T1));%Corrected concentration of fluorophores
-Cnew1(1)=1;
+Cnew=nan(size(T));%Corrected concentration of fluorophores
+Cnew(:, 1)=Cunb(:, 1);
 
 %this is the dCP, or loss attributable to permeability
-dCP1=nan(1, length(T1)-1);
+dCB=nan(height(Cunb), length(T)-1);
+dCU=nan(height(Cunb), length(T)-1);
+dCP=nan(height(Cunb), length(T)-1);
 
-unb_frac=zeros(size(Cunb));
-unb_frac(1)=1;%Fraction of fluorophores that are unbleached
+unb_frac=zeros(size(T));
+unb_frac(:,1)=1;%Fraction of fluorophores that are unbleached
 
-Cbl_exp=zeros(size(T1));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
+Cbl_exp=nan(size(T));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
+Cbl_exp(:,1)=0;
 
+if tau>=1
 %this correction should work regardless of the frame rate
-for i=1:length(T1)-1
+for i=1:length(T)-1
    
-    dCB = Cunb(i)/(alpha); %this is the amount of photobleaching that occured in our measured value
-    dCT = Cunb(i+1) - Cunb(i); %this is the total fluor. loss for the measured value
-    dCP1(i) = dCT + dCB; %this is the amount of loss attributable to permeability
+    dCB(i) = Cunb(i)/alpha; %this is the amount of photobleaching that occured in our measured value
+    dCU(i) = Cunb(i+1) - Cunb(i); %this is the total fluor. loss for the measured value
+    dCP(i) = dCU(i) + dCB(i); %this is the amount of loss attributable to permeability
     
     
-    dCP1(i)=dCP1(i)/unb_frac(i);%Correcting for the fact that a fraction of fluorophores are unbleached
+    dCP(i)=dCP(i)/unb_frac(i);%Correcting for the fact that a fraction of fluorophores are unbleached
     
-    Cnew1(i+1)=Cnew1(i)+dCP1(i);
+    Cnew(i+1)=Cnew(i)+dCP(i);
     
-    Cbl_exp(i+1)=Cbl_exp(i)+dCB+dCP1(i)*(1-unb_frac(i));%Accounting fo the change in concentration fo bleached fluorophores
+    Cbl_exp(i+1)=Cbl_exp(i)+dCB(i)+dCP(i)*(1-unb_frac(i));%Accounting fo the change in concentration fo bleached fluorophores
      
     unb_frac(i+1)=(Cunb(i+1))/(Cunb(i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
     
 end
 
-%plot these values. The Cnew1 vector and M vector should look the same, but
-%they don't. What went wrong with the correction? 
-figure, hold on
-plot(T1, Cnew1, '-b')
-plot(T1, M1, '--m')
-plot(T1,Cunb,'.k')
-legend({'Corrected Conc.','Actual Conc.','Measured Conc.'})
+elseif tau<1
+    
+    %this correction should work regardless of the frame rate
+for i=1:length(T)-1
+   
+    dCB(i) = ((Cunb(i)+Cunb(i+1))/2)/alpha; %this is the amount of photobleaching that occured in our measured value
+    dCU(i) = Cunb(i+1) - Cunb(i); %this is the total fluor. loss for the measured value
+    dCP(i) = dCU(i) + dCB(i); %this is the amount of loss attributable to permeability
+    
+    
+    dCP(i)=dCP(i)/unb_frac(i);%Correcting for the fact that a fraction of fluorophores are unbleached
+    
+    Cnew(i+1)=Cnew(i)+dCP(i);
+    
+    Cbl_exp(i+1)=Cbl_exp(i)+dCB(i)+dCP(i)*(1-unb_frac(i));%Accounting fo the change in concentration fo bleached fluorophores
+     
+    unb_frac(i+1)=(Cunb(i+1))/(Cunb(i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
+    
+end
+
+end
+
+    modelfun=@(gamma,x)exp(-x.*gamma);
+    gamma0=1;
+    gamma=nlinfit(T, Cnew, modelfun, gamma0);
+
+end
