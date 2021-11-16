@@ -13,7 +13,7 @@ normTraces=0;
 modelFit=1;
 modelCheck=0;
 modelInterp=0;
-tauPlot=1;
+tauPlot=0;
 bleachCorrect=1;
 
 colorcode={'#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'};
@@ -121,14 +121,14 @@ end
 if modelFit==1
 
     cd([dirsave '/ModelFit'])
-    [fit1, tau1, yhat1]=expModel(t1, normintensity1, 'LB perfusion, frame rate = 1 min, replicate 1', 1, '10232021_Exp1');
-    [fit2, tau2, yhat2]=expModel(t2, normintensity2,  'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 1, '10232021_Exp2');
-    [fit3, tau3, yhat3]=expModel(t3, normintensity3, 'LB perfusion, frame rate = 1 min, replicate 2', 1, '10262021_Exp1');
-    [fit4, tau4, yhat4]=expModel(t4, normintensity4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 1, '10262021_Exp2');
-    [fit5a, tau5a, yhat5a]=expModel(t5a(1:17), normintensity5a(:, 1:17), 'LB perfusion, frame rate = 5 min, adjusted', 1, '10282021_Exp1_adj');
-    [fit5b, tau5b, yhat5b]=expModel(t5b, normintensity5b, 'LB perfusion, frame rate = 5 min, unadjusted', 1, '10282021_Exp1_unadj');
-    [fit6, tau6, yhat6]=expModel(t6, normintensity6, 'LB perfusion, frame rate = 30 s', 1, '10302021_Exp1');
-    [fit7, tau7, yhat7]=expModel(t7, normintensity7, 'LB perfusion, frame rate = 15 s', 1, '10302021_Exp2');
+    [fit1, tau1, yhat1]=expModel(t1, normintensity1, 'LB perfusion, frame rate = 1 min, replicate 1', 0, '10232021_Exp1');
+    [fit2, tau2, yhat2]=expModel(t2, normintensity2,  'PBS 1-hour Incubation, frame rate = 1 min, replicate 1', 0, '10232021_Exp2');
+    [fit3, tau3, yhat3]=expModel(t3, normintensity3, 'LB perfusion, frame rate = 1 min, replicate 2', 0, '10262021_Exp1');
+    [fit4, tau4, yhat4]=expModel(t4, normintensity4, 'PBS 1-hour Incubation, frame rate = 1 min, replicate 2', 0, '10262021_Exp2');
+%     [fit5a, tau5a, yhat5a]=expModel(t5a(1:17), normintensity5a(:, 1:17), 'LB perfusion, frame rate = 5 min, adjusted', 0, '10282021_Exp1_adj');
+%     [fit5b, tau5b, yhat5b]=expModel(t5b, normintensity5b, 'LB perfusion, frame rate = 5 min, unadjusted', 0, '10282021_Exp1_unadj');
+%     [fit6, tau6, yhat6]=expModel(t6, normintensity6, 'LB perfusion, frame rate = 30 s', 0, '10302021_Exp1');
+%     [fit7, tau7, yhat7]=expModel(t7, normintensity7, 'LB perfusion, frame rate = 15 s', 0, '10302021_Exp2');
     
     %     % compare the time constants
 %     figure, hold on
@@ -180,8 +180,21 @@ end
 
 %%  plot tau and thalf as a function of frame rate
 if tauPlot==1
-%     cd(dirsave)
-% 
+    cd(dirsave)
+    
+    %plot tau as a function of initial adjusted fluor. (fluor - background)
+    figure, hold on
+    scatter([adjintensity1(:,1); adjintensity3(:,1)], [tau1, tau3], 'MarkerFaceColor', colorcode{1})
+    scatter(adjintensity6(:,1), tau6, 'MarkerFaceColor', colorcode{2})
+    scatter(adjintensity7(:,1), tau7, 'MarkerFaceColor', colorcode{3})
+    scatter([adjintensity2(:,1); adjintensity4(:,1)], [tau2, tau4], 'MarkerFaceColor', colorcode{4})
+    xlabel('Initial Adjusted Intensity (A.U.)')
+    ylabel('Tau (min^{-1})')
+    legend({'LB, frame rate = 1 min', 'LB, frame rate = 30 s', 'LB, frame rate = 15 s', 'PBS, frame rate = 1 min'})
+    saveas(gcf, 'tau_initialF.png')
+    saveas(gcf, 'tau_initialF.fig')    
+
+
 %     groups = categorical({'PBS, rep1', 'PBS, rep2', 'LB, rep1', 'LB, rep2', 'LB, 5 min unadj', 'LB, 5 min adj', 'LB, 30 s', 'LB, 15 s'});
 %     tau = {tau2; tau4; tau1; tau3; tau5a; tau5b; tau6; tau7};
 %     order = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -226,79 +239,79 @@ if tauPlot==1
 
     linearCoef_thalf = polyfit(frameRate,frameRate_thalf,1);
     linearFit_thalf = polyval(linearCoef_thalf,[0 frameRate]);
-
-%     figure, hold on
-%     for i=1:length(frameRate_tau)
-%         a=scatter(frameRate, frameRate_tau, 'MarkerEdgeColor', '#0072BD');
-%         b=errorbar(0.25, mean(tau7), -std(tau7), std(tau7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-%         c=errorbar(0.5, mean(tau6), -std(tau6), std(tau6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-%         d=errorbar(1, mean([tau1, tau3]), -std([tau1, tau3]), std([tau1, tau3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-%     end
-%     plot([0 frameRate], linearFit_tau, '-r')
-%     ylim([0 35])
-%     xlim([0, 1.1])
-%     xlabel('Frame Rate (min)')
-%     ylabel('\tau (min^{-1})')
-%     title('\tau as a function of frame rate')
-%     % saveas(gcf, 'frameRate_tau.png')
-%     % saveas(gcf, 'frameRate_tau.fig')
 % 
-%     figure, hold on
-%     for i=1:length(frameRate_thalf)
-%         a=scatter(frameRate, frameRate_thalf, 'MarkerEdgeColor', '#0072BD');
-%         b=errorbar(0.25, mean(thalf7), -std(thalf7), std(thalf7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-%         c=errorbar(0.5, mean(thalf6), -std(thalf6), std(thalf6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-%         d=errorbar(1, mean([thalf1, thalf3]), -std([thalf1, thalf3]), std([thalf1, thalf3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
-%     end
-%     plot([0 frameRate], linearFit_thalf, '-r')
-%     ylim([0 30])
-%     xlim([0, 1.1])
-%     xlabel('Frame Rate (min)')
-%     ylabel('t_{1/2} (min)')
-%     title('t_{1/2} as a function of frame rate')
-%     % saveas(gcf, 'frameRate_thalf.png')
-    % saveas(gcf, 'frameRate_thalf.fig')
-    
-    figure
-    scatter([intensity7(:,1)', intensity6(:,1)', intensity1(:,1)', intensity3(:,1)'], framerate_tau)
-    
-    
+% %     figure, hold on
+% %     for i=1:length(frameRate_tau)
+% %         a=scatter(frameRate, frameRate_tau, 'MarkerEdgeColor', '#0072BD');
+% %         b=errorbar(0.25, mean(tau7), -std(tau7), std(tau7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+% %         c=errorbar(0.5, mean(tau6), -std(tau6), std(tau6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+% %         d=errorbar(1, mean([tau1, tau3]), -std([tau1, tau3]), std([tau1, tau3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+% %     end
+% %     plot([0 frameRate], linearFit_tau, '-r')
+% %     ylim([0 35])
+% %     xlim([0, 1.1])
+% %     xlabel('Frame Rate (min)')
+% %     ylabel('\tau (min^{-1})')
+% %     title('\tau as a function of frame rate')
+% %     % saveas(gcf, 'frameRate_tau.png')
+% %     % saveas(gcf, 'frameRate_tau.fig')
+% % 
+% %     figure, hold on
+% %     for i=1:length(frameRate_thalf)
+% %         a=scatter(frameRate, frameRate_thalf, 'MarkerEdgeColor', '#0072BD');
+% %         b=errorbar(0.25, mean(thalf7), -std(thalf7), std(thalf7), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+% %         c=errorbar(0.5, mean(thalf6), -std(thalf6), std(thalf6), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+% %         d=errorbar(1, mean([thalf1, thalf3]), -std([thalf1, thalf3]), std([thalf1, thalf3]), 'Color', 'black', 'Marker', 'x', 'LineWidth', 1, 'MarkerSize', 8);
+% %     end
+% %     plot([0 frameRate], linearFit_thalf, '-r')
+% %     ylim([0 30])
+% %     xlim([0, 1.1])
+% %     xlabel('Frame Rate (min)')
+% %     ylabel('t_{1/2} (min)')
+% %     title('t_{1/2} as a function of frame rate')
+% %     % saveas(gcf, 'frameRate_thalf.png')
+%     % saveas(gcf, 'frameRate_thalf.fig')
+%     
+%     figure
+%     scatter([intensity7(:,1)', intensity6(:,1)', intensity1(:,1)', intensity3(:,1)'], framerate_tau)
+%     
+%     
 end
 %% Photobleach Correction Model
 if bleachCorrect==1
-    alpha = linearCoef_tau(1);
-    [Cnew1, dCP1, unb_frac1, Cbl_exp1, gamma1] = photoCorrect(normintensity1, t1, alpha);
-    [Cnew2, dCP2, unb_frac2, Cbl_exp2, gamma2] = photoCorrect(normintensity2, t2, alpha);
-    [Cnew3, dCP3, unb_frac3, Cbl_exp3, gamma3] = photoCorrect(normintensity3, t3, alpha);
-    [Cnew4, dCP4, unb_frac4, Cbl_exp4, gamma4] = photoCorrect(normintensity4, t4, alpha);
-    
-    %perform normalization
-    Cnew2 = Cnew2 - Cnew2(:, end);
-    Cnew2 = Cnew2./Cnew2(:,1);
-    
-    Cnew4 = Cnew4 - Cnew4(:, end);
-    Cnew4 = Cnew4./Cnew4(:,1);
-    
-    %Combine datasets 
-    LB_combo = [Cnew1(:, 1:93); Cnew3];
-    PBS_combo = [Cnew2; Cnew4(:, 1:48)];
-    
-    LB_avg = mean(LB_combo, 1, 'omitnan');
-    LB_std = std(LB_combo, 0, 1, 'omitnan');
-
-    PBS_avg = mean(PBS_combo, 1, 'omitnan');
-    PBS_std = std(PBS_combo, 0, 1, 'omitnan');
-
-    figure('DefaultAxesFontSize',18), hold on
-    %ciplot((LB_avg-LB_std),(LB_avg+LB_std),t3,[0.75 0.75 1])
-    plot(t3(1:51),LB_avg(1,1:51),'Color', [0.00 0.45 0.74], 'LineWidth', 2)
-    %ciplot((PBS_avg-PBS_std),(PBS_avg+PBS_std),t2,[0.99 0.76 0.93])
-    plot(t2,PBS_avg,'Color', [0.64 0.08 0.18], 'LineWidth', 2)
-    ylim([0 1.3])
-    xlabel('Time (minutes)')
-    ylabel('Normalized Fluorescence (A.U.)')
-%legend({ 'LB Standard Deviation', 'LB Average','PBS Standard Deviation', 'PBS Average'})
-legend({ 'LB Average', 'PBS Average'})
+    %alpha = linearCoef_tau(1);
+%     [Cnew1, dCP1, unb_frac1, Cbl_exp1, gamma1] = photoCorrect(normintensity1, t1, tau1);
+%     [Cnew2, dCP2, unb_frac2, Cbl_exp2, gamma2] = photoCorrect(normintensity2, t2, tau2);
+%     [Cnew3, dCP3, unb_frac3, Cbl_exp3, gamma3] = photoCorrect(normintensity3, t3, tau3);
+%     [Cnew4, dCP4, unb_frac4, Cbl_exp4, gamma4] = photoCorrect(normintensity4, t4, tau4);
+%     
+% %     %perform normalization
+% %     Cnew2 = Cnew2 - Cnew2(:, end);
+% %     Cnew2 = Cnew2./Cnew2(:,1);
+% %     
+% %     Cnew4 = Cnew4 - Cnew4(:, end);
+% %     Cnew4 = Cnew4./Cnew4(:,1);
+% %     
+% %     Combine datasets 
+%     LB_combo = [Cnew1(:, 1:93); Cnew3];
+%     PBS_combo = [Cnew2; Cnew4(:, 1:48)];
+%     
+%     LB_avg = mean(LB_combo, 1, 'omitnan');
+%     LB_std = std(LB_combo, 0, 1, 'omitnan');
+% 
+%     PBS_avg = mean(PBS_combo, 1, 'omitnan');
+%     PBS_std = std(PBS_combo, 0, 1, 'omitnan');
+% 
+%     figure('DefaultAxesFontSize',18), hold on
+%     ciplot((LB_avg-LB_std),(LB_avg+LB_std),t3,[0.75 0.75 1])
+%     plot(t3(1:51),LB_avg(1,1:51),'Color', [0.00 0.45 0.74], 'LineWidth', 2)
+%     ciplot((PBS_avg-PBS_std),(PBS_avg+PBS_std),t2,[0.99 0.76 0.93])
+%     plot(t2,PBS_avg,'Color', [0.64 0.08 0.18], 'LineWidth', 2)
+%     ylim([0 1.3])
+%     xlabel('Time (minutes)')
+%     ylabel('Normalized Fluorescence (A.U.)')
+%     legend({ 'LB Standard Deviation', 'LB Average','PBS Standard Deviation', 'PBS Average'})
+%legend({ 'LB Average', 'PBS Average'})
 
 %     figure, hold on
 %     for n=1:height(normintensity1)
@@ -335,7 +348,23 @@ legend({ 'LB Average', 'PBS Average'})
 %     xlabel('Time (minutes)')
 %     ylabel('Normalized Fluorescence (A.U.)')
 
-
+      PBS_combo = [normintensity2; normintensity4(:, 1:48)];
+      [CnewA, dCPA, unb_fracA, Cbl_expA, gammaA] = photoCorrect(PBS_combo, t2, [tau2, tau4], 1);
+      [CnewB, dCPB, unb_fracB, Cbl_expB, gammaB] = photoCorrect(PBS_combo, t2, [tau2, tau4], 2);
+      [CnewC, dCPC, unb_fracC, Cbl_expC, gammaC] = photoCorrect(PBS_combo, t2, [tau2, tau4], 3);
+      
+    figure, hold on
+    %ciplot((mean(CnewA, 1, 'omitnan')-std(CnewA, 0, 1, 'omitnan')),(mean(CnewA, 1, 'omitnan')+std(CnewA, 0, 1, 'omitnan')),t2,[0.99 0.76 0.93])
+    plot(t2, mean(CnewA, 1, 'omitnan'), 'Color', [0.64 0.08 0.18], 'LineWidth', 2)
+    %ciplot((mean(CnewB, 1, 'omitnan')-std(CnewB, 0, 1, 'omitnan')),(mean(CnewB, 1, 'omitnan')+std(CnewB, 0, 1, 'omitnan')),t2,[0.75 0.75 1])
+    plot(t2, mean(CnewB, 1, 'omitnan'), 'Color', [0.00 0.45 0.74], 'LineWidth', 2)
+    %ciplot((mean(CnewC, 1, 'omitnan')-std(CnewC, 0, 1, 'omitnan')),(mean(CnewC, 1, 'omitnan')+std(CnewC, 0, 1, 'omitnan')),t2,[0.6471 0.9020 0.3137])
+    plot(t2, mean(CnewC, 1, 'omitnan'), 'Color', [0.3451 0.5098 0.1333], 'LineWidth', 2)
+    ylim([0 Inf])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence (A.U.)')
+    %legend({ 'Original Correction Standard Deviation', 'Original Correction','Average Correction Standard Deviation', 'Average Correction','Forward Correction Standard Deviation', 'Forward Correction'})
+    legend({'Original Correction','Average Correction','Forward Correction'})
 end
 
 %% Functions
@@ -636,63 +665,111 @@ function [xq, vq, thalf]=interpPlot(normintensity,time, text, save, saveAs)
 %     close all
 end
 
-function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, alpha)
+function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, tau, parameter)
     
-    %I prefer to pre-allocate with nan in case same values are missing in
-    %the raw data
+    %calculate dt (there's variation of dt during initial values, so it's
+    %easier to use end values)
     dt=abs(t(end-1)-t(end));
-    %disp(['dt = ' num2str(dt)])
+    beta = 1/((16.0806)*dt + 0.4234); %1/tau
+    alpha=1/beta/dt; %tau*dt
     
     %assume that the initial 'measured' fluorescence values and corrected
-    %fluor. values will be equal
+    %fluor. values will be equal. I prefer to pre-allocate with nan in case 
+    %some values are missing in the raw data
     Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
     Cnew(:, 1)=normintensity(:, 1);
 
     %this is the dCP, or loss attributable to permeability
     dCP=nan(height(normintensity), length(t)-1);
 
-%     Cbl=zeros(size(normintensity));%Normalized concentration of bleached fluorophores
-%     Cunb=zeros(size(normintensity));%Normalized concentration of unbleached fluorophores
-%     Ctot=zeros(size(normintensity));%Normalized concentration of total fluorophores
-%     Cunb(:,1)=normintensity(:, 1);%Initial concentration of unbleached fluorophores is 1
-%     Cbl(:, 1)=0;%Initial concentration of unbleached fluorophores is 0
-%     Ctot(:, 1)=normintensity(:, 1);
-
-    unb_frac=nan(size(normintensity));
-    unb_frac(:, 1)=1;%Fraction of fluorophores that are unbleached at the initial time point
+    unb_frac=nan(size(normintensity)); %fraction of unvbleached fluor. 
+    unb_frac(:, 1)=1;%all fluorophores are unbleached at the initial time point
 
     Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
     Cbl_exp(:, 1)=0;
     
-    %this correction should work regardless of the frame rate
     for n=1:height(normintensity)
-
-        %disp(['alpha = ' num2str(alpha)])
         
-        for i=1:length(t)-1
+        if parameter==1
+            for i=1:length(t)-1
 
-            dCB = normintensity(n,i)/(alpha); %this is the amount of photobleaching that occured in our measured value
-%             if dCB<0 %no negative dCB for normintensity1
-%                 disp(['negative dCB for cell ' num2str(n) ', t = ' num2str(i)])
-%             end
-            
-            dCT = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
-%             if dCT>0 %many positive dCT for normintensity1
-%                 disp(['positive dCT for cell ' num2str(n) ', t = ' num2str(i)])
-%                 %dCT=-dCT;
-%                 %continue 
-%             end
-            
-            dCP(n, i) = dCT + dCB; %this is the amount of loss attributable to permeability
+                dCB = normintensity(n,i)/(alpha); %this is the amount of photobleaching that occured in our measured value
+    %             if dCB<0 %no negative dCB for normintensity1
+    %                 disp(['negative dCB for cell ' num2str(n) ', t = ' num2str(i)])
+    %             end
 
-            dCP(n,i)=dCP(n,i)/unb_frac(n,i);%Correcting for the fact that a fraction of fluorophores are unbleached
- 
-            Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
+                dCT = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+    %             if dCT>0 %many positive dCT for normintensity1
+    %                 disp(['positive dCT for cell ' num2str(n) ', t = ' num2str(i)])
+    %                 %dCT=-dCT;
+    %                 %continue 
+    %             end
 
-            Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
-            unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
+                dCP(n, i) = dCT + dCB; %this is the amount of loss attributable to permeability
+
+                dCP(n,i)=dCP(n,i)/unb_frac(n,i);%Correcting for the fact that a fraction of fluorophores are unbleached
+
+                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
+
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
+
+            end
+        elseif parameter==2
             
+              for i=1:length(t)-1
+
+                dCB = ((normintensity(n,i)+normintensity(n,i+1))/2)/(alpha); %this is the amount of photobleaching that occured in our measured value
+    %             if dCB<0 %no negative dCB for normintensity1
+    %                 disp(['negative dCB for cell ' num2str(n) ', t = ' num2str(i)])
+    %             end
+
+                dCT = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+    %             if dCT>0 %many positive dCT for normintensity1
+    %                 disp(['positive dCT for cell ' num2str(n) ', t = ' num2str(i)])
+    %                 %dCT=-dCT;
+    %                 %continue 
+    %             end
+
+                dCP(n, i) = dCT + dCB; %this is the amount of loss attributable to permeability
+
+                dCP(n,i)=dCP(n,i)/unb_frac(n,i);%Correcting for the fact that a fraction of fluorophores are unbleached
+
+                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
+
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
+
+              end
+              
+        elseif parameter==3
+            
+              for i=1:length(t)-1
+
+                dCB = normintensity(n,i+1)/(alpha); %this is the amount of photobleaching that occured in our measured value
+    %             if dCB<0 %no negative dCB for normintensity1
+    %                 disp(['negative dCB for cell ' num2str(n) ', t = ' num2str(i)])
+    %             end
+
+                dCT = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+    %             if dCT>0 %many positive dCT for normintensity1
+    %                 disp(['positive dCT for cell ' num2str(n) ', t = ' num2str(i)])
+    %                 %dCT=-dCT;
+    %                 %continue 
+    %             end
+
+                dCP(n, i) = dCT + dCB; %this is the amount of loss attributable to permeability
+
+                dCP(n,i)=dCP(n,i)/unb_frac(n,i);%Correcting for the fact that a fraction of fluorophores are unbleached
+
+                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
+
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
+
+              end    
         end
+        
     end
     
     gamma = nan(height(normintensity), 1);
@@ -700,6 +777,7 @@ function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, 
         p = dCP(n,end)/dt;
         gamma(n,1) = p/Cnew(n, end-1);
     end
+    
 end
 
 function ciplot(lower,upper,x,colour,Trans)
