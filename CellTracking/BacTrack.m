@@ -396,8 +396,7 @@ end
 %throw away cells that lyse pre-maturely
 delind=[];
 for i=1:ncells
-    deltaL = lcell(i,4)-lcell(i,1);
-    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1|deltaL < 0
+    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1
         delind=[delind;i];
     end
 end
