@@ -22,17 +22,19 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='10302021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10302021_analysis/' basename '/' basename '_colony5/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10302021_analysis/' basename '/' basename '_colony5/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/10302021_analysis/' basename '/' basename '_colony5/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='11152021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
-troubleshoot=0;
+troubleshoot=2;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony5_dm.mat'])
+    load([basename '_colony4_dm.mat'])
+    replot=0;
+    troubleshoot=2;
 else
     
     for i=1:length(channels)
@@ -46,8 +48,8 @@ else
 
     %pre-allocate variables
     icell_intensity=nan(ncells, T);
-    adj_intensity=nan(ncells, T);
-    norm_intensity=nan(ncells, T);
+%     adj_intensity=nan(ncells, T);
+%     norm_intensity=nan(ncells, T);
     time=time./60;
     
     for i=1:length(channels)
@@ -65,15 +67,15 @@ else
             
         end
         
-        %subtract the background from each trace
-        for n=1:ncells
-            adj_intensity(n,:) = icell_intensity(n,:)-icell_intensity(n,end);
-        end 
-        
-        %normalize the intensity traces
-        for n=1:ncells
-            norm_intensity(n,:) = adj_intensity(n,:)./adj_intensity(n,1);
-        end    
+%         %subtract the background from each trace
+%         for n=1:ncells
+%             adj_intensity(n,:) = icell_intensity(n,:)-icell_intensity(n,end);
+%         end 
+%         
+%         %normalize the intensity traces
+%         for n=1:ncells
+%             norm_intensity(n,:) = adj_intensity(n,:)./adj_intensity(n,1);
+%         end    
        
     end    
 end
@@ -123,6 +125,18 @@ elseif troubleshoot==2
      end
 end
 
+%% omit cells
+omit=[];
+
+if isempty(omit)==0
+    include=[1:ncells];
+    include=include(include~=omit);
+    icell_intensity=icell_intensity(include, :);
+    lcell=lcell(include, :);
+    B=B(include, :);
+    pixels=pixels(include, :);
+    ncells=ncells-length(omit);
+end
 %% Plot data
 if replot==1
     
@@ -141,47 +155,47 @@ if replot==1
     saveas(gcf, [basename,'_fullIntensity_dm.fig'])
     saveas(gcf, [basename,'_fullIntensity_dm.png'])
     
-    figure(2), hold on
-    for i=1:height(adj_intensity)
-        plot(time, adj_intensity(i,:), '-g')
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Adjusted Intensity of mNeonGreen vs Time')
-    %subtitle('blue = halved','Color','blue')
-    xlabel('Time (min)')
-    ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_adjIntensity_dm.fig'])
-    saveas(gcf, [basename,'_adjIntensity_dm.png'])
-    
-    %plot to see single traces of mNeonGreen cells
-    figure(3), hold on
-    for i=1:height(norm_intensity)
-        plot(time, norm_intensity(i,:), '-g')
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Normalized Intensity of mNeonGreen vs Time')
-    %subtitle('blue = halved','Color','blue')
-    xlabel('Time (min)')
-    ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_normIntensity_dm.fig'])
-    saveas(gcf, [basename,'_normIntensity_dm.png'])
-
-    figure(4), hold on
-    for n=1:height(norm_intensity)
-        plot(time, lcell(n, 1:end), '-g')
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Cell Length vs Time')
-    %subtitle('blue = halved','Color','blue')
-    xlabel('Time (min)')
-    ylabel('Length (\mum)')
-    saveas(gcf, [basename,'_LTintensity_dm.fig'])
-    saveas(gcf, [basename,'_LTintensity_dm.png'])
-
+%     figure(2), hold on
+%     for i=1:height(adj_intensity)
+%         plot(time, adj_intensity(i,:), '-g')
+%     end
+%     %xline(tpt, '--', {'Membrane Lysis'})
+%     title('Adjusted Intensity of mNeonGreen vs Time')
+%     %subtitle('blue = halved','Color','blue')
+%     xlabel('Time (min)')
+%     ylabel('Cellular Intensity (A.U.)')
+%     saveas(gcf, [basename,'_adjIntensity_dm.fig'])
+%     saveas(gcf, [basename,'_adjIntensity_dm.png'])
+%     
+%     %plot to see single traces of mNeonGreen cells
+%     figure(3), hold on
+%     for i=1:height(norm_intensity)
+%         plot(time, norm_intensity(i,:), '-g')
+%     end
+%     %xline(tpt, '--', {'Membrane Lysis'})
+%     title('Normalized Intensity of mNeonGreen vs Time')
+%     %subtitle('blue = halved','Color','blue')
+%     xlabel('Time (min)')
+%     ylabel('Cellular Intensity (A.U.)')
+%     saveas(gcf, [basename,'_normIntensity_dm.fig'])
+%     saveas(gcf, [basename,'_normIntensity_dm.png'])
+% 
+%     figure(4), hold on
+%     for n=1:height(norm_intensity)
+%         plot(time, lcell(n, 1:end), '-g')
+%     end
+%     %xline(tpt, '--', {'Membrane Lysis'})
+%     title('Cell Length vs Time')
+%     %subtitle('blue = halved','Color','blue')
+%     xlabel('Time (min)')
+%     ylabel('Length (\mum)')
+%     saveas(gcf, [basename,'_LTintensity_dm.fig'])
+%     saveas(gcf, [basename,'_LTintensity_dm.png'])
+% 
 end
 
 cd(savedir)
-save([basename '_colony5_dm.mat'])
+save([basename '_colony4_dm.mat'])
 
-cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/10312021_analysis')
-save([basename '_colony5_dm.mat'])
+cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/11152021_analysis')
+save([basename '_colony4_dm.mat'])
