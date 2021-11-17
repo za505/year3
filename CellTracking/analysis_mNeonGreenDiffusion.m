@@ -348,6 +348,10 @@ if bleachCorrect==1
 %     xlabel('Time (minutes)')
 %     ylabel('Normalized Fluorescence (A.U.)')
 
+%    Combine datasets 
+      LB_combo = [normintensity1(:, 1:48); normintensity3(:,1:48)];
+      [Cnew1, dCP1, unb_frac1, Cbl_exp1, gamma1] = photoCorrect(LB_combo, t3(1:48), [tau1, tau3], 1);
+            
       PBS_combo = [normintensity2; normintensity4(:, 1:48)];
       [CnewA, dCPA, unb_fracA, Cbl_expA, gammaA] = photoCorrect(PBS_combo, t2, [tau2, tau4], 1);
       [CnewB, dCPB, unb_fracB, Cbl_expB, gammaB] = photoCorrect(PBS_combo, t2, [tau2, tau4], 2);
@@ -355,16 +359,18 @@ if bleachCorrect==1
       
     figure, hold on
     %ciplot((mean(CnewA, 1, 'omitnan')-std(CnewA, 0, 1, 'omitnan')),(mean(CnewA, 1, 'omitnan')+std(CnewA, 0, 1, 'omitnan')),t2,[0.99 0.76 0.93])
-    plot(t2, mean(CnewA, 1, 'omitnan'), 'Color', [0.64 0.08 0.18], 'LineWidth', 2)
+    %plot(t2, mean(CnewA, 1, 'omitnan'), 'Color', [0.64 0.08 0.18], 'LineWidth', 2)
     %ciplot((mean(CnewB, 1, 'omitnan')-std(CnewB, 0, 1, 'omitnan')),(mean(CnewB, 1, 'omitnan')+std(CnewB, 0, 1, 'omitnan')),t2,[0.75 0.75 1])
-    plot(t2, mean(CnewB, 1, 'omitnan'), 'Color', [0.00 0.45 0.74], 'LineWidth', 2)
+    %plot(t2, mean(CnewB, 1, 'omitnan'), 'Color', [0.00 0.45 0.74], 'LineWidth', 2)
     %ciplot((mean(CnewC, 1, 'omitnan')-std(CnewC, 0, 1, 'omitnan')),(mean(CnewC, 1, 'omitnan')+std(CnewC, 0, 1, 'omitnan')),t2,[0.6471 0.9020 0.3137])
-    plot(t2, mean(CnewC, 1, 'omitnan'), 'Color', [0.3451 0.5098 0.1333], 'LineWidth', 2)
-    ylim([0 Inf])
+    plot(t3(1:48), mean(Cnew1, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 2)
+    plot(t2, mean(CnewC, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 2)
+    ylim([0 1.3])
     xlabel('Time (minutes)')
     ylabel('Normalized Fluorescence (A.U.)')
+    legend({'Average Control', 'Average PBS-incubated'})
     %legend({ 'Original Correction Standard Deviation', 'Original Correction','Average Correction Standard Deviation', 'Average Correction','Forward Correction Standard Deviation', 'Forward Correction'})
-    legend({'Original Correction','Average Correction','Forward Correction'})
+    %legend({'Original Correction','Average Correction','Forward Correction'})
 end
 
 %% Functions
