@@ -47,9 +47,9 @@ tic
 %File Parameters
 basename='05262021_Exp1';%Name to save the file to
 skp=[];%frames to skip
-dirname=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_TADA'];%directory where the imagestack is saved
-imdir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_gfp'];%directory where the imagestack is saved
-savedir=['/Users/zarina/Downloads/NYU/Year2_2021_Spring/05262021_analysis/' basename '/05262021_plasmolysisTrack2/05262021_figures'];
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/PlasmolysisTrack/' basename '_TADA/' basename '_erased'];%directory where the imagestack is saved
+imdir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/PlasmolysisTrack/' basename '_GFP/' basename '_aligned'];%directory where the imagestack is saved
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/PlasmolysisTrack/' basename '_TADA/' basename '_figures'];
 %metaname=['/Matlab Ready/' basename '/' basename '.txt'];%full pathname of the metadata file
 
 %Tracking Parameters
