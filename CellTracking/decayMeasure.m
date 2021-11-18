@@ -22,17 +22,18 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='11152021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='11152021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony5/' basename '_TADA/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony5/'  basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony5/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
 troubleshoot=2;
+skp=[1:19];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony4_dm.mat'])
+    load([basename '_colony5_dm.mat'])
     replot=0;
     troubleshoot=2;
 else
@@ -40,11 +41,12 @@ else
     for i=1:length(channels)
         cd(channels{i}); 
         fluo_directory{i}=dir('*.tif');
+        fluo_directory{i}=fluo_directory{1}(skp(end)+1:end);
     end
     
     %go to directory where .mat files are stored
     cd(dirname)
-    load([basename '_BTphase'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
+    load([basename '_WT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
     icell_intensity=nan(ncells, T);
@@ -195,7 +197,7 @@ if replot==1
 end
 
 cd(savedir)
-save([basename '_colony4_dm.mat'])
+save([basename '_colony5_dm.mat'])
 
 cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/11152021_analysis')
-save([basename '_colony4_dm.mat'])
+save([basename '_colony5_dm.mat'])
