@@ -64,16 +64,13 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='11152021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='11192021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11192021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11192021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=1;
-tscale1=60;
-tscale2=15;
-tpoint1=[0:tscale1:15*60];
-tpoint2=[tpoint1(end)+tscale2:tscale2:45*60+tscale2];
+multiScale=0;
+tscale=60;
 thresh=0;%For default, enter zero.
 IntThresh=200;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -85,7 +82,7 @@ minA=100;%Minimum cell area. default 50
 maxA=2000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-vis=0;%Display cell tracking? 0=No, 1=Yes.
+vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 troubleshooting=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -527,7 +524,6 @@ for k=1:ncells
   pause
   close all
 end
-else
 end
 %% clean up
 % keep=[];
