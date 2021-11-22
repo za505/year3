@@ -65,26 +65,28 @@ tPBS=t5;
 %% sanity check: length traces
 if lengthTraces==1
     
+    graph=0;
     %make sure lysed cells lyse and sodium azide treated cells don't
     cd([dirsave '/LengthTraces'])
-    [l_avg1, l_std1]=lengthPlot(time1, lCell1,  'LB perfusion, frame rate = 15 s', 1, 1, '10302021_Exp2'); 
-    [l_avg2, l_std2]=lengthPlot(time2, lCell2, 'sodium azide treatment, frame rate = 15 s', 1, 1, '11152021_Exp1');
-    [l_avgLB, l_stdLB]=lengthPlot(timeLB, lCellLB,  'LB perfusion, frame rate = 1 min', 1, 1, 'LB'); 
-    [l_avgPBS, l_stdPBS]=lengthPlot(timePBS, lCellPBS, 'PBS incubation, frame rate = 1 min', 1, 1, 'PBS');
-    [l_avg7, l_std7]=lengthPlot(time7, lCell7, 'lysozyme treatment, frame rate = 1 min', 1, 1, '11152021_Exp2');
+    [l_avg1, l_std1]=lengthPlot(time1, lCell1,  'LB perfusion, frame rate = 15 s', graph, 1, '10302021_Exp2'); 
+    [l_avg2, l_std2]=lengthPlot(time2, lCell2, 'sodium azide treatment, frame rate = 15 s', graph, 1, '11152021_Exp1');
+    [l_avgLB, l_stdLB]=lengthPlot(timeLB, lCellLB,  'LB perfusion, frame rate = 1 min', graph, 1, 'LB'); 
+    [l_avgPBS, l_stdPBS]=lengthPlot(timePBS, lCellPBS, 'PBS incubation, frame rate = 1 min', graph, 1, 'PBS');
+    [l_avg7, l_std7]=lengthPlot(time7, lCell7, 'lysozyme treatment, frame rate = 1 min', graph, 1, '11152021_Exp2');
     
 end
 
 %% sanity check: fluorescence traces
 if intensityTraces==1
     
+    graph=0;
     %check to see that the initial intensity values are comparable 
     cd([dirsave '/IntensityTraces'])
-    [intensity_avg1, intensity_std1]=intensityPlot(time1, intensity1, 'LB perfusion, frame rate = 15 s', 1, 1, '10302021_Exp2');
-    [intensity_avg2, intensity_std2]=intensityPlot(time2, intensity2, 'sodium azide treatment, frame rate = 15 s', 1, 1, '11152021_Exp1');
-    [intensity_avgLB, intensity_stdLB]=intensityPlot(timeLB, intensityLB,  'LB perfusion, frame rate = 1 min', 1, 1, 'LB'); 
-    [intensity_avgPBS, intensity_stdPBS]=intensityPlot(timePBS, intensityPBS, 'PBS incubation, frame rate = 1 min', 1, 1, 'PBS');
-    [intensity_avg7, intensity_std7]=intensityPlot(time7, intensity7, 'lysozyme treatment, frame rate = 1 min', 1, 1, '11152021_Exp2');
+    [intensity_avg1, intensity_std1]=intensityPlot(time1, intensity1, 'LB perfusion, frame rate = 15 s', graph, 1, '10302021_Exp2');
+    [intensity_avg2, intensity_std2]=intensityPlot(time2, intensity2, 'sodium azide treatment, frame rate = 15 s', graph, 1, '11152021_Exp1');
+    [intensity_avgLB, intensity_stdLB]=intensityPlot(timeLB, intensityLB,  'LB perfusion, frame rate = 1 min', graph, 1, 'LB'); 
+    [intensity_avgPBS, intensity_stdPBS]=intensityPlot(timePBS, intensityPBS, 'PBS incubation, frame rate = 1 min', graph, 1, 'PBS');
+    [intensity_avg7, intensity_std7]=intensityPlot(time7, intensity7, 'lysozyme treatment, frame rate = 1 min', graph, 1, '11152021_Exp2');
     
 %     figure, hold on
 %     for n=1:height(intensity1)
@@ -103,39 +105,42 @@ end
 %% sanity check: adjusted fluorescence traces
 if adjTraces==1
     
+    graph=0;
     %do the adjusted traces both go to zero?
     cd([dirsave '/AdjTraces'])
-    [adjintensity_avg1, adjintensity_std1]=adjintensityPlot(time1, adjintensity1, 'LB perfusion, frame rate = 15 s', 1, 1, '10302021_Exp2');
-    [adjintensity_avg2, adjintensity_std2]=adjintensityPlot(time2, adjintensity2, 'sodium azide treatment, frame rate = 15 s', 1, 1, '11152021_Exp1');
-    [adjintensity_avgLB, adjintensity_stdLB]=adjintensityPlot(timeLB, adjintensityLB, 'LB perfusion, frame rate = 1 min', 1, 1, 'LB');
-    [adjintensity_avgPBS, adjintensity_stdPBS]=adjintensityPlot(timePBS, adjintensityPBS, 'PBS incubation, frame rate = 1 min', 1, 1, 'PBS');
-    [adjintensity_avg7, adjintensity_std7]=adjintensityPlot(time7, adjintensity7, 'lysozyme treatment, frame rate = 1 min', 1, 1, '11152021_Exp2');
+    [adjintensity_avg1, adjintensity_std1]=adjintensityPlot(time1, adjintensity1, 'LB perfusion, frame rate = 15 s', graph, 1, '10302021_Exp2');
+    [adjintensity_avg2, adjintensity_std2]=adjintensityPlot(time2, adjintensity2, 'sodium azide treatment, frame rate = 15 s', graph, 1, '11152021_Exp1');
+    [adjintensity_avgLB, adjintensity_stdLB]=adjintensityPlot(timeLB, adjintensityLB, 'LB perfusion, frame rate = 1 min', graph, 1, 'LB');
+    [adjintensity_avgPBS, adjintensity_stdPBS]=adjintensityPlot(timePBS, adjintensityPBS, 'PBS incubation, frame rate = 1 min', graph, 1, 'PBS');
+    [adjintensity_avg7, adjintensity_std7]=adjintensityPlot(time7, adjintensity7, 'lysozyme treatment, frame rate = 1 min', graph, 1, '11152021_Exp2');
 
 end
 
 %% normalized fluorescence traces
 if normTraces==1
     
+    graph=0;
     %do the traces start at 1 and end at zero?
     cd([dirsave '/NormTraces'])
-    [normintensity_avg1, normintensity_std1]=normintensityPlot(t1, normintensity1, 'LB perfusion, frame rate = 15 s', 1, 1, '10302021_Exp2');
-    [normintensity_avg2, normintensity_std2]=normintensityPlot(t2, normintensity2, 'sodium azide treatment, frame rate = 15 s', 1, 1, '11152021_Exp1');
-    [normintensity_avgLB, normintensity_stdLB]=normintensityPlot(tLB, normintensityLB, 'LB perfusion, frame rate = 1 min', 1, 1, 'LB');
-    [normintensity_avgPBS, normintensity_stdPBS]=normintensityPlot(tPBS, normintensityPBS, 'PBS incubation, frame rate = 1 min', 1, 1, 'PBS');
-    [normintensity_avg7, normintensity_std7]=normintensityPlot(t7, normintensity7, 'lysozyme treatment, frame rate = 1 min', 1, 1, '11152021_Exp2');
+    [normintensity_avg1, normintensity_std1]=normintensityPlot(t1, normintensity1, 'LB perfusion, frame rate = 15 s', graph, 1, '10302021_Exp2');
+    [normintensity_avg2, normintensity_std2]=normintensityPlot(t2, normintensity2, 'sodium azide treatment, frame rate = 15 s', graph, 1, '11152021_Exp1');
+    [normintensity_avgLB, normintensity_stdLB]=normintensityPlot(tLB, normintensityLB, 'LB perfusion, frame rate = 1 min', graph, 1, 'LB');
+    [normintensity_avgPBS, normintensity_stdPBS]=normintensityPlot(tPBS, normintensityPBS, 'PBS incubation, frame rate = 1 min', graph, 1, 'PBS');
+    [normintensity_avg7, normintensity_std7]=normintensityPlot(t7, normintensity7, 'lysozyme treatment, frame rate = 1 min', graph, 1, '11152021_Exp2');
 
 end
 
 %% fit the data to an exponential model
 if modelFit==1
 
+    graph=0;
     %remember, none of the tau values should be zero
     cd([dirsave '/ModelFit'])
-    [fit1, tau1, yhat1]=expModel(t1, normintensity1, 'LB perfusion, frame rate = 15 s', 1, 1, '10302021_Exp2');
-    [fit2, tau2, yhat2]=expModel(t2, normintensity2,  'sodium azide treatment, frame rate = 15 s', 1, 1, '11152021_Exp1');
-    [fitLB, tauLB, yhatLB]=expModel(tLB, normintensityLB, 'LB perfusion, frame rate = 1 min', 1, 1, 'LB');
-    [fitPBS, tauPBS, yhatPBS]=expModel(tPBS, normintensityPBS,  'PBS incubation, frame rate = 1 min', 1, 1, 'PBS');
-    [fit7, tau7, yhat7]=expModel(t7, normintensity7,  'lysozyme treatment, frame rate = 1 min', 1, 1, '11152021_Exp2');
+    [fit1, tau1, yhat1]=expModel(t1, normintensity1, 'LB perfusion, frame rate = 15 s', graph, 1, '10302021_Exp2');
+    [fit2, tau2, yhat2]=expModel(t2, normintensity2,  'sodium azide treatment, frame rate = 15 s', graph, 1, '11152021_Exp1');
+    [fitLB, tauLB, yhatLB]=expModel(tLB, normintensityLB, 'LB perfusion, frame rate = 1 min', graph, 1, 'LB');
+    [fitPBS, tauPBS, yhatPBS]=expModel(tPBS, normintensityPBS,  'PBS incubation, frame rate = 1 min', graph, 1, 'PBS');
+    [fit7, tau7, yhat7]=expModel(t7, normintensity7,  'lysozyme treatment, frame rate = 1 min', graph, 1, '11152021_Exp2');
 
     
     % compare the time constants
@@ -183,8 +188,8 @@ end
 if modelCheck==1
     
    cd([dirsave '/ModelCheck'])
-   [residuals1, est1]=residualPlot(normintensity1, yhat1, t1, fit1, 'LB perfusion, frame rate = 15 s', 1, 1, '10302021_Exp2');
-   [residuals2, est2]=residualPlot(normintensity2, yhat2, t2, fit2, 'sodium azide treatment, frame rate = 15 s', 1, 1, '11152021_Exp1');
+   [residuals1, est1]=residualPlot(normintensity1, yhat1, t1, fit1, 'LB perfusion, frame rate = 15 s', graph, 1, '10302021_Exp2');
+   [residuals2, est2]=residualPlot(normintensity2, yhat2, t2, fit2, 'sodium azide treatment, frame rate = 15 s', graph, 1, '11152021_Exp1');
 
 end
 
@@ -192,24 +197,25 @@ end
 if modelInterp==1
     
     cd([dirsave '/ModelInterp'])
-    [xq1, vq1, thalf1]=interpPlot(normintensity1, t1, 'LB perfusion, frame rate = 15 s', 1, 1, '10302021_Exp2');
-    [xq2, vq2, thalf2]=interpPlot(normintensity2, t2, 'sodium azide treatment, frame rate = 15 s', 1, 1, '11152021_Exp1');
+    [xq1, vq1, thalf1]=interpPlot(normintensity1, t1, 'LB perfusion, frame rate = 15 s', graph, 1, '10302021_Exp2');
+    [xq2, vq2, thalf2]=interpPlot(normintensity2, t2, 'sodium azide treatment, frame rate = 15 s', graph, 1, '11152021_Exp1');
 
 end
 
 %% Photobleach Correction Model
 if bleachCorrect==1
     
+    graph=1;
     cd(dirsave)
-    [Cnew1, dCP1, unb_frac1, Cbl_exp1, gamma1] = photoCorrect(normintensity1, t1, tau1, 3, 1, 1, '10302021_Exp2');
-    [Cnew2, dCP2, unb_frac2, Cbl_exp2, gamma2] = photoCorrect(normintensity2, t2, tau2, 3, 1, 1, '11152021_Exp1');
-    [CnewLB, dCPLB, unb_fracLB, Cbl_expLB, gammaLB] = photoCorrect(normintensityLB, tLB, tauLB, 3, 1, 1, 'LB');
-    [CnewPBS, dCPPBS, unb_fracPBS, Cbl_expPBS, gammaPBS] = photoCorrect(normintensityPBS, tPBS, tauPBS, 3, 1, 1, 'PBS');
-    [Cnew7, dCP7, unb_frac7, Cbl_exp7, gamma7] = photoCorrect(normintensity7, t7, tau7, 3, 1, 1, '11152021_Exp2');
+    [Cnew1, dCP1, dCB1, dCT1, unb_frac1, Cbl_exp1, gamma1] = photoCorrect(normintensity1, t1, tau1, 3, graph, 1, '10302021_Exp2');
+    [Cnew2, dCP2, dCB2, dCT2, unb_frac2, Cbl_exp2, gamma2] = photoCorrect(normintensity2, t2, tau2, 3, graph, 1, '11152021_Exp1');
+    [CnewLB, dCPLB, dCBLB, dCTLB, unb_fracLB, Cbl_expLB, gammaLB] = photoCorrect(normintensityLB, tLB, tauLB, 3, graph, 1, 'LB');
+    [CnewPBS, dCPPBS, dCBPBS, dCTPBS, unb_fracPBS, Cbl_expPBS, gammaPBS] = photoCorrect(normintensityPBS, tPBS, tauPBS, 3, graph, 1, 'PBS');
+    [Cnew7, dCP7, dCB7, dCT7, unb_frac7, Cbl_exp7, gamma7] = photoCorrect(normintensity7, t7, tau7, 3, graph, 1, '11152021_Exp2');
     
     figure, hold on
-    %ciplot(mean(Cnew1,1, 'omitnan')-std(Cnew1,0, 1, 'omitnan'), mean(Cnew1,1, 'omitnan')+std(Cnew1,0, 1, 'omitnan'), t1, colorcode2{1})
-    plot(t1, mean(Cnew1,1, 'omitnan'), 'Color', colorcode{1})
+    %ciplot(mean(Cnewgraph, 1, 'omitnan')-std(Cnew1,0, 1, 'omitnan'), mean(Cnewgraph, 1, 'omitnan')+std(Cnew1,0, 1, 'omitnan'), t1, colorcode2{1})
+    plot(t1, mean(Cnewgraph, 1, 'omitnan'), 'Color', colorcode{1})
     %ciplot(mean(Cnew2,1, 'omitnan')-std(Cnew2,0, 1, 'omitnan'), mean(Cnew2,1, 'omitnan')+std(Cnew2,0, 1, 'omitnan'), t2, colorcode2{2})
     plot(t2, mean(Cnew2,1, 'omitnan'), 'Color', colorcode{2})
     %ciplot(mean(Cnew3,1, 'omitnan')-std(Cnew3,0, 1, 'omitnan'), mean(Cnew3,1, 'omitnan')+std(Cnew3,0, 1, 'omitnan'), t3, colorcode2{3})
@@ -576,7 +582,7 @@ function [xq, vq, thalf]=interpPlot(normintensity,time, text, graph, save, saveA
     end 
 end
 
-function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, tau, parameter, graph, save, saveAs)
+function [Cnew, dCP, dCB, dCT, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, tau, parameter, graph, save, saveAs)
     
     %calculate dt (there's variation of dt during initial values, so it's
     %easier to use end values)
@@ -590,8 +596,10 @@ function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, 
     Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
     Cnew(:, 1)=normintensity(:, 1);
 
-    %this is the dCP, or loss attributable to permeability
-    dCP=nan(height(normintensity), length(t)-1);
+    %pre-allocate variables
+    dCB=nan(height(normintensity), length(t)-1);
+    dCT=nan(height(normintensity), length(t)-1);
+    dCP=nan(height(normintensity), length(t)-1); %this is the dCP, or loss attributable to permeability
 
     unb_frac=nan(size(normintensity)); %fraction of unvbleached fluor. 
     unb_frac(:, 1)=1;%all fluorophores are unbleached at the initial time point
@@ -604,25 +612,35 @@ function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, 
         if parameter==1
             for i=1:length(t)-1
 
-                dCB = normintensity(n,i)/(alpha); %this is the amount of photobleaching that occured in our measured value
+                dCB(n,i) = normintensity(n,i)/(alpha); %this is the amount of photobleaching that occured in our measured value
     %             if dCB<0 %no negative dCB for normintensity1
     %                 disp(['negative dCB for cell ' num2str(n) ', t = ' num2str(i)])
     %             end
-
-                dCT = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+                
+                if dCB(n,i)<10e-3
+                    break
+                end
+                
+                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
     %             if dCT>0 %many positive dCT for normintensity1
     %                 disp(['positive dCT for cell ' num2str(n) ', t = ' num2str(i)])
     %                 %dCT=-dCT;
     %                 %continue 
     %             end
-
-                dCP(n, i) = dCT + dCB; %this is the amount of loss attributable to permeability
+    
+  
+                if dCT(n,i)==0
+                     disp('dCT was 0 and the loop didnt skip')
+                end
+                
+                
+                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
 
                 dCP(n,i)=dCP(n,i)/unb_frac(n,i);%Correcting for the fact that a fraction of fluorophores are unbleached
 
                 Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
 
-                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
                 unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
 
             end
@@ -630,25 +648,33 @@ function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, 
             
               for i=1:length(t)-1
 
-                dCB = ((normintensity(n,i)+normintensity(n,i+1))/2)/(alpha); %this is the amount of photobleaching that occured in our measured value
+                dCB(n,i) = ((normintensity(n,i)+normintensity(n,i+1))/2)/(alpha); %this is the amount of photobleaching that occured in our measured value
     %             if dCB<0 %no negative dCB for normintensity1
     %                 disp(['negative dCB for cell ' num2str(n) ', t = ' num2str(i)])
     %             end
-
-                dCT = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+    
+                if dCB(n,i)<10e-3
+                    break
+                end
+                
+                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
     %             if dCT>0 %many positive dCT for normintensity1
     %                 disp(['positive dCT for cell ' num2str(n) ', t = ' num2str(i)])
     %                 %dCT=-dCT;
     %                 %continue 
     %             end
-
-                dCP(n, i) = dCT + dCB; %this is the amount of loss attributable to permeability
+                
+                if dCT(n,i)==0
+                     disp('dCT was 0 and the loop didnt skip')
+                end
+                
+                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
 
                 dCP(n,i)=dCP(n,i)/unb_frac(n,i);%Correcting for the fact that a fraction of fluorophores are unbleached
 
                 Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
 
-                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
                 unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
 
               end
@@ -657,25 +683,33 @@ function [Cnew, dCP, unb_frac, Cbl_exp, gamma] = photoCorrect(normintensity, t, 
             
               for i=1:length(t)-1
 
-                dCB = normintensity(n,i+1)/(alpha); %this is the amount of photobleaching that occured in our measured value
+                dCB(n,i) = normintensity(n,i+1)/(alpha); %this is the amount of photobleaching that occured in our measured value
     %             if dCB<0 %no negative dCB for normintensity1
     %                 disp(['negative dCB for cell ' num2str(n) ', t = ' num2str(i)])
     %             end
-
-                dCT = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+    
+                if dCB(n,i)<10e-3
+                    break
+                end
+                
+                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
     %             if dCT>0 %many positive dCT for normintensity1
     %                 disp(['positive dCT for cell ' num2str(n) ', t = ' num2str(i)])
     %                 %dCT=-dCT;
     %                 %continue 
     %             end
 
-                dCP(n, i) = dCT + dCB; %this is the amount of loss attributable to permeability
+                if dCT(n,i)==0
+                     disp('dCT was 0 and the loop didnt skip')
+                end
+                
+                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
 
                 dCP(n,i)=dCP(n,i)/unb_frac(n,i);%Correcting for the fact that a fraction of fluorophores are unbleached
 
                 Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
 
-                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
                 unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
 
               end    
