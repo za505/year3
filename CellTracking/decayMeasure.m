@@ -29,7 +29,7 @@ channels={['/Users/zarina/Downloads/NYU/Year3_2021_Fall/11152021_analysis/' base
 recrunch=0;
 replot=1;
 troubleshoot=2;
-skp=[1:19];
+skp=[];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
@@ -38,10 +38,17 @@ if recrunch==1
     troubleshoot=2;
 else
     
-    for i=1:length(channels)
-        cd(channels{i}); 
-        fluo_directory{i}=dir('*.tif');
-        fluo_directory{i}=fluo_directory{1}(skp(end)+1:end);
+    if isempty(skp)==0
+        for i=1:length(channels)
+            cd(channels{i}); 
+            fluo_directory{i}=dir('*.tif');
+            fluo_directory{i}=fluo_directory{1}(skp(end)+1:end);
+        end
+    else
+        for i=1:length(channels)
+            cd(channels{i}); 
+            fluo_directory{i}=dir('*.tif');
+        end
     end
     
     %go to directory where .mat files are stored
