@@ -14,7 +14,7 @@ colorcode2={[0.63 0.84 0.97], [1 0.73 0.62], [0.92 0.65 0.97], [0.8 0.94 0.61]};
 %inputs
 check1=0; %view norm. fluor vs time for LB experiments 
 check2=0;
-check3=0;
+check3=1;
 check4=0;
 check5=0;
 
@@ -124,16 +124,14 @@ end
 %but I am not sure why. Is it just noise?
 
 %fit the plots to an exponential model to find tau
-graph=1;
+graph=0;
 
-[fit_LB, tau_LB, yhat_LB]=expModel(t2, normintensity_LB, 'LB, frame rate=1 min',  graph);
+[fit_LB, tau_LB, yhat_LB]=expModel(t2, normintensity_LB, 'LB, frame rate=1 min',  graph)
 [fit3, tau3, yhat3]=expModel(t3, normintensity3, 'LB, frame rate=30 s',  graph);
 [fit4, tau4, yhat4]=expModel(t4, normintensity4, 'LB, frame rate=15 s',  graph);
 [fit5, tau5, yhat5]=expModel(t5, normintensity5, 'LB, frame rate=1.2 s',  graph);
 
-%plot tau as a function of frame rate and determine the slope when 1 min is
-%included vs when 1 min data is not included
-
+%% plot tau as a function of frame rate and determine the slope
 % compare the time constants
 % find the mean and standard deviation of the time constants
 tau_means = [mean(tau5, 'omitnan'), mean(tau4, 'omitnan'), mean(tau3, 'omitnan'), mean(tau_LB, 'omitnan')];
@@ -145,7 +143,7 @@ linearFit1= polyval(linearCoef1,[0, repelem(1.2/60, length(tau5)), repelem(0.25,
 linearCoef2 = polyfit([repelem(1.2/60, length(tau5)), repelem(0.25, length(tau4)), repelem(0.5, length(tau3))],[tau5, tau4, tau3],1);
 linearFit2= polyval(linearCoef2,[0, repelem(1.2/60, length(tau5)), repelem(0.25, length(tau4)), repelem(0.5, length(tau3)), ones(1,length(tau_LB))]);
     
-if check2==1
+if check3==1
     figure, hold on
     scatter(repelem(1.2/60, length(tau5)), tau5, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
     scatter(repelem(0.25, length(tau4)), tau4, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
@@ -318,6 +316,9 @@ end
 
 
 function [fit, tau, yhat]=expModel(time, normintensity, text,  graph)
+    fit=[];
+    tau=[];
+    yhat=[];
     
     for i=1:height(normintensity)
 
@@ -326,9 +327,11 @@ function [fit, tau, yhat]=expModel(time, normintensity, text,  graph)
             tau_temp = polyfit(time(idx), normintensity(i,idx),1);
             y_hat= polyval(tau_temp, time);  
             
-            fit=[fit, i];
-            tau=[tau; tau_temp];
-            yhat=[yhat; y_hat]; 
+            if tau_temp(1,1)~=0
+                fit=[fit, i];
+                tau=[tau, abs(tau_temp(1,1))];
+                yhat=[yhat; y_hat]; 
+            end
 
     end
 
