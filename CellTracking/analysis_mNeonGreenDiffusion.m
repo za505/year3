@@ -13,7 +13,7 @@ colorcode2={[0.63 0.84 0.97], [1 0.73 0.62], [0.92 0.65 0.97], [0.8 0.94 0.61]};
 
 %inputs
 check1=0; %view norm. fluor vs time for LB experiments 
-check2=1;
+check2=0;
 check3=0;
 check4=0;
 check5=0;
@@ -28,7 +28,7 @@ check5=0;
 %still be a function of frame rate, and from that linear relationship, the
 %rate of photobleaching can be deduced. 
 
-dirsave='/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/11222021_analysis';
+dirsave='/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/12032021_analysis';
 cd([dirsave '/MatFiles'])
 
 datadir1=dir(['10232021_Exp1' '*dm.mat']); %LB, frame rate=1 min, rep1
@@ -39,32 +39,77 @@ datadir4=dir(['10302021_Exp2' '*dm.mat']); %LB, frame rate=15 s
 
 datadir5=dir(['11202021_Exp1' '*dm.mat']); %LB, frame rate=1.2 s
 
-[intensity1, adjintensity1, normintensity1, lCell1, time1, t1]=dataInput(datadir1, 6);
-[intensity2, adjintensity2, normintensity2, lCell2, time2, t2]=dataInput(datadir2, 6);
+[intensity1, adjintensity1, normintensity1, lCell1, t1]=dataInput(datadir1, 5);
+[intensity2, adjintensity2, normintensity2, lCell2, t2]=dataInput(datadir2, 5);
 
-[intensity3, adjintensity3, normintensity3, lCell3, time3, t3]=dataInput(datadir3, 6);
-[intensity4, adjintensity4, normintensity4, lCell4, time4, t4]=dataInput(datadir4, 6);
+[intensity3, adjintensity3, normintensity3, lCell3, t3]=dataInput(datadir3, 5);
+[intensity4, adjintensity4, normintensity4, lCell4, t4]=dataInput(datadir4, 5);
 
-[intensity5, adjintensity5, normintensity5, lCell5, time5, t5]=dataInput(datadir5, 9);
+[intensity5, adjintensity5, normintensity5, lCell5, t5]=dataInput(datadir5, 6);
 
-%combine the data of the 'LB, frame rate=1 min' replicates
-intensity_LB=[intensity1(:, 1:98); intensity2];
-adjintensity_LB=[adjintensity1(:, 1:98); adjintensity2];
-normintensity_LB=[normintensity1(:, 1:93); normintensity2];
-lCell_LB=[lCell1(:, 1:98); lCell2];
-
-%sanity check: normalization
+%% Check the length traces to make sure cells aren't lysed
 if check1==1
-    figure, hold on
+    figure(1), hold on
+    for i=1:height(lCell1)
+        plot(t1, lCell1(i,:), 'Color', colorcode{1})
+    end
+    ylabel('Length (\mum)')
+    xlabel('Time (min)')
+    title('Length vs Time, LB frame rate = 1 min')
+
+    figure(2), hold on
+    for i=1:height(lCell2)
+        plot(t2, lCell2(i,:), 'Color', colorcode{1})
+    end
+    ylabel('Length (\mum)')
+    xlabel('Time (min)')
+    title('Length vs Time, LB frame rate = 1 min')
+
+    figure(3), hold on
+    for i=1:height(lCell3)
+        plot(t3, lCell3(i,:), 'Color', colorcode{1})
+    end
+    ylabel('Length (\mum)')
+    xlabel('Time (min)')
+    title('Length vs Time, LB frame rate = 30 s')
+
+    figure(4), hold on
+    for i=1:height(lCell4)
+        plot(t4, lCell4(i,:), 'Color', colorcode{1})
+    end
+    ylabel('Length (\mum)')
+    xlabel('Time (min)')
+    title('Length vs Time, LB frame rate = 15 s')
+
+    figure(5), hold on
+    for i=1:height(lCell5)
+        plot(t5, lCell5(i,:), 'Color', colorcode{1})
+    end
+    ylabel('Length (\mum)')
+    xlabel('Time (min)')
+    title('Length vs Time, LB frame rate = 1.2 s')
+end    
+
+%% combine the data of the 'LB, frame rate=1 min' replicates
+intensity_LB=[intensity1; intensity2];
+adjintensity_LB=[adjintensity1; adjintensity2];
+normintensity_LB=[normintensity1; normintensity2];
+
+%% sanity check: normalization
+if check2==1
+    figure(1), hold on
     for i=1:height(normintensity_LB)
         plot(t2, normintensity_LB(i,:), 'Color', colorcode{1})
     end
+    figure(2), hold on
     for i=1:height(normintensity3)
         plot(t3, normintensity3(i,:), 'Color', colorcode{2})
     end
+    figure(3), hold on
     for i=1:height(normintensity4)
         plot(t4, normintensity4(i,:), 'Color', colorcode{3})
     end
+    figure(4), hold on
     for i=1:height(normintensity5)
         plot(t5, normintensity5(i,:), 'Color', colorcode{4})
     end
@@ -75,11 +120,11 @@ if check1==1
     subtitle(txt)
 end
 
-%Observations: the faster the frame rate, the smaller the standard
-%deviation
+%Observations: there seems to be a spike in fluorescence for some traces,
+%but I am not sure why. Is it just noise?
 
 %fit the plots to an exponential model to find tau
-graph=0;
+graph=1;
 
 [fit_LB, tau_LB, yhat_LB]=expModel(t2, normintensity_LB, 'LB, frame rate=1 min',  graph);
 [fit3, tau3, yhat3]=expModel(t3, normintensity3, 'LB, frame rate=30 s',  graph);
@@ -240,7 +285,7 @@ if check5==1
     ylabel('Normalized Fluorescence (A.U.)')
 end
 %% Functions
-function [intensity, adjintensity, normintensity, lCell, tme, t]=dataInput(datadir, imstart)
+function [intensity, adjintensity, normintensity, lCell, t]=dataInput(datadir, imend)
         
         %pre-allocate variables
         intensity=[];
@@ -251,15 +296,14 @@ function [intensity, adjintensity, normintensity, lCell, tme, t]=dataInput(datad
             load(datadir(i).name, 'icell_intensity', 'lcell', 'time')
 
             for n=1:height(icell_intensity)
-                if ~isnan(icell_intensity(n, imstart))&~isnan(icell_intensity(n, end)) %make sure there are fluor readings during the initial frame and the final frame, otherwise the adjust. and norm. will look off
-                    intensity=[intensity; icell_intensity(n, :)];
-                    lCell=[lCell; lcell(n, :)];
+                if ~isnan(icell_intensity(n, imend))&~isnan(icell_intensity(n, end)) %make sure there are fluor readings during the initial frame and the final frame, otherwise the adjust. and norm. will look off
+                    intensity=[intensity; icell_intensity(n, 1:imend)];
+                    lCell=[lCell; lcell(n, 1:imend)];
                 end
             end
 
             if i==1
-                tme=time;
-                t=time(imstart:end)-time(imstart); %new time vector
+                t=time(1:imend); %new time vector
             end
         end
 
@@ -267,32 +311,23 @@ function [intensity, adjintensity, normintensity, lCell, tme, t]=dataInput(datad
             adjintensity = intensity-intensity(:, end);
 
             %normalize to initial frame
-            normintensity=adjintensity(:, imstart:end)./adjintensity(:,imstart);
+            normintensity=adjintensity./adjintensity(:,1);
             normintensity(normintensity<0)=0;
             
 end
 
-function [fit, tau, yhat]=expModel(time, normintensity, text,  graph)
-  
-    modelfun=@(tau,x)exp(-x./tau);
-    tau0=1;
 
-    %pre-allocate variables
-    fit=[];
-    tau=[];
-    yhat=[];
+function [fit, tau, yhat]=expModel(time, normintensity, text,  graph)
     
     for i=1:height(normintensity)
-            idx=find(normintensity(i,:)<=1); %this will skip the detergent perfusion reading
-            tau_temp=nlinfit(time(idx), normintensity(i,idx), modelfun, tau0);
-            y_hat=modelfun(tau_temp, time);   
-            
-%             residuals=abs(normintensity(i,:)-y_hat);
-%             est=residuals./normintensity(i,:);
-%             est(est==Inf)=0;
+
+            dni=diff(normintensity(i,:));
+            idx=find(dni<0); %this will skip the detergent perfusion reading
+            tau_temp = polyfit(time(idx), normintensity(i,idx),1);
+            y_hat= polyval(tau_temp, time);  
             
             fit=[fit, i];
-            tau=[tau, tau_temp];
+            tau=[tau; tau_temp];
             yhat=[yhat; y_hat]; 
 
     end
