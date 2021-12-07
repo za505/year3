@@ -131,7 +131,7 @@ end
 
 %% Correct LB and PBS traces for photobleaching
 %correct for photobleaching
-parameter=30;
+parameter=16.9441;
 [Cnew_LB, dCP_LB, dCB_LB, dCT_LB, unb_frac_LB, Cbl_exp_LB, gamma_LB] = photoCorrect(normintensity_LB, t2, parameter);
 [Cnew_PBS60, dCP_PBS60, dCB_PBS60, dCT_PBS60, unb_frac_PBS60, Cbl_exp_PBS60, gamma_PBS60] = photoCorrect(normintensity_PBS60, t3, parameter);
 [Cnew5, dCP5, dCB5, dCT5, unb_frac5, Cbl_exp5, gamma5] = photoCorrect(normintensity5, t5, parameter);
@@ -154,8 +154,8 @@ if check3==1
     ylabel('Normalized Fluorescence (A.U.)')
     xlabel('Time (min)')
     title('Normalized Fluorescence vs Time')
-    %txt = ['{\color[rgb]{0 0.45 0.74}Untreated \color[rgb]{0.85 0.33 0.1} PBS, 1 hour  \color[rgb]{0.49 0.18 0.56} PBS, 20 min \color[rgb]{0.47 0.67 0.19} PBS, 2 min}'];
-    %subtitle(txt)
+    txt = ['{\color[rgb]{0 0.45 0.74} Untreated \color[rgb]{0.85 0.33 0.1} PBS, 1 hour  \color[rgb]{0.49 0.18 0.56} PBS, 20 min \color[rgb]{0.47 0.67 0.19} PBS, 2 min}'];
+    subtitle(txt)
     saveas(gcf, ['correction_' num2str(parameter) '.png'])
     saveas(gcf, ['correction_' num2str(parameter) '.fig'])
 end
