@@ -33,98 +33,18 @@ datadir5=dir(['11202021_Exp1' '*dm.mat']); %LB, frame rate=1.2 s
 [normintensity5, Cnew5, tme5, idx5, B5, positions5]=photoCorrect(datadir5, 9, 16.9441);
 
 %% plot normalized traces vs corrected traces
-comparePlot(normintensity1, Cnew1, tme1)
-comparePlot(normintensity2, Cnew2, tme2)
-
-comparePlot(normintensity3, Cnew3, tme3)
-comparePlot(normintensity4, Cnew4, tme4)
-
-%% are the cells with increasing traces actually brighter? 
-
+% comparePlot(normintensity1, Cnew1, tme1)
+% comparePlot(normintensity2, Cnew2, tme2)
+% 
+% comparePlot(normintensity3, Cnew3, tme3)
+% comparePlot(normintensity4, Cnew4, tme4)
+% 
 % comparePlot(normintensity5, Cnew5, tme5)
-% movieMake(datadir1, dirsave)
-% %% Function
-function compareImage(datadir, imstart, idx, B, positions, Cnew)
-      
-    for i=1:length(datadir)
-        
-        if i==1
-            s1=1;
-            s2=positons(i);
-        else
-            s1=positions(i-1);
-            s2=positions(i);
-        end
-        
-        %first, load the decay measure data
-        cd(datadir(i).folder)
-        load(datadir(i).name, 'fluo_directory', 'channels')
-        
-        cd(channels{1});
-        imagename=fluo_directory{1}(imstart + idx).name;
-        im=imread(imagename);
-        
-        figure, imshow(im, []), hold on
-        for n=s1:s2
-            if Cnew(n, idx)>1
-                plot(B{n,idx}(:,1),B{n,idx}(:,2),'-r')
-            else
-                plot(B{n,idx}(:,1),B{n,idx}(:,2),'-b')
-            end
-        end
-        
-        pause, close all
-    end
-end
-%         %go through each cell
-%         for n=1:ncells
-% 
-%             m=min(find(cellfun('length', B(n,:))>0)); %find the initial boundaries
-%             dx=max(B{n,m}(:,1))-min(B{n,m}(:,1)); %columns are the x direction
-%             dy=max(B{n,m}(:,2))-min(B{n,m}(:,2)); %rows are the y direction
-%             r1=round(min(B{n,m}(:,1))-dx/2);
-%             r2=round(min(B{n,m}(:,2))-dy/2);
-%             d1=max([dx dy]);
-% 
-%             %open video writer and save in new folder
-%             cd(dirsave)
-%             mkdir([basename '_movies'])
-%             cd(['./' basename '_movies'])
-% 
-%             v = VideoWriter(strcat(basename, '_colony', num2str(i), '_cell', num2str(n)),'MPEG-4');
-%             open(v);
-% 
-%             for t=1:T
-% 
-%                 cd(channels{1});
-%                 imagename=fluo_directory{1}(t).name;
-%                 im=imread(imagename);
-%                 
-%                 y=1:size(im,1);
-%                 x=1:size(im,2);
-%                 [X,Y] = meshgrid(x,y);
-%                 
-%                 [by, bx]=ind2sub(size(im), pixels{n,t});
-%                 [within, border]=inpolygon(X, Y, bx, by);
-%                 %im(pixels{n,t})=-1;
-%                 
-%                 imgreen = imcrop(im,[r1 r2 d1*2 d1*2]);
-%                 imshow(imgreen, [])
-%              
-%                 frame = getframe(gcf);
-%                 writeVideo(v,frame);
-%                 pause(1)
-%                 clf
-% 
-%             end
-%             close(v)
-%             close all
-%         end
-%     end
-% end
+%% are the cells with increasing traces actually brighter? 
+compareImage(datadir1, 10, idx1, B1, positions1, Cnew1)
 
 %% Functions
-function [normintensity, Cnew, tme, idx, bounds, positons]=photoCorrect(datadir, imstart, parameter)
+function [normintensity, Cnew, tme, idx, bounds, positions]=photoCorrect(datadir, imstart, parameter)
         
         %pre-allocate variables
         intensity=[];
@@ -143,7 +63,7 @@ function [normintensity, Cnew, tme, idx, bounds, positons]=photoCorrect(datadir,
                 %make sure there are fluor readings during the initial frame and the final frame, otherwise the adjust. and norm. will look off
                 if ~isnan(icell_intensity(n, imstart))&~isnan(icell_intensity(n, end)) 
                     intensity=[intensity; icell_intensity(n, :)];
-                    bounds={bounds; B{n, imstart:end}};
+                    bounds=[bounds; {B{n, imstart:end}}];
                 end
             end
 
@@ -257,4 +177,39 @@ function comparePlot(normintensity, Cnew, tme)
     xlabel('Time (minutes)')
     ylabel('Normalized Fluorescence (A.U.)')
 
+end
+
+function compareImage(datadir, imstart, idx, B, positions, Cnew)
+      
+    mdx=length(Cnew)/2;
+    
+    for i=1:length(datadir)
+        
+        if i==1
+            s1=1;
+            s2=positions(i);
+        else
+            s1=positions(i-1);
+            s2=positions(i);
+        end
+        
+        %first, load the decay measure data
+        cd(datadir(i).folder)
+        load(datadir(i).name, 'fluo_directory', 'channels')
+        
+        cd(channels{1});
+        imagename=fluo_directory{1}(imstart + idx).name;
+        im=imread(imagename);
+        
+        figure, imshow(im, []), hold on
+        for n=s1:s2
+            if Cnew(n, mdx)>1
+                plot(B{n,mdx}(:,1),B{n,mdx}(:,2),'-r')
+            else
+                plot(B{n,mdx}(:,1),B{n,mdx}(:,2),'-b')
+            end
+        end
+        
+        pause, close all
+    end
 end
