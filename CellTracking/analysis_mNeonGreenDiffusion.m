@@ -26,27 +26,6 @@ PBS20b=dir(['11302021_Exp1' '*dm.mat']); %PBS 20 min, rep 2
 PBS2a=dir(['11192021_Exp2' '*dm.mat']); %PBS 2 min, rep 1
 PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 
-%visualize the length traces to determine the pre- and post-lysis frames
-% [time_LBa, lCell_LBa]=lengthView(LBa); %pre-lysis=5, post-lysis=10
-% [time_LBb, lCell_LBb]=lengthView(LBb); %pre-lysis=4, post-lysis=8
-% [time_PBS60a, lCell_PBS60a]=lengthView(PBS60a); %pre-lysis=2, post-lysis=6
-% [time_PBS60b, lCell_PBS60b]=lengthView(PBS60b); %pre-lysis=4, post-lysis=7
-% [time_PBS20a, lCell_PBS20a]=lengthView(PBS20a); %pre-lysis=3, post-lysis=8
-% [time_PBS20b, lCell_PBS20b]=lengthView(PBS20b); %pre-lysis=3, post-lysis=7
-% [time_PBS2a, lCell_PBS2a]=lengthView(PBS2a); %pre-lysis=9, post-lysis=13
-% [time_PBS2b, lCell_PBS2b]=lengthView(PBS2b); %pre-lysis=9, post-lysis=13
-% 
-% %% Perform analysis with traces normalized to pre-lysis frame
-% %calculate corrected fluorescence traces
-% [normintensity_LBa, intensity_LBa, Cnew_LBa, tme_LBa, tau_LBa, yhat_LBa]=photoCorrect(LBa, 5, 28.9210);
-% [normintensity_LBb, intensity_LBb, Cnew_LBb, tme_LBb, tau_LBb, yhat_LBb]=photoCorrect(LBb, 4, 28.9210);
-% [normintensity_PBS60a, intensity_PBS60a, Cnew_PBS60a, tme_PBS60a, tau_PBS60a, yhat_PBS60a]=photoCorrect(PBS60a, 2, 28.9210);
-% [normintensity_PBS60b, intensity_PBS60b, Cnew_PBS60b, tme_PBS60b, tau_PBS60b, yhat_PBS60b]=photoCorrect(PBS60b, 4, 28.9210);
-% [normintensity_PBS20a, intensity_PBS20a, Cnew_PBS20a, tme_PBS20a, tau_PBS20a, yhat_PBS20a]=photoCorrect(PBS20a, 3, 28.9210);
-% [normintensity_PBS20b, intensity_PBS20b, Cnew_PBS20b, tme_PBS20b, tau_PBS20b, yhat_PBS20b]=photoCorrect(PBS20b, 3, 28.9210);
-% [normintensity_PBS2a, intensity_PBS2a, Cnew_PBS2a, tme_PBS2a, tau_PBS2a, yhat_PBS2a]=photoCorrect(PBS2a, 9, 28.9210);
-% [normintensity_PBS2b, intensity_PBS2b, Cnew_PBS2b, tme_PBS2b, tau_PBS2b, yhat_PBS2b]=photoCorrect(PBS2b, 9, 28.9210);
-
 %plot average raw fluor. intensities
 % cd(dirsave)
 % 
@@ -81,25 +60,7 @@ PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 % saveas(gcf, 'rawIntensity.png')
 % saveas(gcf, 'rawIntensity.fig')
 
-%plot normalized traces and corrected traces
-% cd([dirsave '/preLysis'])
-% comparePlot(normintensity_LBa, Cnew_LBa, tme_LBa)
-% saveas(gcf, '10232021_Exp1_normTraces.fig'), saveas(gcf, '10232021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_LBb, Cnew_LBb, tme_LBb)
-% saveas(gcf, '10262021_Exp1_normTraces.fig'), saveas(gcf, '10262021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_PBS60a, Cnew_PBS60a, tme_PBS60a)
-% saveas(gcf, '10232021_Exp2_normTraces.fig'), saveas(gcf, '10232021_Exp2_normTraces.png'), close
-% comparePlot(normintensity_PBS60b, Cnew_PBS60b, tme_PBS60b)
-% saveas(gcf, '10262021_Exp2_normTraces.fig'), saveas(gcf, '10262021_Exp2_normTraces.png'), close
-% comparePlot(normintensity_PBS20a, Cnew_PBS20a, tme_PBS20a)
-% saveas(gcf, '11192021_Exp1_normTraces.fig'), saveas(gcf, '11192021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_PBS20b, Cnew_PBS20b, tme_PBS20b)
-% saveas(gcf, '11302021_Exp1_normTraces.fig'), saveas(gcf, '11302021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_PBS2a, Cnew_PBS2a, tme_PBS2a)
-% saveas(gcf, '11192021_Exp2_normTraces.fig'), saveas(gcf, '11192021_Exp2_normTraces.png'), close
-% comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
-% saveas(gcf, '12082021_Exp3_normTraces.fig'), saveas(gcf, '12082021_Exp3_normTraces.png'), close
-% 
+
 % %% Perform analysis with traces normalized to post-lysis frame
 %calculate corrected fluor traces
 [normintensity_LBa, intensity_LBa, Cnew_LBa, tme_LBa, tau_LBa, yhat_LBa, dCB_LBa, dCT_LBa, dCP_LBa, Cbl_exp_LBa, unb_frac_LBa]=photoCorrect(LBa, 10, 28.9210);
@@ -125,23 +86,23 @@ PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 % figure, plot(tme_PBS20a, unb_frac_PBS20a)
 
 % %plot normalized traces vs corrected traces
-% cd([dirsave '/postLysis'])
-% comparePlot(normintensity_LBa, Cnew_LBa, tme_LBa)
-% saveas(gcf, '10232021_Exp1_normTraces.fig'), saveas(gcf, '10232021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_LBb, Cnew_LBb, tme_LBb)
-% saveas(gcf, '10262021_Exp1_normTraces.fig'), saveas(gcf, '10262021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_PBS60a, Cnew_PBS60a, tme_PBS60a)
-% saveas(gcf, '10232021_Exp2_normTraces.fig'), saveas(gcf, '10232021_Exp2_normTraces.png'), close
-% comparePlot(normintensity_PBS60b, Cnew_PBS60b, tme_PBS60b)
-% saveas(gcf, '10262021_Exp2_normTraces.fig'), saveas(gcf, '10262021_Exp2_normTraces.png'), close
-% comparePlot(normintensity_PBS20a, Cnew_PBS20a, tme_PBS20a)
-% saveas(gcf, '11192021_Exp1_normTraces.fig'), saveas(gcf, '11192021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_PBS20b, Cnew_PBS20b, tme_PBS20b)
-% saveas(gcf, '11302021_Exp1_normTraces.fig'), saveas(gcf, '11302021_Exp1_normTraces.png'), close
-% comparePlot(normintensity_PBS2a, Cnew_PBS2a, tme_PBS2a)
-% saveas(gcf, '11192021_Exp2_normTraces.fig'), saveas(gcf, '11192021_Exp2_normTraces.png'), close
-% comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
-% saveas(gcf, '12082021_Exp3_normTraces.fig'), saveas(gcf, '12082021_Exp3_normTraces.png'), close
+cd([dirsave '/postLysis'])
+comparePlot(intensity_LBa, Cnew_LBa, tme_LBa)
+saveas(gcf, '10232021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '10232021_Exp1_rawCorrectedTraces.png'), close
+comparePlot(normintensity_LBb, Cnew_LBb, tme_LBb)
+saveas(gcf, '10262021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '10262021_Exp1_rawCorrectedTraces.png'), close
+comparePlot(normintensity_PBS60a, Cnew_PBS60a, tme_PBS60a)
+saveas(gcf, '10232021_Exp2_rawCorrectedTraces.fig'), saveas(gcf, '10232021_Exp2_rawCorrectedTraces.png'), close
+comparePlot(normintensity_PBS60b, Cnew_PBS60b, tme_PBS60b)
+saveas(gcf, '10262021_Exp2_rawCorrectedTraces.fig'), saveas(gcf, '10262021_Exp2_rawCorrectedTraces.png'), close
+comparePlot(normintensity_PBS20a, Cnew_PBS20a, tme_PBS20a)
+saveas(gcf, '11192021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '11192021_Exp1_rawCorrectedTraces.png'), close
+comparePlot(normintensity_PBS20b, Cnew_PBS20b, tme_PBS20b)
+saveas(gcf, '11302021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '11302021_Exp1_rawCorrectedTraces.png'), close
+comparePlot(normintensity_PBS2a, Cnew_PBS2a, tme_PBS2a)
+saveas(gcf, '11192021_Exp2_rawCorrectedTraces.fig'), saveas(gcf, '11192021_Exp2_rawCorrectedTraces.png'), close
+comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
+saveas(gcf, '12082021_Exp3_rawCorrectedTraces.fig'), saveas(gcf, '12082021_Exp3_rawCorrectedTraces.png'), close
 
 %% Functions
 function [time, lCell]=lengthView(datadir)
@@ -180,7 +141,9 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
         
         %pre-allocate variables
         intensity=[];
-      
+        tau=[];
+        yhat=[];
+        
         %go through the data for each position
         for i=1:length(datadir)
             
@@ -196,40 +159,45 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
                 end
             end
 
+%             if i==1
+%                 tme=time(imstart:end)-time(imstart); %new time vector
+%             end
+            
             if i==1
-                tme=time(imstart:end)-time(imstart); %new time vector
+                tme=time; %new time vector
             end
 
         end
 
-        %adjust the background
-        adjintensity = intensity-intensity(:, end);
-
-        %normalize to the initial post-lysis frame
-        normintensity=adjintensity(:, imstart:end)./adjintensity(:,imstart);
-        normintensity(normintensity<0)=0;
-        
-        %fit normalized traces to exponential decay function
-        modelfun=@(tau,x)exp(-x./tau);
-        tau0=1;
-        
-        %pre-allocate variables
-        fit=[];
-        tau=[];
-        yhat=[];
-
-        for i=1:height(normintensity)
-%             %this will skip the detergent perfusion reading
-%             idx=find(normintensity(i,:)<=1); 
-            tau_temp=nlinfit(tme, normintensity(i,:), modelfun, tau0);
-            y_hat=modelfun(tau_temp, tme);   
-
-%             fit=[fit, i];
-            tau=[tau, tau_temp];
-            yhat=[yhat; y_hat]; 
-
-        end
-    
+        normintensity=intensity;
+%         %adjust the background
+%         adjintensity = intensity-intensity(:, end);
+% 
+%         %normalize to the initial post-lysis frame
+%         normintensity=adjintensity(:, imstart:end)./adjintensity(:,imstart);
+%         normintensity(normintensity<0)=0;
+%         
+%         %fit normalized traces to exponential decay function
+%         modelfun=@(tau,x)exp(-x./tau);
+%         tau0=1;
+%         
+%         %pre-allocate variables
+%         fit=[];
+%         tau=[];
+%         yhat=[];
+% 
+%         for i=1:height(normintensity)
+% %             %this will skip the detergent perfusion reading
+% %             idx=find(normintensity(i,:)<=1); 
+%             tau_temp=nlinfit(tme, normintensity(i,:), modelfun, tau0);
+%             y_hat=modelfun(tau_temp, tme);   
+% 
+% %             fit=[fit, i];
+%             tau=[tau, tau_temp];
+%             yhat=[yhat; y_hat]; 
+% 
+%         end
+%     
         %calculate dt (there's variation of dt during initial values, so it's
         %easier to use end values)
         dt=tme(end)-tme(end-1);
@@ -254,7 +222,6 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
         Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
         Cbl_exp(:, 1)=0;
 
-        mx=[];
         for n=1:height(normintensity)
            
             for i=1:length(tme)-1
@@ -279,19 +246,14 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
                 
             end  
             
-            %when does the loop break (Cnew no longer calculated)
-            mx=[mx,i];
         end
         
-        %mean time stamp for Cnew
-        idx=round(mean(mx));
-        
-        gamma = nan(height(normintensity), 1);
-    
-        for n=1:height(normintensity)
-            p = dCP(n,end)/dt;
-            gamma(n,1) = p/Cnew(n, end-1);
-        end
+%         gamma = nan(height(normintensity), 1);
+%     
+%         for n=1:height(normintensity)
+%             p = dCP(n,end)/dt;
+%             gamma(n,1) = p/Cnew(n, end-1);
+%         end
         
 end
 
@@ -303,7 +265,7 @@ function comparePlot(normintensity, Cnew, tme)
         plot(tme, Cnew(n, :), '-g')
     end
     xlabel('Time (minutes)')
-    ylabel('Normalized Fluorescence (A.U.)')
+    ylabel('Fluorescence (A.U.)')
 
 end
 
