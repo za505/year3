@@ -26,41 +26,6 @@ PBS20b=dir(['11302021_Exp1' '*dm.mat']); %PBS 20 min, rep 2
 PBS2a=dir(['11192021_Exp2' '*dm.mat']); %PBS 2 min, rep 1
 PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 
-%plot average raw fluor. intensities
-% cd(dirsave)
-% 
-% figure, hold on
-% ciplot(mean(intensity_LBa, 1, 'omitnan')-std(intensity_LBa, 0, 1, 'omitnan'), mean(intensity_LBa, 1, 'omitnan')+std(intensity_LBa, 0, 1, 'omitnan'), time_LBa, colorcode2{1})
-% plot(time_LBa, mean(intensity_LBa, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-% 
-% ciplot(mean(intensity_LBb, 1, 'omitnan')-std(intensity_LBb, 0, 1, 'omitnan'), mean(intensity_LBb, 1, 'omitnan')+std(intensity_LBb, 0, 1, 'omitnan'), time_LBb, colorcode2{2})
-% plot(time_LBb, mean(intensity_LBb, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-% 
-% ciplot(mean(intensity_PBS60a, 1, 'omitnan')-std(intensity_PBS60a, 0, 1, 'omitnan'), mean(intensity_PBS60a, 1, 'omitnan')+std(intensity_PBS60a, 0, 1, 'omitnan'), time_PBS60a, colorcode2{3})
-% plot(time_PBS60a, mean(intensity_PBS60a, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
-% 
-% ciplot(mean(intensity_PBS60b, 1, 'omitnan')-std(intensity_PBS60b, 0, 1, 'omitnan'), mean(intensity_PBS60b, 1, 'omitnan')+std(intensity_PBS60b, 0, 1, 'omitnan'), time_PBS60b, colorcode2{4})
-% plot(time_PBS60b, mean(intensity_PBS60b, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-% 
-% ciplot(mean(intensity_PBS20a, 1, 'omitnan')-std(intensity_PBS20a, 0, 1, 'omitnan'), mean(intensity_PBS20a, 1, 'omitnan')+std(intensity_PBS20a, 0, 1, 'omitnan'), time_PBS20a, colorcode2{5})
-% plot(time_PBS20a, mean(intensity_PBS20a, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-% 
-% ciplot(mean(intensity_PBS20b, 1, 'omitnan')-std(intensity_PBS20b, 0, 1, 'omitnan'), mean(intensity_PBS20b, 1, 'omitnan')+std(intensity_PBS20b, 0, 1, 'omitnan'), time_PBS20b, colorcode2{6})
-% plot(time_PBS20b, mean(intensity_PBS20b, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-% 
-% ciplot(mean(intensity_PBS2a, 1, 'omitnan')-std(intensity_PBS2a, 0, 1, 'omitnan'), mean(intensity_PBS2a, 1, 'omitnan')+std(intensity_PBS2a, 0, 1, 'omitnan'), time_PBS2a, colorcode2{7})
-% plot(time_PBS2a, mean(intensity_PBS2a, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-% 
-% ciplot(mean(intensity_PBS2b, 1, 'omitnan')-std(intensity_PBS2b, 0, 1, 'omitnan'), mean(intensity_PBS2b, 1, 'omitnan')+std(intensity_PBS2b, 0, 1, 'omitnan'), time_PBS2b, colorcode2{8})
-% plot(time_PBS2b, mean(intensity_PBS2b, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
-% 
-% legend('LB, rep 1, std', 'LB, rep 1, mean', 'LB, rep 2, std', 'LB, rep 2, mean', 'PBS 1 hour, rep 1, std', 'PBS 1 hour, rep 1, mean', 'PBS 1 hour, rep 2, std', 'PBS 1 hour, rep 2, mean', 'PBS 20 min, rep 1, std', 'PBS 20 min, rep 1, mean', 'PBS 20 min, rep 2, std', 'PBS 20 min, rep 2, mean', 'PBS 2 min, rep 1, std', 'PBS 2 min, rep 1, mean', 'PBS 2 min, rep 2, std', 'PBS 2 min, rep 2, mean')
-% xlabel('Time (minutes)')
-% ylabel('Fluorescence (A.U.)')
-% saveas(gcf, 'rawIntensity.png')
-% saveas(gcf, 'rawIntensity.fig')
-
-
 % %% Perform analysis with traces normalized to post-lysis frame
 %calculate corrected fluor traces
 [normintensity_LBa, intensity_LBa, Cnew_LBa, tme_LBa, tau_LBa, yhat_LBa, dCB_LBa, dCT_LBa, dCP_LBa, Cbl_exp_LBa, unb_frac_LBa]=photoCorrect(LBa, 10, 28.9210);
@@ -73,11 +38,11 @@ PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 [normintensity_PBS2b, intensity_PBS2b, Cnew_PBS2b, tme_PBS2b, tau_PBS2b, yhat_PBS2b, dCB_PBS2b, dCT_PBS2b, dCP_PBS2b, Cbl_exp_PBS2b, unb_frac_PBS2b]=photoCorrect(PBS2b, 13, 28.9210);
  
 %% plot correction variables
-% figure, plot(tme_LBa(1:end-1), dCB_LBa)
-% figure, plot(tme_LBa(1:end-1), dCT_LBa)
-% figure, plot(tme_LBa(1:end-1), dCP_LBa)
-% figure, plot(tme_LBa, Cbl_exp_LBa)
-% figure, plot(tme_LBa, unb_frac_LBa)
+figure, plot(tme_LBa(1:end-1), dCB_LBa)
+figure, plot(tme_LBa(1:end-1), dCT_LBa)
+figure, plot(tme_LBa(1:end-1), dCP_LBa)
+figure, plot(tme_LBa, Cbl_exp_LBa)
+figure, plot(tme_LBa, unb_frac_LBa)
 % 
 % figure, plot(tme_PBS20a(1:end-1), dCB_PBS20a)
 % figure, plot(tme_PBS20a(1:end-1), dCT_PBS20a)
@@ -86,24 +51,57 @@ PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 % figure, plot(tme_PBS20a, unb_frac_PBS20a)
 
 % %plot normalized traces vs corrected traces
-cd([dirsave '/postLysis'])
-comparePlot(intensity_LBa, Cnew_LBa, tme_LBa)
-saveas(gcf, '10232021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '10232021_Exp1_rawCorrectedTraces.png'), close
-comparePlot(normintensity_LBb, Cnew_LBb, tme_LBb)
-saveas(gcf, '10262021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '10262021_Exp1_rawCorrectedTraces.png'), close
-comparePlot(normintensity_PBS60a, Cnew_PBS60a, tme_PBS60a)
-saveas(gcf, '10232021_Exp2_rawCorrectedTraces.fig'), saveas(gcf, '10232021_Exp2_rawCorrectedTraces.png'), close
-comparePlot(normintensity_PBS60b, Cnew_PBS60b, tme_PBS60b)
-saveas(gcf, '10262021_Exp2_rawCorrectedTraces.fig'), saveas(gcf, '10262021_Exp2_rawCorrectedTraces.png'), close
-comparePlot(normintensity_PBS20a, Cnew_PBS20a, tme_PBS20a)
-saveas(gcf, '11192021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '11192021_Exp1_rawCorrectedTraces.png'), close
-comparePlot(normintensity_PBS20b, Cnew_PBS20b, tme_PBS20b)
-saveas(gcf, '11302021_Exp1_rawCorrectedTraces.fig'), saveas(gcf, '11302021_Exp1_rawCorrectedTraces.png'), close
-comparePlot(normintensity_PBS2a, Cnew_PBS2a, tme_PBS2a)
-saveas(gcf, '11192021_Exp2_rawCorrectedTraces.fig'), saveas(gcf, '11192021_Exp2_rawCorrectedTraces.png'), close
-comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
-saveas(gcf, '12082021_Exp3_rawCorrectedTraces.fig'), saveas(gcf, '12082021_Exp3_rawCorrectedTraces.png'), close
+%cd([dirsave '/postLysis'])
+% comparePlot(normintensity_LBa, Cnew_LBa, tme_LBa)
+% %saveas(gcf, '10232021_Exp1_noAdjTraces.fig'), saveas(gcf, '10232021_Exp1_noAdjTraces.png'), close
+% comparePlot(normintensity_LBb, Cnew_LBb, tme_LBb)
+% %saveas(gcf, '10262021_Exp1_noAdjTraces.fig'), saveas(gcf, '10262021_Exp1_noAdjTraces.png'), close
+% comparePlot(normintensity_PBS60a, Cnew_PBS60a, tme_PBS60a)
+% %saveas(gcf, '10232021_Exp2_noAdjTraces.fig'), saveas(gcf, '10232021_Exp2_noAdjTraces.png'), close
+% comparePlot(normintensity_PBS60b, Cnew_PBS60b, tme_PBS60b)
+% %saveas(gcf, '10262021_Exp2_noAdjTraces.fig'), saveas(gcf, '10262021_Exp2_noAdjTraces.png'), close
+% comparePlot(normintensity_PBS20a, Cnew_PBS20a, tme_PBS20a)
+% %saveas(gcf, '11192021_Exp1_noAdjTraces.fig'), saveas(gcf, '11192021_Exp1_noAdjTraces.png'), close
+% comparePlot(normintensity_PBS20b, Cnew_PBS20b, tme_PBS20b)
+% %saveas(gcf, '11302021_Exp1_noAdjTraces.fig'), saveas(gcf, '11302021_Exp1_noAdjTraces.png'), close
+% comparePlot(normintensity_PBS2a, Cnew_PBS2a, tme_PBS2a)
+% %saveas(gcf, '11192021_Exp2_noAdjTraces.fig'), saveas(gcf, '11192021_Exp2_noAdjTraces.png'), close
+% comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
+% %saveas(gcf, '12082021_Exp3_noAdjTraces.fig'), saveas(gcf, '12082021_Exp3_noAdjTraces.png'), close
 
+%plot average raw fluor. intensities
+cd(dirsave)
+
+figure, hold on
+ciplot(mean(normintensity_LBa, 1, 'omitnan')-std(normintensity_LBa, 0, 1, 'omitnan'), mean(normintensity_LBa, 1, 'omitnan')+std(normintensity_LBa, 0, 1, 'omitnan'), tme_LBa, colorcode2{1})
+plot(tme_LBa, mean(normintensity_LBa, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+
+ciplot(mean(normintensity_LBb, 1, 'omitnan')-std(normintensity_LBb, 0, 1, 'omitnan'), mean(normintensity_LBb, 1, 'omitnan')+std(normintensity_LBb, 0, 1, 'omitnan'), tme_LBb, colorcode2{2})
+plot(tme_LBb, mean(normintensity_LBb, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
+
+ciplot(mean(normintensity_PBS60a, 1, 'omitnan')-std(normintensity_PBS60a, 0, 1, 'omitnan'), mean(normintensity_PBS60a, 1, 'omitnan')+std(normintensity_PBS60a, 0, 1, 'omitnan'), tme_PBS60a, colorcode2{3})
+plot(tme_PBS60a, mean(normintensity_PBS60a, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
+
+ciplot(mean(normintensity_PBS60b, 1, 'omitnan')-std(normintensity_PBS60b, 0, 1, 'omitnan'), mean(normintensity_PBS60b, 1, 'omitnan')+std(normintensity_PBS60b, 0, 1, 'omitnan'), tme_PBS60b, colorcode2{4})
+plot(tme_PBS60b, mean(normintensity_PBS60b, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
+
+ciplot(mean(normintensity_PBS20a, 1, 'omitnan')-std(normintensity_PBS20a, 0, 1, 'omitnan'), mean(normintensity_PBS20a, 1, 'omitnan')+std(normintensity_PBS20a, 0, 1, 'omitnan'), tme_PBS20a, colorcode2{5})
+plot(tme_PBS20a, mean(normintensity_PBS20a, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
+
+ciplot(mean(normintensity_PBS20b, 1, 'omitnan')-std(normintensity_PBS20b, 0, 1, 'omitnan'), mean(normintensity_PBS20b, 1, 'omitnan')+std(normintensity_PBS20b, 0, 1, 'omitnan'), tme_PBS20b, colorcode2{6})
+plot(tme_PBS20b, mean(normintensity_PBS20b, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
+
+ciplot(mean(normintensity_PBS2a, 1, 'omitnan')-std(normintensity_PBS2a, 0, 1, 'omitnan'), mean(normintensity_PBS2a, 1, 'omitnan')+std(normintensity_PBS2a, 0, 1, 'omitnan'), tme_PBS2a, colorcode2{7})
+plot(tme_PBS2a, mean(normintensity_PBS2a, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
+
+ciplot(mean(normintensity_PBS2b, 1, 'omitnan')-std(normintensity_PBS2b, 0, 1, 'omitnan'), mean(normintensity_PBS2b, 1, 'omitnan')+std(normintensity_PBS2b, 0, 1, 'omitnan'), tme_PBS2b, colorcode2{8})
+plot(tme_PBS2b, mean(normintensity_PBS2b, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
+
+legend('LB, rep 1, std', 'LB, rep 1, mean', 'LB, rep 2, std', 'LB, rep 2, mean', 'PBS 1 hour, rep 1, std', 'PBS 1 hour, rep 1, mean', 'PBS 1 hour, rep 2, std', 'PBS 1 hour, rep 2, mean', 'PBS 20 min, rep 1, std', 'PBS 20 min, rep 1, mean', 'PBS 20 min, rep 2, std', 'PBS 20 min, rep 2, mean', 'PBS 2 min, rep 1, std', 'PBS 2 min, rep 1, mean', 'PBS 2 min, rep 2, std', 'PBS 2 min, rep 2, mean')
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+% saveas(gcf, 'rawIntensity.png')
+% saveas(gcf, 'rawIntensity.fig')
 %% Functions
 function [time, lCell]=lengthView(datadir)
         %pre-allocate variables
@@ -141,9 +139,7 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
         
         %pre-allocate variables
         intensity=[];
-        tau=[];
-        yhat=[];
-        
+      
         %go through the data for each position
         for i=1:length(datadir)
             
@@ -159,45 +155,40 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
                 end
             end
 
-%             if i==1
-%                 tme=time(imstart:end)-time(imstart); %new time vector
-%             end
-            
             if i==1
-                tme=time; %new time vector
+                tme=time(imstart:end)-time(imstart); %new time vector
             end
 
         end
 
-        normintensity=intensity;
-%         %adjust the background
-%         adjintensity = intensity-intensity(:, end);
-% 
-%         %normalize to the initial post-lysis frame
-%         normintensity=adjintensity(:, imstart:end)./adjintensity(:,imstart);
-%         normintensity(normintensity<0)=0;
-%         
-%         %fit normalized traces to exponential decay function
-%         modelfun=@(tau,x)exp(-x./tau);
-%         tau0=1;
-%         
-%         %pre-allocate variables
-%         fit=[];
-%         tau=[];
-%         yhat=[];
-% 
-%         for i=1:height(normintensity)
-% %             %this will skip the detergent perfusion reading
-% %             idx=find(normintensity(i,:)<=1); 
-%             tau_temp=nlinfit(tme, normintensity(i,:), modelfun, tau0);
-%             y_hat=modelfun(tau_temp, tme);   
-% 
-% %             fit=[fit, i];
-%             tau=[tau, tau_temp];
-%             yhat=[yhat; y_hat]; 
-% 
-%         end
-%     
+        %adjust the background
+        %adjintensity = intensity-intensity(:, end);
+
+        %normalize to the initial post-lysis frame
+        normintensity=intensity(:, imstart:end)./intensity(:,imstart);
+        normintensity(normintensity<0)=0;
+        
+        %fit normalized traces to exponential decay function
+        modelfun=@(tau,x)exp(-x./tau);
+        tau0=1;
+        
+        %pre-allocate variables
+        fit=[];
+        tau=[];
+        yhat=[];
+
+        for i=1:height(normintensity)
+%             %this will skip the detergent perfusion reading
+%             idx=find(normintensity(i,:)<=1); 
+            tau_temp=nlinfit(tme, normintensity(i,:), modelfun, tau0);
+            y_hat=modelfun(tau_temp, tme);   
+
+%             fit=[fit, i];
+            tau=[tau, tau_temp];
+            yhat=[yhat; y_hat]; 
+
+        end
+    
         %calculate dt (there's variation of dt during initial values, so it's
         %easier to use end values)
         dt=tme(end)-tme(end-1);
@@ -222,6 +213,7 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
         Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
         Cbl_exp(:, 1)=0;
 
+        mx=[];
         for n=1:height(normintensity)
            
             for i=1:length(tme)-1
@@ -246,14 +238,19 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
                 
             end  
             
+            %when does the loop break (Cnew no longer calculated)
+            mx=[mx,i];
         end
         
-%         gamma = nan(height(normintensity), 1);
-%     
-%         for n=1:height(normintensity)
-%             p = dCP(n,end)/dt;
-%             gamma(n,1) = p/Cnew(n, end-1);
-%         end
+        %mean time stamp for Cnew
+        idx=round(mean(mx));
+        
+        gamma = nan(height(normintensity), 1);
+    
+        for n=1:height(normintensity)
+            p = dCP(n,end)/dt;
+            gamma(n,1) = p/Cnew(n, end-1);
+        end
         
 end
 
@@ -265,7 +262,7 @@ function comparePlot(normintensity, Cnew, tme)
         plot(tme, Cnew(n, :), '-g')
     end
     xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
+    ylabel('Normalized Fluorescence (A.U.)')
 
 end
 
