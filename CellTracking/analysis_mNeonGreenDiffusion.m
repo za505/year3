@@ -1,5 +1,5 @@
 %Author: Zarina Akbary
-%Date: 12/16/2021
+%Date: 12/17/2021
 %Purpose: To combine and analyze decayMeasure (dm.mat) data from mNeonGreen diffusion
 %experiments. 
 
@@ -14,7 +14,7 @@ colorcode={[0 0.45 0.74], [0.85 0.33 0.1], [0.49 0.18 0.56], [0.47 0.67 0.19], [
 colorcode2={[0.63 0.84 0.97], [1 0.73 0.62], [0.92 0.65 0.97], [0.8 0.94 0.61], [0.8 0.94 0.61], [0.78 0.93 1], [1 0.7 0.76], [0.98 0.79 0.94]};
 
 %first, direct the code to the location of the dm.mat files 
-dirsave='/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/12152021_analysis';
+dirsave='/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/12112021_analysis';
 cd([dirsave '/MatFiles'])
 
 LBa=dir(['10232021_Exp1' '*dm.mat']); %LB, rep 1
@@ -26,16 +26,72 @@ PBS20b=dir(['11302021_Exp1' '*dm.mat']); %PBS 20 min, rep 2
 PBS2a=dir(['11192021_Exp2' '*dm.mat']); %PBS 2 min, rep 1
 PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 
+%% Perform analysis with traces normalized to pre-lysis frame
+%calculate corrected fluorescence traces
+[normintensity_LBa, intensity_LBa, Cnew_LBa, tme_LBa, tau_LBa, yhat_LBa]=photoCorrect(LBa, 5, 28.9210);
+[normintensity_LBb, intensity_LBb, Cnew_LBb, tme_LBb, tau_LBb, yhat_LBb]=photoCorrect(LBb, 4, 28.9210);
+[normintensity_PBS60a, intensity_PBS60a, Cnew_PBS60a, tme_PBS60a, tau_PBS60a, yhat_PBS60a]=photoCorrect(PBS60a, 2, 28.9210);
+[normintensity_PBS60b, intensity_PBS60b, Cnew_PBS60b, tme_PBS60b, tau_PBS60b, yhat_PBS60b]=photoCorrect(PBS60b, 4, 28.9210);
+[normintensity_PBS20a, intensity_PBS20a, Cnew_PBS20a, tme_PBS20a, tau_PBS20a, yhat_PBS20a]=photoCorrect(PBS20a, 3, 28.9210);
+[normintensity_PBS20b, intensity_PBS20b, Cnew_PBS20b, tme_PBS20b, tau_PBS20b, yhat_PBS20b]=photoCorrect(PBS20b, 3, 28.9210);
+[normintensity_PBS2a, intensity_PBS2a, Cnew_PBS2a, tme_PBS2a, tau_PBS2a, yhat_PBS2a]=photoCorrect(PBS2a, 9, 28.9210);
+[normintensity_PBS2b, intensity_PBS2b, Cnew_PBS2b, tme_PBS2b, tau_PBS2b, yhat_PBS2b]=photoCorrect(PBS2b, 9, 28.9210);
+
+%visualize the length traces to determine the pre- and post-lysis frames
+% [time_LBa, lCell_LBa]=lengthView(LBa); %pre-lysis=5, post-lysis=10
+% [time_LBb, lCell_LBb]=lengthView(LBb); %pre-lysis=4, post-lysis=8
+% [time_PBS60a, lCell_PBS60a]=lengthView(PBS60a); %pre-lysis=2, post-lysis=6
+% [time_PBS60b, lCell_PBS60b]=lengthView(PBS60b); %pre-lysis=4, post-lysis=7
+% [time_PBS20a, lCell_PBS20a]=lengthView(PBS20a); %pre-lysis=3, post-lysis=8
+% [time_PBS20b, lCell_PBS20b]=lengthView(PBS20b); %pre-lysis=3, post-lysis=7
+% [time_PBS2a, lCell_PBS2a]=lengthView(PBS2a); %pre-lysis=9, post-lysis=13
+% [time_PBS2b, lCell_PBS2b]=lengthView(PBS2b); %pre-lysis=9, post-lysis=13
+
+%plot average raw fluor. intensities
+% cd(dirsave)
+% % 
+% figure, hold on
+% % ciplot(mean(intensity_LBa, 1, 'omitnan')-std(intensity_LBa, 0, 1, 'omitnan'), mean(intensity_LBa, 1, 'omitnan')+std(intensity_LBa, 0, 1, 'omitnan'), time_LBa, colorcode2{1})
+% plot(time_LBa, mean(intensity_LBa, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+% % 
+% % ciplot(mean(intensity_LBb, 1, 'omitnan')-std(intensity_LBb, 0, 1, 'omitnan'), mean(intensity_LBb, 1, 'omitnan')+std(intensity_LBb, 0, 1, 'omitnan'), time_LBb, colorcode2{2})
+% plot(time_LBb, mean(intensity_LBb, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
+% % 
+% % ciplot(mean(intensity_PBS60a, 1, 'omitnan')-std(intensity_PBS60a, 0, 1, 'omitnan'), mean(intensity_PBS60a, 1, 'omitnan')+std(intensity_PBS60a, 0, 1, 'omitnan'), time_PBS60a, colorcode2{3})
+% plot(time_PBS60a, mean(intensity_PBS60a, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
+% % 
+% % ciplot(mean(intensity_PBS60b, 1, 'omitnan')-std(intensity_PBS60b, 0, 1, 'omitnan'), mean(intensity_PBS60b, 1, 'omitnan')+std(intensity_PBS60b, 0, 1, 'omitnan'), time_PBS60b, colorcode2{4})
+% plot(time_PBS60b, mean(intensity_PBS60b, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
+% % 
+% % ciplot(mean(intensity_PBS20a, 1, 'omitnan')-std(intensity_PBS20a, 0, 1, 'omitnan'), mean(intensity_PBS20a, 1, 'omitnan')+std(intensity_PBS20a, 0, 1, 'omitnan'), time_PBS20a, colorcode2{5})
+% plot(time_PBS20a, mean(intensity_PBS20a, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
+% % 
+% % ciplot(mean(intensity_PBS20b, 1, 'omitnan')-std(intensity_PBS20b, 0, 1, 'omitnan'), mean(intensity_PBS20b, 1, 'omitnan')+std(intensity_PBS20b, 0, 1, 'omitnan'), time_PBS20b, colorcode2{6})
+% plot(time_PBS20b, mean(intensity_PBS20b, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
+% % 
+% % ciplot(mean(intensity_PBS2a, 1, 'omitnan')-std(intensity_PBS2a, 0, 1, 'omitnan'), mean(intensity_PBS2a, 1, 'omitnan')+std(intensity_PBS2a, 0, 1, 'omitnan'), time_PBS2a, colorcode2{7})
+% plot(time_PBS2a, mean(intensity_PBS2a, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
+% % 
+% % ciplot(mean(intensity_PBS2b, 1, 'omitnan')-std(intensity_PBS2b, 0, 1, 'omitnan'), mean(intensity_PBS2b, 1, 'omitnan')+std(intensity_PBS2b, 0, 1, 'omitnan'), time_PBS2b, colorcode2{8})
+% plot(time_PBS2b, mean(intensity_PBS2b, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
+% % 
+% legend('LB, rep 1, std', 'LB, rep 1, mean', 'LB, rep 2, std', 'LB, rep 2, mean', 'PBS 1 hour, rep 1, std', 'PBS 1 hour, rep 1, mean', 'PBS 1 hour, rep 2, std', 'PBS 1 hour, rep 2, mean', 'PBS 20 min, rep 1, std', 'PBS 20 min, rep 1, mean', 'PBS 20 min, rep 2, std', 'PBS 20 min, rep 2, mean', 'PBS 2 min, rep 1, std', 'PBS 2 min, rep 1, mean', 'PBS 2 min, rep 2, std', 'PBS 2 min, rep 2, mean')
+% xlabel('Time (minutes)')
+% ylabel('Fluorescence (A.U.)')
+% %saveas(gcf, 'rawIntensity.png')
+% %saveas(gcf, 'rawIntensity.fig')
+
+
 % %% Perform analysis with traces normalized to post-lysis frame
 %calculate corrected fluor traces
-[normintensity_LBa, intensity_LBa, Cnew_LBa, tme_LBa, tau_LBa, yhat_LBa, dCB_LBa, dCT_LBa, dCP_LBa, Cbl_exp_LBa, unb_frac_LBa]=photoCorrect(LBa, 10, 28.9210);
-[normintensity_LBb, intensity_LBb, Cnew_LBb, tme_LBb, tau_LBb, yhat_LBb, dCB_LBb, dCT_LBb, dCP_LBb, Cbl_exp_LBb, unb_frac_LBb]=photoCorrect(LBb, 8, 28.9210);
-[normintensity_PBS60a, intensity_PBS60a, Cnew_PBS60a, tme_PBS60a, tau_PBS60a, yhat_PBS60a, dCB_PBS60a, dCT_PBS60a, dCP_PBS60a, Cbl_exp_PBS60a, unb_frac_PBS60a]=photoCorrect(PBS60a, 6, 28.9210);
-[normintensity_PBS60b, intensity_PBS60b, Cnew_PBS60b, tme_PBS60b, tau_PBS60b, yhat_PBS60b, dCB_PBS60b, dCT_PBS60b, dCP_PBS60b, Cbl_exp_PBS60b, unb_frac_PBS60b]=photoCorrect(PBS60b, 7, 28.9210);
-[normintensity_PBS20a, intensity_PBS20a, Cnew_PBS20a, tme_PBS20a, tau_PBS20a, yhat_PBS20a, dCB_PBS20a, dCT_PBS20a, dCP_PBS20a, Cbl_exp_PBS20a, unb_frac_PBS20a]=photoCorrect(PBS20a, 8, 28.9210);
-[normintensity_PBS20b, intensity_PBS20b, Cnew_PBS20b, tme_PBS20b, tau_PBS20b, yhat_PBS20b, dCB_PBS20b, dCT_PBS20b, dCP_PBS20b, Cbl_exp_PBS20b, unb_frac_PBS20b]=photoCorrect(PBS20b, 7, 28.9210);
-[normintensity_PBS2a, intensity_PBS2a, Cnew_PBS2a, tme_PBS2a, tau_PBS2a, yhat_PBS2a, dCB_PBS2a, dCT_PBS2a, dCP_PBS2a, Cbl_exp_PBS2a, unb_frac_PBS2a]=photoCorrect(PBS2a, 13, 28.9210);
-[normintensity_PBS2b, intensity_PBS2b, Cnew_PBS2b, tme_PBS2b, tau_PBS2b, yhat_PBS2b, dCB_PBS2b, dCT_PBS2b, dCP_PBS2b, Cbl_exp_PBS2b, unb_frac_PBS2b]=photoCorrect(PBS2b, 13, 28.9210);
+% [normintensity_LBa, intensity_LBa, Cnew_LBa, tme_LBa, tau_LBa, yhat_LBa, dCB_LBa, dCT_LBa, dCP_LBa, Cbl_exp_LBa, unb_frac_LBa]=photoCorrect(LBa, 10, 28.9210);
+% [normintensity_LBb, intensity_LBb, Cnew_LBb, tme_LBb, tau_LBb, yhat_LBb, dCB_LBb, dCT_LBb, dCP_LBb, Cbl_exp_LBb, unb_frac_LBb]=photoCorrect(LBb, 8, 28.9210);
+% [normintensity_PBS60a, intensity_PBS60a, Cnew_PBS60a, tme_PBS60a, tau_PBS60a, yhat_PBS60a, dCB_PBS60a, dCT_PBS60a, dCP_PBS60a, Cbl_exp_PBS60a, unb_frac_PBS60a]=photoCorrect(PBS60a, 6, 28.9210);
+% [normintensity_PBS60b, intensity_PBS60b, Cnew_PBS60b, tme_PBS60b, tau_PBS60b, yhat_PBS60b, dCB_PBS60b, dCT_PBS60b, dCP_PBS60b, Cbl_exp_PBS60b, unb_frac_PBS60b]=photoCorrect(PBS60b, 7, 28.9210);
+% [normintensity_PBS20a, intensity_PBS20a, Cnew_PBS20a, tme_PBS20a, tau_PBS20a, yhat_PBS20a, dCB_PBS20a, dCT_PBS20a, dCP_PBS20a, Cbl_exp_PBS20a, unb_frac_PBS20a]=photoCorrect(PBS20a, 8, 28.9210);
+% [normintensity_PBS20b, intensity_PBS20b, Cnew_PBS20b, tme_PBS20b, tau_PBS20b, yhat_PBS20b, dCB_PBS20b, dCT_PBS20b, dCP_PBS20b, Cbl_exp_PBS20b, unb_frac_PBS20b]=photoCorrect(PBS20b, 7, 28.9210);
+% [normintensity_PBS2a, intensity_PBS2a, Cnew_PBS2a, tme_PBS2a, tau_PBS2a, yhat_PBS2a, dCB_PBS2a, dCT_PBS2a, dCP_PBS2a, Cbl_exp_PBS2a, unb_frac_PBS2a]=photoCorrect(PBS2a, 13, 28.9210);
+% [normintensity_PBS2b, intensity_PBS2b, Cnew_PBS2b, tme_PBS2b, tau_PBS2b, yhat_PBS2b, dCB_PBS2b, dCT_PBS2b, dCP_PBS2b, Cbl_exp_PBS2b, unb_frac_PBS2b]=photoCorrect(PBS2b, 13, 28.9210);
  
 %% plot correction variables
 % figure, plot(tme_LBa(1:end-1), dCB_LBa)
@@ -51,57 +107,25 @@ PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 % figure, plot(tme_PBS20a, unb_frac_PBS20a)
 
 % %plot normalized traces vs corrected traces
-cd([dirsave '/postLysis'])
-comparePlot(normintensity_LBa, Cnew_LBa, tme_LBa)
-%saveas(gcf, '10232021_Exp1_noAdjTraces.fig'), saveas(gcf, '10232021_Exp1_noAdjTraces.png'), close
-comparePlot(normintensity_LBb, Cnew_LBb, tme_LBb)
-%saveas(gcf, '10262021_Exp1_noAdjTraces.fig'), saveas(gcf, '10262021_Exp1_noAdjTraces.png'), close
-comparePlot(normintensity_PBS60a, Cnew_PBS60a, tme_PBS60a)
-%saveas(gcf, '10232021_Exp2_noAdjTraces.fig'), saveas(gcf, '10232021_Exp2_noAdjTraces.png'), close
-comparePlot(normintensity_PBS60b, Cnew_PBS60b, tme_PBS60b)
-%saveas(gcf, '10262021_Exp2_noAdjTraces.fig'), saveas(gcf, '10262021_Exp2_noAdjTraces.png'), close
-comparePlot(normintensity_PBS20a, Cnew_PBS20a, tme_PBS20a)
-%saveas(gcf, '11192021_Exp1_noAdjTraces.fig'), saveas(gcf, '11192021_Exp1_noAdjTraces.png'), close
-comparePlot(normintensity_PBS20b, Cnew_PBS20b, tme_PBS20b)
-%saveas(gcf, '11302021_Exp1_noAdjTraces.fig'), saveas(gcf, '11302021_Exp1_noAdjTraces.png'), close
-comparePlot(normintensity_PBS2a, Cnew_PBS2a, tme_PBS2a)
-%saveas(gcf, '11192021_Exp2_noAdjTraces.fig'), saveas(gcf, '11192021_Exp2_noAdjTraces.png'), close
-comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
-%saveas(gcf, '12082021_Exp3_noAdjTraces.fig'), saveas(gcf, '12082021_Exp3_noAdjTraces.png'), close
+% cd([dirsave '/postLysis'])
+% comparePlot(normintensity_LBa, Cnew_LBa, tme_LBa)
+% %saveas(gcf, '10232021_Exp1_rawCorrectedTraces.fig'), %saveas(gcf, '10232021_Exp1_rawCorrectedTraces.png'), close
+% comparePlot(normintensity_LBb, Cnew_LBb, tme_LBb)
+% %saveas(gcf, '10262021_Exp1_rawCorrectedTraces.fig'), %saveas(gcf, '10262021_Exp1_rawCorrectedTraces.png'), close
+% comparePlot(normintensity_PBS60a, Cnew_PBS60a, tme_PBS60a)
+% %saveas(gcf, '10232021_Exp2_rawCorrectedTraces.fig'), %saveas(gcf, '10232021_Exp2_rawCorrectedTraces.png'), close
+% comparePlot(normintensity_PBS60b, Cnew_PBS60b, tme_PBS60b)
+% %saveas(gcf, '10262021_Exp2_rawCorrectedTraces.fig'), %saveas(gcf, '10262021_Exp2_rawCorrectedTraces.png'), close
+% comparePlot(normintensity_PBS20a, Cnew_PBS20a, tme_PBS20a)
+% %saveas(gcf, '11192021_Exp1_rawCorrectedTraces.fig'), %saveas(gcf, '11192021_Exp1_rawCorrectedTraces.png'), close
+% comparePlot(normintensity_PBS20b, Cnew_PBS20b, tme_PBS20b)
+% %saveas(gcf, '11302021_Exp1_rawCorrectedTraces.fig'), %saveas(gcf, '11302021_Exp1_rawCorrectedTraces.png'), close
+% comparePlot(normintensity_PBS2a, Cnew_PBS2a, tme_PBS2a)
+% %saveas(gcf, '11192021_Exp2_rawCorrectedTraces.fig'), %saveas(gcf, '11192021_Exp2_rawCorrectedTraces.png'), close
+% comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
+% %saveas(gcf, '12082021_Exp3_rawCorrectedTraces.fig'), %saveas(gcf, '12082021_Exp3_rawCorrectedTraces.png'), close
 
-%plot average raw fluor. intensities
-cd(dirsave)
-
-figure, hold on
-ciplot(mean(normintensity_LBa, 1, 'omitnan')-std(normintensity_LBa, 0, 1, 'omitnan'), mean(normintensity_LBa, 1, 'omitnan')+std(normintensity_LBa, 0, 1, 'omitnan'), tme_LBa, colorcode2{1})
-plot(tme_LBa, mean(normintensity_LBa, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-
-ciplot(mean(normintensity_LBb, 1, 'omitnan')-std(normintensity_LBb, 0, 1, 'omitnan'), mean(normintensity_LBb, 1, 'omitnan')+std(normintensity_LBb, 0, 1, 'omitnan'), tme_LBb, colorcode2{2})
-plot(tme_LBb, mean(normintensity_LBb, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-
-ciplot(mean(normintensity_PBS60a, 1, 'omitnan')-std(normintensity_PBS60a, 0, 1, 'omitnan'), mean(normintensity_PBS60a, 1, 'omitnan')+std(normintensity_PBS60a, 0, 1, 'omitnan'), tme_PBS60a, colorcode2{3})
-plot(tme_PBS60a, mean(normintensity_PBS60a, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
-
-ciplot(mean(normintensity_PBS60b, 1, 'omitnan')-std(normintensity_PBS60b, 0, 1, 'omitnan'), mean(normintensity_PBS60b, 1, 'omitnan')+std(normintensity_PBS60b, 0, 1, 'omitnan'), tme_PBS60b, colorcode2{4})
-plot(tme_PBS60b, mean(normintensity_PBS60b, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-
-ciplot(mean(normintensity_PBS20a, 1, 'omitnan')-std(normintensity_PBS20a, 0, 1, 'omitnan'), mean(normintensity_PBS20a, 1, 'omitnan')+std(normintensity_PBS20a, 0, 1, 'omitnan'), tme_PBS20a, colorcode2{5})
-plot(tme_PBS20a, mean(normintensity_PBS20a, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-
-ciplot(mean(normintensity_PBS20b, 1, 'omitnan')-std(normintensity_PBS20b, 0, 1, 'omitnan'), mean(normintensity_PBS20b, 1, 'omitnan')+std(normintensity_PBS20b, 0, 1, 'omitnan'), tme_PBS20b, colorcode2{6})
-plot(tme_PBS20b, mean(normintensity_PBS20b, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-
-ciplot(mean(normintensity_PBS2a, 1, 'omitnan')-std(normintensity_PBS2a, 0, 1, 'omitnan'), mean(normintensity_PBS2a, 1, 'omitnan')+std(normintensity_PBS2a, 0, 1, 'omitnan'), tme_PBS2a, colorcode2{7})
-plot(tme_PBS2a, mean(normintensity_PBS2a, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
-ciplot(mean(normintensity_PBS2b, 1, 'omitnan')-std(normintensity_PBS2b, 0, 1, 'omitnan'), mean(normintensity_PBS2b, 1, 'omitnan')+std(normintensity_PBS2b, 0, 1, 'omitnan'), tme_PBS2b, colorcode2{8})
-plot(tme_PBS2b, mean(normintensity_PBS2b, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
-
-legend('LB, rep 1, std', 'LB, rep 1, mean', 'LB, rep 2, std', 'LB, rep 2, mean', 'PBS 1 hour, rep 1, std', 'PBS 1 hour, rep 1, mean', 'PBS 1 hour, rep 2, std', 'PBS 1 hour, rep 2, mean', 'PBS 20 min, rep 1, std', 'PBS 20 min, rep 1, mean', 'PBS 20 min, rep 2, std', 'PBS 20 min, rep 2, mean', 'PBS 2 min, rep 1, std', 'PBS 2 min, rep 1, mean', 'PBS 2 min, rep 2, std', 'PBS 2 min, rep 2, mean')
-xlabel('Time (minutes)')
-ylabel('Fluorescence (A.U.)')
-% saveas(gcf, 'rawIntensity.png')
-% saveas(gcf, 'rawIntensity.fig')
+figure, plot(tme_PBS60b, normintensity_PBS60b, '-b')
 %% Functions
 function [time, lCell]=lengthView(datadir)
         %pre-allocate variables
@@ -112,7 +136,7 @@ function [time, lCell]=lengthView(datadir)
             
             %load decayMeasure .mat file
             cd(datadir(i).folder)
-            load(datadir(i).name, 'lcell', 'time', 'cellAdjIntensity', 'basename')
+            load(datadir(i).name, 'lcell', 'time', 'icell_intensity', 'basename')
 
             for n=1:height(lcell)          
                 lCell=[lCell; lcell(n, :)];
@@ -129,8 +153,8 @@ function [time, lCell]=lengthView(datadir)
 %         end
 %         xlabel('Time (minutes)')
 %         ylabel('Length \mum')
-%         saveas(gcf, [basename '_lengthTraces.fig'])
-%         saveas(gcf, [basename '_lengthTraces.png'])
+%         %saveas(gcf, [basename '_lengthTraces.fig'])
+%         %saveas(gcf, [basename '_lengthTraces.png'])
 %         pause(0.1), close
 
 end
@@ -145,27 +169,37 @@ function [normintensity, intensity, Cnew, tme, tau, yhat, dCB, dCT, dCP, Cbl_exp
             
             %load decayMeasure .mat file
             cd(datadir(i).folder)
-            load(datadir(i).name, 'cellAdjIntensity', 'time')
+            load(datadir(i).name, 'icell_intensity', 'time')
 
-            for n=1:height(cellAdjIntensity)
+            for n=1:height(icell_intensity)
 
                 %make sure there are fluor readings during the initial frame and the final frame, otherwise the adjust. and norm. will look off
-                if ~isnan(cellAdjIntensity(n, imstart))&~isnan(cellAdjIntensity(n, end)) 
-                    intensity=[intensity; cellAdjIntensity(n, :)];
+                if ~isnan(icell_intensity(n, imstart))&~isnan(icell_intensity(n, end)) 
+                    intensity=[intensity; icell_intensity(n, :)];
                 end
             end
-
+            
             if i==1
                 tme=time(imstart:end)-time(imstart); %new time vector
             end
 
         end
+        
+        omit=[2:4]+imstart;
+        idx=setdiff(1:length(time), omit);
+        v=intensity(:, idx);
+        vq=nan(height(v), length(omit));
+        for n=1:height(v)
+            vq(n, :)=interp1(idx, v(n, :), omit);
+        end
+        intensity2=intensity;
+        intensity2(:, omit)=vq;
 
         %adjust the background
-        %adjintensity = intensity-intensity(:, end);
+        adjintensity = intensity-intensity(:, end);
 
         %normalize to the initial post-lysis frame
-        normintensity=intensity(:, imstart:end)./intensity(:,imstart);
+        normintensity=adjintensity(:, imstart:end)./adjintensity(:,imstart);
         normintensity(normintensity<0)=0;
         
         %fit normalized traces to exponential decay function
@@ -360,8 +394,8 @@ end
 % % xticks([0 1.2/60 2/60 3/60])
 % % xticklabels({'0', '1.2 s', '2 s', '3 s'})
 % % title('Tau vs Frame Rate')
-% % saveas(gcf, 'alpha.fig')
-% % saveas(gcf, 'alpha.png')
+% % %saveas(gcf, 'alpha.fig')
+% % %saveas(gcf, 'alpha.png')
 % 
 % beta1=1./tau1;
 % beta2=1./tau2;
