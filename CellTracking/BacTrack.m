@@ -64,16 +64,13 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='12082021_Exp2';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12082021_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12082021_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='12162021_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_647/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_647/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=1;
-tscale1=60;
-tscale2=3;
-tpoint1=[0:tscale1:7*60];
-tpoint2=[tpoint1(end)+tscale2:tscale2:13.15*60];
+multiScale=0;
+tscale=30;
 thresh=0;%For default, enter zero.
 IntThresh=2000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -85,7 +82,7 @@ minA=100;%Minimum cell area. default 50
 maxA=2000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-vis=0;%Display cell tracking? 0=No, 1=Yes.
+vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 troubleshooting=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,11 +206,13 @@ for t=1:T
     
     cc=bwconncomp(ed3,4);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
-    idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>3e4);
+
+    %idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>3e4);
+    idx=find([stats.Area]>minA&[stats.Area]<maxA); %new edit, 12/24/2021
     %idx=find([stats.Area]>minA&[stats.MeanIntensity]>3e4);
     ed4=ismember(labelmatrix(cc),idx);
     %imshow(ed4), pause, close
-     
+        
     %Find cell areas and centroids
     bw=bwmorph(ed4,'thicken');
     [P,bw]=bwboundaries(bw,4,'noholes');
@@ -396,7 +395,8 @@ end
 %throw away cells that lyse pre-maturely
 delind=[];
 for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1
+    %if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1
+    if sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
         delind=[delind;i];
     end
 end
@@ -505,7 +505,7 @@ cd(savedir);
 save([basename '_BTlab'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_BTphase'])
+save([basename '_BT'])
 end
 
 %% Troubleshooting
@@ -553,22 +553,22 @@ end
 % save([basename '_BTphase'])
 % 
 %% Plot data
-cd(savedir);
-
-figure(1), title('Cell Length vs. Time')
-clf
-hold on
-for i=1:ncells  
-    lcell(i,:)=movingaverage(lcell(i,:),3);
-    %indx=isnan(lcell(i,:))~=1;
-    %indx=find(indx);
-    %plot(time(indx),lcell(i,indx))
-    plot(time./60,lcell(i,:)) 
-end
-xlabel('Time (min)')
-ylabel('Length (\mum)')
-fig2pretty
-saveas(gcf,[basename,'_lTraces.png'])
+% cd(savedir);
+% 
+% figure(1), title('Cell Length vs. Time')
+% clf
+% hold on
+% for i=1:ncells  
+%     lcell(i,:)=movingaverage(lcell(i,:),3);
+%     %indx=isnan(lcell(i,:))~=1;
+%     %indx=find(indx);
+%     %plot(time(indx),lcell(i,indx))
+%     plot(time./60,lcell(i,:)) 
+% end
+% xlabel('Time (min)')
+% ylabel('Length (\mum)')
+% fig2pretty
+% saveas(gcf,[basename,'_lTraces.png'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
