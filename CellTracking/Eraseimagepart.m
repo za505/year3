@@ -20,11 +20,11 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='08272021_Exp1';
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_erased'];
-%mirname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/PlasmolysisTrack_test/' basename '_phase/'  basename '_erased'];
+basename='12162021_Exp1';
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_647/' basename '_erased'];
+%mirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_aligned'];
 split=0; %there is a break in the movie
-%split1=24; %first frame for segment 2
+%split1=13; %first frame for segment 2
 %split2=; %last frame for segment 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 curdir=cd;
@@ -34,15 +34,28 @@ directory=dir('*.tif');
 T=length(directory);
 path(dirname,path)
 
+% cd(mirname);
+% mirdirectory=dir('*.tif');
+% 
+% f1=1;
+% f2=17;
+% imname=mirdirectory(f1).name;
+% imname2=mirdirectory(f2).name;
+% imA=imread(imname);
+% imB=imread(imname2);
+
 %Pick the regions to erase    
     %load image
-    imagename=directory(T).name;
+    cd(dirname)
+    t=1;
+    imagename=directory(t).name;
     im1=imread(imagename);
     [imM,imN]=size(im1);
 
     ppix=0.5;
     im2=norm16bit(im1,ppix);
 
+    %figure, imshowpair(imA, imB, 'montage')
     figure,imshow(im1,stretchlim(im1)*65000)
     set(gcf,'Pointer','fullcross')
     hold on
@@ -164,7 +177,7 @@ for t=1:T
     end
 end
 
-%make sure the same regions are deleted in the other image stack as well
+% %make sure the same regions are deleted in the other image stack as well
 % cd(mirname);
 % directory=dir('*.tif');
 % T=length(directory);
