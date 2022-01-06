@@ -1,29 +1,30 @@
 %PlasTrack.m
 %Tracks percent plasmolyis from phase/CY5 image stacks.
 %Dylan Fitzmaurice
+%edit: Zarina Akbary
+%purpose: I want to compare the plasmolysis quantification b/t TADA/phase,
+%TADA/GFP, and/or phase/647
 
 clear 
 close all
 
-%%
-basename='FC1_061221_P2';
-load([basename '_ompA_BF_1' '_BT'])%load BF data 
+%% load the WallTrack.m data
+basename='05262021_Exp1';
+cwdir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/PlasmolysisTrack/' basename '/' basename '_TADA/' basename '_figures/'];
+cd(cwdir)
+load([basename '_WT'], 'B', 'im', 'preF', 'postF');
 
-A=load([basename '_ompA_CY5_1_BT']);%load CY5 data 
-CY5_im3=A.im3;% CY5 image
-CY5_boun=A.boun;% CY5 bound
+% A=load([basename '_ompA_CY5_1_BT']);%load CY5 data 
+% CY5_im3=A.im3;% CY5 image
+% CY5_boun=A.boun;% CY5 bound
 %%
 
-y=1:size(im3{1,1},1)%im3 = BF image
-x=1:size(im3{1,1},2)
+y=1:size(im,1);
+x=1:size(im,2);
 [X,Y] = meshgrid(x,y);
 
 mx=max(x);
 my=max(y);
-
-% A=load([basename ‘_ompA_CY5_1_BT’])% Need to load CY5 data like 
-% CY5_im3=A.im3;% CY5 image
-% CY5_boun=A.boun;% CY5 bound
 
 frame=1;
 
