@@ -86,22 +86,39 @@ x=1:size(imCpre,2);
 mx=max(x);
 my=max(y);
 
-pre_bw = zeros(size(imCpre));
-post_bw = zeros(size(imCpre));
+pre_in = zeros(size(imCpre));
+pre_on = zeros(size(imCpre));
+post_in = zeros(size(imCpre));
+post_on = zeros(size(imCpre));
 
-%generate binary image of pre-shocked cells
-for i=1:height(prePixels)
-    pre_bw(prePixels{i})=1;
+for i=1:height(preB)
+    pre_xv=preB{i,1}(:, 1);
+    pre_yv=preB{i,1}(:, 2);
+    
+    [in, on]=inpolygon(X,Y,pre_xv, pre_yv);
+    pre_in = pre_in + in;
+    pre_on = pre_on + on;
+    
 end
 
-%generate binary image of post-shocked cells
-for i=1:height(postPixels)
-    post_bw(postPixels{i})=1;
+for i=1:height(postB)
+    post_xv=postB{i,1}(:, 1);
+    post_yv=postB{i,1}(:, 2);
+    
+    [in, on]=inpolygon(X,Y,post_xv, post_yv);
+    post_in = post_in + in;
+    post_on = post_on + on;
+    
 end
+
+[preL,pre_bw]=bwboundaries(pre_in,4,'noholes');
+[postL,post_bw]=bwboundaries(post_in,4,'noholes');
+preP=struct2cell(regionprops(pre_bw,'PixelIdxList'));
+postP=struct2cell(regionprops(post_bw,'PixelIdxList'));
 
 %calculate the area of pre- and post-shocked cells
-pre_area=cellfun(@height, prePixels);
-post_area=cellfun(@height, postPixels);
+pre_area=cellfun(@height, preP)';
+post_area=cellfun(@height, postP)';
 
 %% Generate a binary image of the GFP labelled cytoplasm
 preMat=zeros(size(imCpre));
@@ -110,28 +127,27 @@ postMat=zeros(size(imCpost));
 preMat_area=nan(height(pre_area),1);
 postMat_area=nan(height(post_area),1);
 
-meanA=65535;
+minA=65535;
 for i=1:height(pre_area)
-    if mean(mean(imGpre(prePixels{i})))<meanA
-        meanA=mean(mean(imGpre(prePixels{i})));
+    if min(min(imGpre(preP{i})))<minA
+        minA=min(min(imGpre(preP{i})));
     end
 end
 for i=1:height(pre_area)
-    idx=find(imGpre(prePixels{i})>=meanA);
-%    preMat(preP(i).PixelIdxList(idx))=imGpre(preP(i).PixelIdxList(idx));
-    preMat(prePixels{i}(idx,1))=1;
+    idx=find(imGpre(preP{i})>=minA);
+    preMat(preP{i}(idx,1))=1;
     preMat_area(i)=length(idx);
 end
 
-meanB=65535;
+minB=65535;
 for i=1:height(post_area)
-    if mean(mean(imGpost(postPixels{i})))<meanB
-        meanB=mean(mean(imGpost(postPixels{i})));
+    if min(min(imGpost(postP{i})))<minB
+        minB=min(min(imGpost(postP{i})));
     end
 end
 for i=1:height(post_area)
-    idx=find(imGpost(postPixels{i})>=meanB);
-    postMat(postPixels{i}(idx,1))=1;
+    idx=find(imGpost(postP{i})>=minB);
+    postMat(postP{i}(idx,1))=1;
     postMat_area(i)=length(idx);
 end
 
@@ -153,30 +169,34 @@ xticks([0 1])
 xlim([-0.2 1.2])
 
 %% Troubleshooting
-% for n=1:height(preL)
+%for n=1:height(preB)
 %     n
-%     figure
-%     imshow(imGpre)
-%     hold on
-% 
-%     if isempty(preL{n,1})==0
-%         plot(preL{n,1}(:,2),preL{n,1}(:,1),'-r')
-%     end
-% 
+figure(1)
+imshow(imGpre)
+hold on
+    
+for n=1:height(preL)
+    if isempty(preL{n,1})==0
+        plot(preL{n,1}(:,2),preL{n,1}(:,1),'-r')
+    end
+end
+
 %       pause
 %       close all
-% end
-% 
-% for n=1:height(postL)
+%end
+
+% for n=1:height(postB)
 %     n
-%     figure
-%     imshow(imGpost)
-%     hold on
-% 
-%     if isempty(postL{n,1})==0
-%         plot(postL{n,1}(:,2),postL{n,1}(:,1),'-r')
-%     end
-% 
+figure(2)
+imshow(imGpost)
+hold on
+
+for n=1:height(postL)
+    if isempty(postL{n,1})==0
+        plot(postL{n,1}(:,2),postL{n,1}(:,1),'-r')
+    end
+end
+
 %       pause
 %       close all
 % end
