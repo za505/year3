@@ -3,32 +3,30 @@
 %Dylan Fitzmaurice
 %edit: Zarina Akbary
 %purpose: I want to compare the plasmolysis quantification b/t TADA/phase,
-%TADA/GFP, and/or phase/647
+%TADA/GFP, and/or phase/TADA
 
 clear 
 close all
 
 %% load the WallTrack.m data
-basename='12162021_Exp1';
-cwdir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_647/' basename '_figures'];
-phasedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_aligned'];
-cytodir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_GFP/' basename '_aligned'];
+basename='12162021_Exp3';
+cwdir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony4/' basename '_TADA/' basename '_figures'];
+phasedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony4/' basename '_phase/' basename '_aligned'];
+cytodir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony4/' basename '_GFP/' basename '_aligned'];
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony4'];
+
+staining=2;
 
 cd(cwdir)
-load([basename '_colony1_preShock'], 'im');
+load([basename '_colony4_preShock'], 'im');
 imCpre=im;
-load([basename '_colony1_postShock'], 'im');
+load([basename '_colony4_postShock'], 'im');
 imCpost=im;
 
-load([basename '_colony1_preShock'], 'B');
+load([basename '_colony4_preShock'], 'B');
 preB=B;
-load([basename '_colony1_postShock'], 'B');
+load([basename '_colony4_postShock'], 'B');
 postB=B;
-
-load([basename '_colony1_preShock'], 'pixels');
-prePixels=pixels;
-load([basename '_colony1_postShock'], 'pixels');
-postPixels=pixels;
 
 cd(phasedir)
 directory=dir('*.tif');
@@ -44,10 +42,35 @@ imGpre=imread(imagename);
 imagename=directory(2).name;
 imGpost=imread(imagename);
 
-% A=load([basename '_ompA_CY5_1_BT']);%load CY5 data 
-% CY5_im3=A.im3;% CY5 image
-% CY5_boun=A.boun;% CY5 bound
-%%
+% %% Troubleshooting
+% for n=1:height(preB)
+%     n
+%     figure
+%     imshow(imCpre)
+%     hold on
+% 
+%     if isempty(preB{n,1})==0
+%         plot(preB{n,1}(:,1),preB{n,1}(:,2),'-r')
+%     end
+% 
+%       pause
+%       close all
+% end
+% 
+% for n=1:height(postB)
+%     n
+%     figure
+%     imshow(imCpost)
+%     hold on
+% 
+%     if isempty(postB{n,1})==0
+%         plot(postB{n,1}(:,1),postB{n,1}(:,2),'-r')
+%     end
+% 
+%       pause
+%       close all
+% end
+%% Generate a binary image of the occulded/stained cells
 y=1:size(imCpre,1);
 x=1:size(imCpre,2);
 [X,Y] = meshgrid(x,y);
@@ -80,104 +103,122 @@ for i=1:height(postB)
     
 end
 
-% pre_sum=sum(sum(pre_in));
-% post_sum=sum(sum(post_in));
 
+[preL,pre_bw]=bwboundaries(pre_in,4,'noholes');
+[postL,post_bw]=bwboundaries(post_in,4,'noholes');
+preP=regionprops(pre_bw,'Area','PixelIdxList');
+postP=regionprops(post_bw,'Area','PixelIdxList');
+
+if staining==1
+    cw_cutoff=5400;
+    mean1=0;
+    for i=1:height(preP)  
+        if mean(mean(imCpre(preP(i).PixelIdxList)))>mean1
+            mean1=mean(mean(imCpre(preP(i).PixelIdxList)));
+        end
+        idx=find(imCpre(preP(i).PixelIdxList)<cw_cutoff);
+        idx=setdiff(preP(i).PixelIdxList, preP(i).PixelIdxList(idx));
+        pre_in(idx)=0;
+    end
+
+    mean2=0;
+    for i=1:height(postP) 
+        if mean(mean(imCpre(preP(i).PixelIdxList)))>mean2
+            mean2=mean(mean(imCpre(preP(i).PixelIdxList)));
+        end
+        idx=find(imCpost(postP(i).PixelIdxList)<cw_cutoff);
+        idx=setdiff(postP(i).PixelIdxList, postP(i).PixelIdxList(idx));
+        post_in(idx)=0;
+    end
+
+    [preL,pre_bw]=bwboundaries(pre_in,4,'noholes');
+    [postL,post_bw]=bwboundaries(post_in,4,'noholes');
+    preP=regionprops(pre_bw,'Area','PixelIdxList');
+    postP=regionprops(post_bw,'Area','PixelIdxList');
+
+end
+
+preP_area=struct2cell(preP);
+preP_area=cell2mat(preP_area(1,:))';
+
+postP_area=struct2cell(postP);
+postP_area=cell2mat(postP_area(1,:))';
+%% Generate a binary image of the GFP labelled cytoplasm
 preMat=zeros(size(imCpre));
 postMat=zeros(size(imCpost));
 
-for i=1:height(prePixels)
-    preMat(prePixels{i, 1})=1;
+preMat_area=nan(height(preP),1);
+postMat_area=nan(height(postP),1);
+
+gfp_cutoff=8890;
+meanA=65535;
+for i=1:height(preP)
+    if mean(mean(imGpre(preP(i).PixelIdxList)))<meanA
+        meanA=mean(mean(imGpre(preP(i).PixelIdxList)));
+    end
+    idx=find(imGpre(preP(i).PixelIdxList)>gfp_cutoff);
+%    preMat(preP(i).PixelIdxList(idx))=imGpre(preP(i).PixelIdxList(idx));
+    preMat(preP(i).PixelIdxList(idx))=1;
+    preMat_area(i)=length(idx);
 end
 
-for i=1:height(postPixels)
-    postMat(postPixels{i, 1})=1;
+meanB=65535;
+for i=1:height(postP)
+    if mean(mean(imGpre(postP(i).PixelIdxList)))<meanB
+        meanB=mean(mean(imGpre(postP(i).PixelIdxList)));
+    end
+    idx=find(imGpost(postP(i).PixelIdxList)>gfp_cutoff);
+%     postMat(postP(i).PixelIdxList(idx))=imGpost(postP(i).PixelIdxList(idx));
+    postMat(postP(i).PixelIdxList(idx))=1;   
+    postMat_area(i)=length(idx);
 end
+
+%% Calculate the percent plasmolysis
+pre_plasmolysis=preP_area-preMat_area; 
+post_plasmolysis=postP_area-postMat_area; 
+
+pre_perc=(pre_plasmolysis./preP_area)*100;
+post_perc=(post_plasmolysis./postP_area)*100;
 
 figure(1)
-imshowpair(pre_in, preMat)
+h1 = scatter(zeros(height(pre_perc), 1), pre_perc,'o');
+hold on
+h2 = scatter(ones(height(post_perc), 1), post_perc,'x');
+title('Pre-shock Plasmolysis vs Post-Shock Plasmolysis')
+ylabel('Percent Plasmolysis')
+xticklabels({'pre-shock', 'post-shock'})
+xticks([0 1])
+xlim([-0.2 1.2])
 
-figure(2)
-imshowpair(post_in, postMat)
+%% Troubleshooting
+for n=1:height(preL)
+    n
+    figure
+    imshow(imGpre)
+    hold on
 
-pause
-% 
-% frame=1;
-% 
-% figure(1)
-% imshow(im3{1,frame})
-% hold on
-% plot(CY5_boun{1,frame}(:,1),CY5_boun{1,frame}(:,2),'-r')
-% 
-% test_im=im3{1,frame};
-% ntest_im=ones(my,mx);
-% for j=1:mx%x direction
-%   for i=1:my%y direction
-%     if test_im(i,j)>20000
-%       ntest_im(i,j)=45000;
-%     elseif test_im(i,j)<20000
-%       ntest_im(i,j)=test_im(i,j);
-%     else 
-%       continue
-%     end
-%   end
-% end
-% ntest_im=uint16(ntest_im)
-% ntest_im(1,1)=45000;
-% ntest_im(my,1)=45000;
-% ntest_im(1,mx)=45000;
-% ntest_im(my,mx)=45000;
-% 
-% figure
-% imshow(ntest_im)
-% hold on
-% plot(CY5_boun{1,frame}(:,1),CY5_boun{1,frame}(:,2),'-r')
-% 
-% % %filter
-% % for sizeim3{1,40})
-% 
-% % for i=1:59
-% % CY5_Z{1,i}=ones(size(CY5_boun{1,i},1),2);
-% % CY5_Z{1,i}=CY5_Z{1,i}*65530;
-% % end
-% 
-% for i=frame  
-% A_xv=CY5_boun{1,i}(:,1);%total boun
-% A_yv=CY5_boun{1,i}(:,2);%total boun
-% [A_in,A_on] = inpolygon(X,Y,A_xv,A_yv);%total boun
-% end
-% total_pix=sum(sum(A_in));%total number of pixels within boundary
-% 
-% im_for_percent_plas=double(ntest_im)-A_in;
-% 
-% for j=1:mx%x direction
-%   for i=1:my%y direction
-%     if A_in(i,j)==0
-%        im_for_percent_plas(i,j)=NaN;
-%     end
-%   end
-% end
-% 
-% for j=1:mx%x direction
-%   for i=1:my%y direction
-%     if im_for_percent_plas(i,j)>=44999
-%       im_for_percent_plas(i,j)=NaN;
-%     else 
-%       continue
-%     end
-%   end
-% end
-% 
-% for j=1:mx%x direction
-%   for i=1:my%y direction
-%     if im_for_percent_plas(i,j)>-2
-%       im_for_percent_plas(i,j)=1;
-%     else 
-%       continue
-%     end
-%   end
-% end
-% 
-% plasm=sum(nansum(im_for_percent_plas));
-% percent_plasmolysis=100-(plasm/total_pix)*100;
+    if isempty(preL{n,1})==0
+        plot(preL{n,1}(:,2),preL{n,1}(:,1),'-r')
+    end
 
+      pause
+      close all
+end
+
+for n=1:height(postL)
+    n
+    figure
+    imshow(imGpost)
+    hold on
+
+    if isempty(postL{n,1})==0
+        plot(postL{n,1}(:,2),postL{n,1}(:,1),'-r')
+    end
+
+      pause
+      close all
+end
+
+%% save data
+cd(savedir);
+save([basename '_colony4_PT'])
