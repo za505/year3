@@ -1,9 +1,7 @@
 %PlasTrack.m
-%Tracks percent plasmolyis from phase/CY5 image stacks.
+%Tracks percent plasmolyis from GFP/CY5/RFP image stacks.
 %Dylan Fitzmaurice
 %edit: Zarina Akbary
-%purpose: I want to compare the plasmolysis quantification b/t TADA/phase,
-%TADA/GFP, and/or phase/TADA
 
 clear 
 close all
@@ -50,105 +48,88 @@ imGpre=imread(imagename);
 imagename=directory(2).name;
 imGpost=imread(imagename);
 
-% %% Troubleshooting
+%% Troubleshooting
+%how well do the boundaries and pixels overelap with the pre-shock frame?
+% figure(1)
+% imshow(imGpre)
+% hold on
 % for n=1:height(preB)
 %     n
-%     figure
-%     imshow(imCpre)
-%     hold on
-% 
 %     if isempty(preB{n,1})==0
 %         plot(preB{n,1}(:,1),preB{n,1}(:,2),'-r')
 %     end
-% 
-%       pause
-%       close all
 % end
 % 
+% %how well do the boundaries and pixels overelap with the post-shock frame?
+% figure(2)
+% imshow(imGpost)
+% hold on
 % for n=1:height(postB)
 %     n
-%     figure
-%     imshow(imCpost)
-%     hold on
-% 
 %     if isempty(postB{n,1})==0
 %         plot(postB{n,1}(:,1),postB{n,1}(:,2),'-r')
 %     end
-% 
-%       pause
-%       close all
 % end
+% 
+% pause, close all
 %% Generate a binary image of the occulded/stained cells
-y=1:size(imCpre,1);
-x=1:size(imCpre,2);
-[X,Y] = meshgrid(x,y);
+pre_bw = zeros(size(imCpre));
+post_bw = zeros(size(imCpre));
 
-mx=max(x);
-my=max(y);
-
-pre_in = zeros(size(imCpre));
-pre_on = zeros(size(imCpre));
-post_in = zeros(size(imCpre));
-post_on = zeros(size(imCpre));
-
-for i=1:height(preB)
-    pre_xv=preB{i,1}(:, 1);
-    pre_yv=preB{i,1}(:, 2);
-    
-    [in, on]=inpolygon(X,Y,pre_xv, pre_yv);
-    pre_in = pre_in + in;
-    pre_on = pre_on + on;
-    
+%generate binary image of pre-shocked cells
+for i=1:height(prePixels)
+    pre_bw(prePixels{i})=1;
 end
 
-for i=1:height(postB)
-    post_xv=postB{i,1}(:, 1);
-    post_yv=postB{i,1}(:, 2);
-    
-    [in, on]=inpolygon(X,Y,post_xv, post_yv);
-    post_in = post_in + in;
-    post_on = post_on + on;
-    
+%generate binary image of post-shocked cells
+for i=1:height(postPixels)
+    post_bw(postPixels{i})=1;
 end
-
-[preL,pre_bw]=bwboundaries(pre_in,4,'noholes');
-[postL,post_bw]=bwboundaries(post_in,4,'noholes');
-preP=struct2cell(regionprops(pre_bw,'PixelIdxList'));
-postP=struct2cell(regionprops(post_bw,'PixelIdxList'));
 
 %calculate the area of pre- and post-shocked cells
-pre_area=cellfun(@height, preP)';
-post_area=cellfun(@height, postP)';
+pre_area=cellfun(@height, prePixels);
+post_area=cellfun(@height, postPixels);
 
+%% how sufficient is the overlap between the binary image and the CY5 and GFP images?
+% figure(3)
+% imshowpair(pre_bw, imCpre)
+% 
+% figure(4)
+% imshowpair(pre_bw, imGpre)
+% 
+% figure(5)
+% imshowpair(post_bw, imCpost)
+% 
+% figure(6)
+% imshowpair(post_bw, imGpost)
+% 
+% pause, close all
 %% Generate a binary image of the GFP labelled cytoplasm
-preMat=zeros(size(imCpre));
-postMat=zeros(size(imCpost));
+preBay=zeros(size(pre_bw));
+postBay=zeros(size(post_bw));
 
+%generate binary image of pre-shocked cells
+pre_level = graythresh(imGpre);
+preMat = imbinarize(imGpre, pre_level);
+
+%generate binary image of post-shocked cells
+post_level = graythresh(imGpost);
+postMat = imbinarize(imGpost, post_level);
+
+%calculate area
 preMat_area=nan(height(pre_area),1);
 postMat_area=nan(height(post_area),1);
 
-minA=65535;
-for i=1:height(pre_area)
-    if min(min(imGpre(preP{i})))<minA
-        minA=min(min(imGpre(preP{i})));
-    end
-end
-for i=1:height(pre_area)
-    idx=find(imGpre(preP{i})>=minA);
-    preMat(preP{i}(idx,1))=1;
-    preMat_area(i)=length(idx);
+for i=1:height(prePixels)
+    preMat_area(i)=sum(preMat(prePixels{i})==1);
+    idx=find(preMat(prePixels{i})==0);
+    preBay(prePixels{i}(idx))=1;
 end
 
-minB=65535;
-for i=1:height(post_area)
-    if min(min(imGpost(postP{i})))<minB
-        minB=min(min(imGpost(postP{i})));
-    end
-end
-for i=1:height(post_area)
-    idx=find(imGpost(postP{i})>=minB);
-    postMat(postP{i}(idx,1))=1;
-    postMat_area(i)=length(idx);
+for i=1:height(postPixels)
+    postMat_area(i)=sum(postMat(postPixels{i})==1);
+    idx=find(postMat(postPixels{i})==0);
+    postBay(postPixels{i}(idx))=1;
 end
 
 %% Calculate the percent plasmolysis
@@ -158,49 +139,50 @@ post_plasmolysis=post_area-postMat_area;
 pre_perc=(pre_plasmolysis./pre_area)*100;
 post_perc=(post_plasmolysis./post_area)*100;
 
+cd(savedir);
 figure(1)
-h1 = scatter(zeros(height(pre_perc), 1), pre_perc,'o');
+h1 = scatter(zeros(height(pre_perc), 1), pre_perc,'k');
 hold on
-h2 = scatter(ones(height(post_perc), 1), post_perc,'x');
-title('Pre-shock Plasmolysis vs Post-Shock Plasmolysis')
+h2 = scatter(ones(height(post_perc), 1), post_perc,'k');
+title('Pre-shock Plasmolysis vs Post-shock Plasmolysis')
 ylabel('Percent Plasmolysis')
-xticklabels({'pre-shock', 'post-shock'})
+xticklabels({'Pre-shock', 'Post-shock'})
 xticks([0 1])
-xlim([-0.2 1.2])
+xlim([-0.5 1.5])
+saveas(gcf, [basename '_colony4_plasmolysis.png'])
+saveas(gcf, [basename '_colony4_plasmolysis.fig'])
 
 %% Troubleshooting
-%for n=1:height(preB)
+% for n=1:height(preB)
 %     n
-figure(1)
-imshow(imGpre)
-hold on
-    
-for n=1:height(preL)
-    if isempty(preL{n,1})==0
-        plot(preL{n,1}(:,2),preL{n,1}(:,1),'-r')
-    end
-end
-
+%     figure
+%     imshow(imGpre)
+%     hold on
+% 
+%     if isempty(preB{n,1})==0
+%         plot(preB{n,1}(:,2),preB{n,1}(:,1),'-r')
+%     end
+% 
 %       pause
 %       close all
-%end
-
-% for n=1:height(postB)
+% end
+% 
+% for n=12 %1:height(postB)
 %     n
-figure(2)
-imshow(imGpost)
-hold on
-
-for n=1:height(postL)
-    if isempty(postL{n,1})==0
-        plot(postL{n,1}(:,2),postL{n,1}(:,1),'-r')
-    end
-end
-
+%     figure
+%     imshow(imGpost)
+%     hold on
+% 
+%     if isempty(postB{n,1})==0
+%         plot(postB{n,1}(:,2),postB{n,1}(:,1),'-r')
+%     end
+% 
 %       pause
 %       close all
 % end
 
+imshowpair(imGpre, preBay)
+imshowpair(imGpost, postBay)
 %% save data
 cd(savedir);
 save([basename '_colony4_PT'])
