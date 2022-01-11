@@ -27,15 +27,15 @@ PBS2a=dir(['11192021_Exp2' '*dm.mat']); %PBS 2 min, rep 1
 PBS2b=dir(['12082021_Exp3' '*dm.mat']); %PBS 2 min, rep 2
 
 %% Perform analysis with traces normalized to pre-lysis frame
-%calculate corrected fluorescence traces
-[normintensity_LBa, intensity_LBa, Cnew_LBa, time_LBa, tme_LBa, beta_LBa, tau_LBa, yhat_LBa]=photoCorrect(LBa, 5, 28.9210);
-[normintensity_LBb, intensity_LBb, Cnew_LBb, time_LBb, tme_LBb, beta_LBb, tau_LBb, yhat_LBb]=photoCorrect(LBb, 4, 28.9210);
-[normintensity_PBS60a, intensity_PBS60a, Cnew_PBS60a, time_PBS60a, tme_PBS60a, beta_PBS60a, tau_PBS60a, yhat_PBS60a]=photoCorrect(PBS60a, 2, 28.9210);
-[normintensity_PBS60b, intensity_PBS60b, Cnew_PBS60b, time_PBS60b, tme_PBS60b, beta_PBS60b, tau_PBS60b, yhat_PBS60b]=photoCorrect(PBS60b, 4, 28.9210);
-[normintensity_PBS20a, intensity_PBS20a, Cnew_PBS20a, time_PBS20a, tme_PBS20a, beta_PBS20a, tau_PBS20a, yhat_PBS20a]=photoCorrect(PBS20a, 3, 28.9210);
-[normintensity_PBS20b, intensity_PBS20b, Cnew_PBS20b, time_PBS20b, tme_PBS20b, beta_PBS20b, tau_PBS20b, yhat_PBS20b]=photoCorrect(PBS20b, 3, 28.9210);
-[normintensity_PBS2a, intensity_PBS2a, Cnew_PBS2a, time_PBS2a, tme_PBS2a, beta_PBS2a, tau_PBS2a, yhat_PBS2a]=photoCorrect(PBS2a, 9, 28.9210);
-[normintensity_PBS2b, intensity_PBS2b, Cnew_PBS2b, time_PBS2b, tme_PBS2b, beta_PBS2b, tau_PBS2b, yhat_PBS2b]=photoCorrect(PBS2b, 9, 28.9210);
+%calculate normalized fluorescence traces
+[normintensity_LBa, intensity_LBa, time_LBa, tme_LBa]=dataNormalize(LBa, 5);
+[normintensity_LBb, intensity_LBb, time_LBb, tme_LBb]=dataNormalize(LBb, 4);
+[normintensity_PBS60a, intensity_PBS60a, time_PBS60a, tme_PBS60a]=dataNormalize(PBS60a, 2);
+[normintensity_PBS60b, intensity_PBS60b, time_PBS60b, tme_PBS60b]=dataNormalize(PBS60b, 4);
+[normintensity_PBS20a, intensity_PBS20a, time_PBS20a, tme_PBS20a]=dataNormalize(PBS20a, 3);
+[normintensity_PBS20b, intensity_PBS20b, time_PBS20b, tme_PBS20b]=dataNormalize(PBS20b, 3);
+[normintensity_PBS2a, intensity_PBS2a, time_PBS2a, tme_PBS2a]=dataNormalize(PBS2a, 9);
+[normintensity_PBS2b, intensity_PBS2b, time_PBS2b, tme_PBS2b]=dataNormalize(PBS2b, 9);
 
 %combine datasets
 time_LB=time_LBb;
@@ -58,27 +58,37 @@ normintensity_PBS60=[normintensity_PBS60a; normintensity_PBS60b(:, 1:length(tme_
 normintensity_PBS20=[normintensity_PBS20a; normintensity_PBS20b(:, 1:length(tme_PBS20))];
 normintensity_PBS2=[normintensity_PBS2a; normintensity_PBS2b(:, 1:length(tme_PBS2))];
 
-Cnew_LB=[Cnew_LBa(:, 1:length(tme_LB)); Cnew_LBb];
-Cnew_PBS60=[Cnew_PBS60a; Cnew_PBS60b(:, 1:length(tme_PBS60))];
-Cnew_PBS20=[Cnew_PBS20a; Cnew_PBS20b(:, 1:length(tme_PBS20))];
-Cnew_PBS2=[Cnew_PBS2a; Cnew_PBS2b(:, 1:length(tme_PBS2))];
+%% correct for photobleaching
+[Cnew_LB, beta_LB, dCB_LB, dCT_LB, dCP_LB, CblExp_LB, unbFrac_LB, midx_LB]=photoCorrect(tme_LB, normintensity_LB, 28.9210);
+[Cnew_PBS60, beta_PBS60, dCB_PBS60, dCT_PBS60, dCP_PBS60, CblExp_PBS60, unbFrac_PBS60, midx_PBS60]=photoCorrect(tme_PBS60, normintensity_PBS60, 28.9210);
+[Cnew_PBS20, beta_PBS20, dCB_PBS20, dCT_PBS20, dCP_PBS20, CblExp_PBS20, unbFrac_PBS20, midx_PBS20]=photoCorrect(tme_PBS20, normintensity_PBS20, 28.9210);
+[Cnew_PBS2, beta_PBS2, dCB_PBS2, dCT_PBS2, dCP_PBS2, CblExp_PBS2, unbFrac_PBS2, midx_PBS2]=photoCorrect(tme_PBS2, normintensity_PBS2, 28.9210);
 
-yhat_LB=[yhat_LBa(:, 1:length(tme_LB)); yhat_LBb];
-yhat_PBS60=[yhat_PBS60a; yhat_PBS60b(:, 1:length(tme_PBS60))];
-yhat_PBS20=[yhat_PBS20a; yhat_PBS20b(:, 1:length(tme_PBS20))];
-yhat_PBS2=[yhat_PBS2a; yhat_PBS2b(:, 1:length(tme_PBS2))];
+%% check to see that the photobleach correction has no anomalies 
+%do dCT, dCB, and dCP all approach zero? Are the values for dCT and dCP
+%negative? Are the values for dCB positive?
+% correctionCheck(tme_LB, dCB_LB, dCT_LB, dCP_LB, CblExp_LB, unbFrac_LB)
+% correctionCheck(tme_PBS60, dCB_PBS60, dCT_PBS60, dCP_PBS60, CblExp_PBS60, unbFrac_PBS60)  %the Cbl peaks when unbFrac=0.5
+% correctionCheck(tme_PBS20, dCB_PBS20, dCT_PBS20, dCP_PBS20, CblExp_PBS20, unbFrac_PBS20)  %the Cbl peaks when unbFrac=0.5
+% correctionCheck(tme_PBS2, dCB_PBS2, dCT_PBS2, dCP_PBS2, CblExp_PBS2, unbFrac_PBS2)
 
-beta_LB=[beta_LBa', beta_LBb'];
-beta_PBS60=[beta_PBS60a', beta_PBS60b'];
-beta_PBS20=[beta_PBS20a', beta_PBS20b'];
-beta_PBS2=[beta_PBS2a', beta_PBS2b'];
+%% fit corrected plot to exponential decay function to calculate tau
+tau0_LB=30;
+tau0_PBS60=1;
+tau0_PBS20=10;
+tau0_PBS2=25;
+[tau_LB, yhat_LB, fidx_LB]=expFit(tme_LB, Cnew_LB, beta_LB, tau0_LB);
+[tau_PBS60, yhat_PBS60, fidx_PBS60]=expFit(tme_PBS60, Cnew_PBS60, beta_PBS60, tau0_PBS60);
+[tau_PBS20, yhat_PBS20, fidx_PBS20]=expFit(tme_PBS20, Cnew_PBS20, beta_PBS20, tau0_PBS20);
+[tau_PBS2, yhat_PBS2, fidx_PBS2]=expFit(tme_PBS2, Cnew_PBS2, beta_PBS2, tau0_PBS2);
 
-tau_LB=[tau_LBa, tau_LBb];
-tau_PBS60=[tau_PBS60a, tau_PBS60b];
-tau_PBS20=[tau_PBS20a, tau_PBS20b];
-tau_PBS2=[tau_PBS2a, tau_PBS2b];
-
+%figure out how well tau fits
+%comparePlot(Cnew_LB, yhat_LB, tme_LB, fidx_LB), pause, close 
+%comparePlot(Cnew_PBS60, yhat_PBS60, tme_PBS60, fidx_PBS60), pause, close
+%comparePlot(Cnew_PBS20, yhat_PBS20, tme_PBS20, fidx_PBS20), pause, close
+%comparePlot(Cnew_PBS2, yhat_PBS2, tme_PBS2, fidx_PBS2), pause, close
 %% Plot the combined values
+cd(dirsave)
 % %plot intensity values
 % figure, hold on
 % %ciplot(mean(intensity_LB, 1, 'omitnan')-std(intensity_LB, 0, 1, 'omitnan'), mean(intensity_LB, 1, 'omitnan')+std(intensity_LB, 0, 1, 'omitnan'), time_LB, colorcode2{1})
@@ -98,7 +108,7 @@ tau_PBS2=[tau_PBS2a, tau_PBS2b];
 % xlabel('Time (minutes)')
 % ylabel('Fluorescence (A.U.)')
 % 
-% %plot corrected values
+% %plot normalized values
 % figure, hold on
 % %ciplot(mean(normintensity_LB, 1, 'omitnan')-std(normintensity_LB, 0, 1, 'omitnan'), mean(normintensity_LB, 1, 'omitnan')+std(normintensity_LB, 0, 1, 'omitnan'), tme_LB, colorcode2{1})
 % plot(tme_LB, mean(normintensity_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
@@ -119,83 +129,85 @@ tau_PBS2=[tau_PBS2a, tau_PBS2b];
 % ylabel('Normalized Fluorescence (A.U.)')
 % ylim([0 1.05])
 % 
-% %plot corrected values
-% figure, hold on
-% %ciplot(mean(Cnew_LB, 1, 'omitnan')-std(Cnew_LB, 0, 1, 'omitnan'), mean(Cnew_LB, 1, 'omitnan')+std(Cnew_LB, 0, 1, 'omitnan'), tme_LB, colorcode2{1})
-% plot(tme_LB, mean(Cnew_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-% 
-% %ciplot(mean(Cnew_PBS60, 1, 'omitnan')-std(Cnew_PBS60, 0, 1, 'omitnan'), mean(Cnew_PBS60, 1, 'omitnan')+std(Cnew_PBS60, 0, 1, 'omitnan'), tme_PBS60, colorcode2{3})
-% plot(tme_PBS60, mean(Cnew_PBS60, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
-% 
-% %ciplot(mean(Cnew_PBS20, 1, 'omitnan')-std(Cnew_PBS20, 0, 1, 'omitnan'), mean(Cnew_PBS20, 1, 'omitnan')+std(Cnew_PBS20, 0, 1, 'omitnan'), tme_PBS20, colorcode2{5})
-% plot(tme_PBS20, mean(Cnew_PBS20, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-% 
-% %ciplot(mean(Cnew_PBS2, 1, 'omitnan')-std(Cnew_PBS2, 0, 1, 'omitnan'), mean(Cnew_PBS2, 1, 'omitnan')+std(Cnew_PBS2, 0, 1, 'omitnan'), tme_PBS2, colorcode2{7})
-% plot(tme_PBS2, mean(Cnew_PBS2, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-% 
-% %legend('LB, rep 1, std', 'LB, rep 1, mean', 'LB, rep 2, std', 'LB, rep 2, mean', 'PBS 1 hour, rep 1, std', 'PBS 1 hour, rep 1, mean', 'PBS 1 hour, rep 2, std', 'PBS 1 hour, rep 2, mean', 'PBS 20 min, rep 1, std', 'PBS 20 min, rep 1, mean', 'PBS 20 min, rep 2, std', 'PBS 20 min, rep 2, mean', 'PBS 2 min, rep 1, std', 'PBS 2 min, rep 1, mean', 'PBS 2 min, rep 2, std', 'PBS 2 min, rep 2, mean')
-% %legend('LB, std', 'LB, mean', 'PBS 1 hour, std', 'PBS 1 hour, mean',  'PBS 20 min, std', 'PBS 20 min, mean', 'PBS 2 min, std', 'PBS 2 min, mean')
-% legend('LB, mean', 'PBS 1 hour, mean',  'PBS 20 min, mean', 'PBS 2 min, mean')
-% xlabel('Time (minutes)')
-% ylabel('Normalized Fluorescence (A.U.)')
-% ylim([0 1.05])
-% % %saveas(gcf, 'rawIntensity.png')
-% % %saveas(gcf, 'rawIntensity.fig')
+%plot corrected values
+alpha=0.5;
+figure, hold on
+ciplot(mean(Cnew_LB(:, 1:50), 1, 'omitnan')-std(Cnew_LB(:, 1:50), 0, 1, 'omitnan'), mean(Cnew_LB(:, 1:50), 1, 'omitnan')+std(Cnew_LB(:, 1:50), 0, 1, 'omitnan'), tme_LB(1:50), colorcode2{1}, alpha)
+plot(tme_LB(1:50), mean(Cnew_LB(:, 1:50), 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
 
-% linearCoef1 = polyfit([zeros(1, length(beta_LB)), repelem(2, length(beta_PBS2)), repelem(20, length(beta_PBS20)), repelem(60, length(beta_PBS60))],[beta_LB, beta_PBS2, beta_PBS20, beta_PBS60],1);
-% linearFit1= polyval(linearCoef1,[0 2 20 60]);
+ciplot(mean(Cnew_PBS2, 1, 'omitnan')-std(Cnew_PBS2, 0, 1, 'omitnan'), mean(Cnew_PBS2, 1, 'omitnan')+std(Cnew_PBS2, 0, 1, 'omitnan'), tme_PBS2, colorcode2{7}, alpha)
+plot(tme_PBS2, mean(Cnew_PBS2, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
 
-% linearCoef1 = polyfit([0 2 20 60], [mean(beta_LB, 'omitnan'), mean(beta_PBS2, 'omitnan'), mean(beta_PBS20, 'omitnan'), mean(beta_PBS60, 'omitnan')], 1);
-% linearFit1 = polyval(linearCoef1, [0 2 20 60]);
-% 
-% %plot beta vs PBS incubation
-% figure, hold on
-% scatter(zeros(1, length(beta_LB)), beta_LB, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter(repelem(60, length(beta_PBS60)), beta_PBS60, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter(repelem(20, length(beta_PBS20)), beta_PBS20, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter(repelem(2, length(beta_PBS2)), beta_PBS2, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter([0 2 20 60], [mean(beta_LB, 'omitnan'), mean(beta_PBS2, 'omitnan'), mean(beta_PBS20, 'omitnan'), mean(beta_PBS60, 'omitnan')], 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
-% 
-% errorbar(0, mean(beta_LB, 'omitnan'), std(beta_LB, 'omitnan'), 'Color', 'black')
-% errorbar(2, mean(beta_PBS2, 'omitnan'), std(beta_PBS2, 'omitnan'), 'Color', 'black')
-% errorbar(20, mean(beta_PBS20, 'omitnan'), std(beta_PBS20, 'omitnan'), 'Color', 'black')
-% errorbar(60, mean(beta_PBS60, 'omitnan'), std(beta_PBS60, 'omitnan'), 'Color', 'black')
-% 
-% plot([0 2 20 60], linearFit1, '--b')
-% 
-% xlim([-2 62])
-% ylim([0 1.1])
-% xlabel('Time (minutes)')
-% ylabel('Beta')
+ciplot(mean(Cnew_PBS20, 1, 'omitnan')-std(Cnew_PBS20, 0, 1, 'omitnan'), mean(Cnew_PBS20, 1, 'omitnan')+std(Cnew_PBS20, 0, 1, 'omitnan'), tme_PBS20, colorcode2{5}, alpha)
+plot(tme_PBS20, mean(Cnew_PBS20, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
 
-%figure out how well tau fits
-comparePlot(Cnew_LB, yhat_LB, tme_LB)
-comparePlot(Cnew_PBS60, yhat_PBS60, tme_PBS60)
-comparePlot(Cnew_PBS20, yhat_PBS20, tme_PBS20)
-comparePlot(Cnew_PBS2, yhat_PBS2, tme_PBS2)
+ciplot(mean(Cnew_PBS60, 1, 'omitnan')-std(Cnew_PBS60, 0, 1, 'omitnan'), mean(Cnew_PBS60, 1, 'omitnan')+std(Cnew_PBS60, 0, 1, 'omitnan'), tme_PBS60, colorcode2{3}, alpha)
+plot(tme_PBS60, mean(Cnew_PBS60, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
+
+%legend('LB, rep 1, std', 'LB, rep 1, mean', 'LB, rep 2, std', 'LB, rep 2, mean', 'PBS 1 hour, rep 1, std', 'PBS 1 hour, rep 1, mean', 'PBS 1 hour, rep 2, std', 'PBS 1 hour, rep 2, mean', 'PBS 20 min, rep 1, std', 'PBS 20 min, rep 1, mean', 'PBS 20 min, rep 2, std', 'PBS 20 min, rep 2, mean', 'PBS 2 min, rep 1, std', 'PBS 2 min, rep 1, mean', 'PBS 2 min, rep 2, std', 'PBS 2 min, rep 2, mean')
+legend({'LB, std', 'LB, mean', 'PBS 2 min, std', 'PBS 2 min, mean', 'PBS 20 min, std', 'PBS 20 min, mean', 'PBS 1 hour, std', 'PBS 1 hour, mean'}, 'Location', 'southeast')
+%legend('LB, mean', 'PBS 1 hour, mean',  'PBS 20 min, mean', 'PBS 2 min, mean')
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+ylim([0 1.05])
+% %saveas(gcf, 'correctedIntensity.png')
+% %saveas(gcf, 'correctedIntensity.fig')
+
+%plot beta values vs PBS incubation
+linearCoef1 = polyfit([zeros(1, length(beta_LB)), repelem(2, length(beta_PBS2)), repelem(20, length(beta_PBS20)), repelem(60, length(beta_PBS60))],[beta_LB', beta_PBS2', beta_PBS20', beta_PBS60'],1);
+linearFit1= polyval(linearCoef1,[0 2 20 60]);
+
+linearCoef1 = polyfit([0 2 20 60], [mean(beta_LB, 'omitnan'), mean(beta_PBS2, 'omitnan'), mean(beta_PBS20, 'omitnan'), mean(beta_PBS60, 'omitnan')], 1);
+linearFit1 = polyval(linearCoef1, [0 2 20 60]);
+
+%plot beta vs PBS incubation
+figure, hold on
+scatter(zeros(1, length(beta_LB)), beta_LB', 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter(repelem(60, length(beta_PBS60)), beta_PBS60', 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter(repelem(20, length(beta_PBS20)), beta_PBS20', 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter(repelem(2, length(beta_PBS2)), beta_PBS2', 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter([0 2 20 60], [mean(beta_LB, 'omitnan'), mean(beta_PBS2, 'omitnan'), mean(beta_PBS20, 'omitnan'), mean(beta_PBS60, 'omitnan')], 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+
+errorbar(0, mean(beta_LB, 'omitnan'), std(beta_LB, 'omitnan'), 'Color', 'black')
+errorbar(2, mean(beta_PBS2, 'omitnan'), std(beta_PBS2, 'omitnan'), 'Color', 'black')
+errorbar(20, mean(beta_PBS20, 'omitnan'), std(beta_PBS20, 'omitnan'), 'Color', 'black')
+errorbar(60, mean(beta_PBS60, 'omitnan'), std(beta_PBS60, 'omitnan'), 'Color', 'black')
+
+plot([0 2 20 60], linearFit1, '--b')
+
+xlim([-2 62])
+ylim([0 1.1])
+xlabel('Time in PBS (minutes)')
+ylabel('Beta (A.U.)')
+
+% %saveas(gcf, 'beta_vs_PBS.png')
+% %saveas(gcf, 'beta_vs_PBS.fig')
 
 % %plot tau as a function of PBS incubation
-% linearCoef2 = polyfit([0 2 20 60], [mean(tau_LB, 'omitnan'), mean(tau_PBS2, 'omitnan'), mean(tau_PBS20, 'omitnan'), mean(tau_PBS60, 'omitnan')], 1);
-% linearFit2 = polyval(linearCoef2, [0 2 20 60]);
-% 
-% figure, hold on
-% scatter(zeros(1, length(tau_LB)), tau_LB, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter(repelem(60, length(tau_PBS60)), tau_PBS60, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter(repelem(20, length(tau_PBS20)), tau_PBS20, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter(repelem(2, length(tau_PBS2)), tau_PBS2, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
-% scatter([0 2 20 60], [mean(tau_LB, 'omitnan'), mean(tau_PBS2, 'omitnan'), mean(tau_PBS20, 'omitnan'), mean(tau_PBS60, 'omitnan')], 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
-% 
-% errorbar(0, mean(tau_LB, 'omitnan'), std(tau_LB, 'omitnan'), 'Color', 'black')
-% errorbar(2, mean(tau_PBS2, 'omitnan'), std(tau_PBS2, 'omitnan'), 'Color', 'black')
-% errorbar(20, mean(tau_PBS20, 'omitnan'), std(tau_PBS20, 'omitnan'), 'Color', 'black')
-% errorbar(60, mean(tau_PBS60, 'omitnan'), std(tau_PBS60, 'omitnan'), 'Color', 'black')
-% 
-% plot([0 2 20 60], linearFit2, '--b')
-% 
-% xlim([-2 62])
-% %ylim([0 1.1])
-% xlabel('Time (minutes)')
-% ylabel('Tau (minutes)')
+linearCoef2 = polyfit([0 2 20 60], [mean(tau_LB, 'omitnan'), mean(tau_PBS2, 'omitnan'), mean(tau_PBS20, 'omitnan'), mean(tau_PBS60, 'omitnan')], 1);
+linearFit2 = polyval(linearCoef2, [0 2 20 60]);
+
+figure, hold on
+scatter(zeros(1, length(tau_LB)), tau_LB, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter(repelem(60, length(tau_PBS60)), tau_PBS60, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter(repelem(20, length(tau_PBS20)), tau_PBS20, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter(repelem(2, length(tau_PBS2)), tau_PBS2, 'MarkerFaceColor', colorcode2{1}, 'MarkerEdgeColor', colorcode2{1})
+scatter([0 2 20 60], [mean(tau_LB, 'omitnan'), mean(tau_PBS2, 'omitnan'), mean(tau_PBS20, 'omitnan'), mean(tau_PBS60, 'omitnan')], 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+
+errorbar(0, mean(tau_LB, 'omitnan'), std(tau_LB, 'omitnan'), 'Color', 'black')
+errorbar(2, mean(tau_PBS2, 'omitnan'), std(tau_PBS2, 'omitnan'), 'Color', 'black')
+errorbar(20, mean(tau_PBS20, 'omitnan'), std(tau_PBS20, 'omitnan'), 'Color', 'black')
+errorbar(60, mean(tau_PBS60, 'omitnan'), std(tau_PBS60, 'omitnan'), 'Color', 'black')
+
+plot([0 2 20 60], linearFit2, '--b')
+
+xlim([-2 62])
+%ylim([0 1.1])
+xlabel('Time in PBS (minutes)')
+ylabel('Tau (minutes)')
+
+% %saveas(gcf, 'tau_vs_PBS.png')
+% %saveas(gcf, 'tau_vs_PBS.fig')
 %% plot correction variables
 % figure, plot(tme_LBa(1:end-1), dCB_LBa)
 % figure, plot(tme_LBa(1:end-1), dCT_LBa)
@@ -228,8 +240,6 @@ comparePlot(Cnew_PBS2, yhat_PBS2, tme_PBS2)
 % comparePlot(normintensity_PBS2b, Cnew_PBS2b, tme_PBS2b)
 % %saveas(gcf, '12082021_Exp3_rawCorrectedTraces.fig'), %saveas(gcf, '12082021_Exp3_rawCorrectedTraces.png'), close
 
-
-plot(tme_PBS60, Cnew_PBS60, '-b')
 %% Functions
 function [normintensity, intensity, time, tme]=dataNormalize(datadir, imstart)
         
@@ -276,7 +286,7 @@ function [normintensity, intensity, time, tme]=dataNormalize(datadir, imstart)
         
 end
 
-function [Cnew, beta, tau, yhat, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(normintensity, tme, parameter)
+function [Cnew, beta, dCB, dCT, dCP, Cbl_exp, unb_frac, midx]=photoCorrect(tme, normintensity, parameter)
         
         %Correct for photobleaching
         %calculate dt (it's easier to use end values)
@@ -328,34 +338,80 @@ function [Cnew, beta, tau, yhat, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(
         
         %calculate beta from corrected values
         beta=Cnew(:, end);
+        
+        %remove outlier values (there cannot be more fluor than what the
+        %cell started with)
+        midx=find(beta<=0.9);
+        beta=beta(midx);
+        Cnew=Cnew(midx, :);
         beta_mean=mean(beta, 'omitnan');
+        
 end
+
+function correctionCheck(tme, dCB, dCT, dCP, Cbl_exp, unb_frac)
+
+figure('Name', 'dCT vs time')
+plot(tme(1:end-1), dCT)
+xlabel('Time (minutes)')
+ylabel('dCT')
+title('Does dCT go to zero? Is it always negative?')
+pause, close
+
+figure('Name', 'dCB vs time')
+plot(tme(1:end-1), dCB)
+xlabel('Time (minutes)')
+ylabel('dCB')
+title('Does dCB go to zero? Is it always positive?')
+pause, close
+
+figure('Name', 'dCP vs time')
+plot(tme(1:end-1), dCP)
+xlabel('Time (minutes)')
+ylabel('dCP')
+title('Does dCP go to zero? Is it always negative?')
+pause, close
+
+figure('Name', 'unb vs Clb vs time'), hold on
+plot(tme, unb_frac, '-b')
+plot(tme, Cbl_exp, '-k')
+xlabel('Time (minutes)')
+title('Does the unbleached fraction reach zero at the same time the bleached concentration peaks?')
+pause, close
+end
+
+function [tau, yhat, fidx]=expFit(tme, Cnew, beta0, tau0)
         %fit normalized traces to exponential decay function
-        %modelfun=@(tau,t)(1-tau(1))*exp(-t./tau(2))+tau(1);
-        tau0=30;
+        %y=(1-beta)*exp(-t./tau)+beta
+        %modelfun=@(tau,t)(1-beta)*exp(-t./tau)+beta;
         
         %pre-allocate variables
         tau=[];
         yhat=[];
-
-        for i=1:height(Cnew)
-            modelfun=@(tau,t)(1-beta(i,1))*exp(-t./tau)+beta(i, 1);
-            tau_temp=nlinfit(tme, Cnew(i,:), modelfun, tau0);
-            y_hat=modelfun(tau_temp, tme);   
-
-            tau=[tau, tau_temp];
-            yhat=[yhat; y_hat]; 
-
-        end
+        fidx=[];
         
+        for i=1:height(Cnew)
+     
+            if ~isnan(beta0(i,1))
+                fidx=[fidx i];
+                %modelfun=@(tau,t)(1-parameter)*exp(-t./tau)+parameter;
+                parameter=beta0(i,1);
+                modelfun=@(tau,t)(1-parameter)*exp(-t./tau)+parameter;
+                tau_temp=nlinfit(tme, Cnew(i,:), modelfun, tau0);
+                y_hat=modelfun(tau_temp, tme);   
+
+                tau=[tau, tau_temp];
+                yhat=[yhat; y_hat]; 
+            end
+        end       
 end
 
-function comparePlot(normintensity, Cnew, tme)
+function comparePlot(Cnew, yhat, tme, fidx)
 
     figure, hold on
-    for n=1:height(normintensity)
-        plot(tme, normintensity(n, :), '-b')
+    for i=1:length(fidx)
+        n=fidx(i);
         plot(tme, Cnew(n, :), '-g')
+        plot(tme, yhat(i, :), '-b')
     end
     xlabel('Time (minutes)')
     ylabel('Normalized Fluorescence (A.U.)')
