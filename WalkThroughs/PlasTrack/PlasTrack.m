@@ -301,21 +301,29 @@ for n=1:height(postMid)
           post_percDist{n,1}(p,1)=(post_distBay{n,1}(p,1)/post_distTotal(n,1))*50;
       end
 end
+
+%sort the distances into categories
+preR=plasRegion(pre_percDist);
+postR=plasRegion(post_percDist);
+
 %% Troubleshooting
-% for n=1:height(preB)
-%     n
-%     figure
-%     imshow(imGpre)
-%     hold on
-% 
-%     if isempty(preB{n,1})==0
-%         plot(preB{n,1}(:,2),preB{n,1}(:,1),'-r')
-%     end
-% 
-%       pause
-%       close all
-% end
-% 
+for n=1:height(preB)
+    n
+    figure(1)
+    imshow(imGpre)
+    hold on
+
+    if ~isempty(pre_percDist{n,1})
+        plot(preB{n,1}(:,1),preB{n,1}(:,2),'-r')
+
+        figure(2)
+        histogram(preR{n,1})
+    end
+
+      pause
+      close all
+end
+ 
 % for n=12 %1:height(postB)
 %     n
 %     figure
@@ -373,4 +381,30 @@ function [midDist]=distCalc(mat1, mat2) %for mat1 (preMid), x is the first colum
     x=(mat2(2)-mat1(1))^2;
     y=(mat2(1)-mat1(2))^2;
     midDist=sqrt(x+y);    
+end
+
+function [plasm_region]=plasRegion(percDist)
+    idx=cellfun(@isempty, percDist);
+    idx=setdiff(1:height(percDist), idx);
+    
+    percDist=percDist(idx, 1);
+    plasm_region=cell(size(percDist));
+    
+    for n=1:height(percDist)
+        for p=1:height(percDist{n,1})
+            pdist=percDist{n,1}(p,1);
+            if pdist <12.5
+               plasm_region{n,1}(p,1)="polar";
+            elseif pdist >=12.5 & pdist <25
+                plasm_region{n,1}(p,1)="subpolar";
+            elseif pdist >=25
+                plasm_region{n,1}(p,1)="mid-cell";
+            end
+        end
+    end
+    
+    %y = discretize(x,[0 .25 .75
+    %1],'categorical',{'small','medium','large'}); maybe use this next
+    %time?
+    plasm_region=cellfun(@categorical, plasm_region, 'UniformOutput', false);
 end
