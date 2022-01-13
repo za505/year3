@@ -15,13 +15,9 @@ savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12182021_analysis/' basena
 
 %load cell wall images, midline variable, and delind
 cd(cwdir)
-load([basename '_colony3_preShock'], 'im', 'mline', 'delind');
-    mline(delind, :)=[];
-    preMid=mline;
+load([basename '_colony3_preShock'], 'im');
 imCpre=im;
-load([basename '_colony3_postShock'], 'im', 'mline', 'delind');
-    mline(delind, :)=[];
-    postMid=mline;
+load([basename '_colony3_postShock'], 'im');
 imCpost=im;
 
 %load boundary coordinates
@@ -52,169 +48,47 @@ imGpre=imread(imagename);
 imagename=directory(2).name;
 imGpost=imread(imagename);
 
-%% Troubleshooting
-%how well do the boundaries and pixels overelap with the pre-shock frame?
-% figure(1)
-% imshow(imGpre)
-% hold on
-% for n=1:height(preB)
-%     n
-%     if isempty(preB{n,1})==0
-%         plot(preB{n,1}(:,1),preB{n,1}(:,2),'-r')
-%     end
-% end
-% 
-% %how well do the boundaries and pixels overelap with the post-shock frame?
-% figure(2)
-% imshow(imGpost)
-% hold on
-% for n=1:height(postB)
-%     n
-%     if isempty(postB{n,1})==0
-%         plot(postB{n,1}(:,1),postB{n,1}(:,2),'-r')
-%     end
-% end
-% 
-% pause, close all
+%% Generate a binary image of the GFP labelled cytoplasm
+preBay=zeros(size(imGpre));
+postBay=zeros(size(imGpost));
 
-% overlay midline, poles, and midpoint on GFP image
-% figure
-% imshow(imGpre)
-% hold on
-% for n=1:height(preMid)
-%     n
-%     midx=round(length(preMid{n,1})/2);
-%     plot(round(preMid{n,1}(midx,1)),round(preMid{n,1}(midx,2)),'b*')
-%     plot(round(preMid{n,1}(1,1)),round(preMid{n,1}(1,2)),'r*')
-%     plot(round(preMid{n,1}(end,1)),round(preMid{n,1}(end,2)),'r*')
-% end
-% 
-% figure
-% imshow(imGpost)
-% hold on
-% for n=1:height(postMid)
-%     n
-%     midx=round(length(postMid{n,1})/2);
-%     plot(round(postMid{n,1}(midx,1)),round(postMid{n,1}(midx,2)),'b*')
-%     plot(round(postMid{n,1}(1,1)),round(postMid{n,1}(1,2)),'r*')
-%     plot(round(postMid{n,1}(end,1)),round(postMid{n,1}(end,2)),'r*')
-% end
-%% Generate a binary image of the occulded/stained cells
-y=1:size(imCpre,1);
-x=1:size(imCpre,2);
-[X,Y] = meshgrid(x,y);
+%binarize pre-shocked GFP image
+pre_level = graythresh(imGpre);
+preMat = imbinarize(imGpre, pre_level);
 
-mx=max(x);
-my=max(y);
+%binarize post-shocked GFP image
+post_level = graythresh(imGpost);
+postMat = imbinarize(imGpost, post_level);
 
-pre_in = zeros(size(imCpre));
-pre_on = zeros(size(imCpre));
-post_in = zeros(size(imCpre));
-post_on = zeros(size(imCpre));
+%generate filled GFP images
+preFill=imfill(preMat, 'holes');
+postFill=imfill(postMat, 'holes');
 
-for i=1:height(preB)
-    pre_xv=preB{i,1}(:, 1);
-    pre_yv=preB{i,1}(:, 2);
-    
-    [in, on]=inpolygon(X,Y,pre_xv, pre_yv);
-    pre_in = pre_in + in;
-    pre_on = pre_on + on;
-    
-end
-
-for i=1:height(postB)
-    post_xv=postB{i,1}(:, 1);
-    post_yv=postB{i,1}(:, 2);
-    
-    [in, on]=inpolygon(X,Y,post_xv, post_yv);
-    post_in = post_in + in;
-    post_on = post_on + on;
-    
-end
-
-[preL,pre_bw]=bwboundaries(pre_in,4,'noholes');
-[postL,post_bw]=bwboundaries(post_in,4,'noholes');
-preP=struct2cell(regionprops(pre_bw,'PixelIdxList'));
-postP=struct2cell(regionprops(post_bw,'PixelIdxList'));
+%generate pixel id list
+preP=struct2cell(regionprops(preFill,'PixelIdxList'));
+postP=struct2cell(regionprops(postFill,'PixelIdxList'));
 
 %calculate the area of pre- and post-shocked cells
 pre_area=cellfun(@height, preP)';
 post_area=cellfun(@height, postP)';
 
-% %calculate the area of pre- and post-shocked cells
-% pre_area=nan(height(prePixels),1);
-% post_area=nan(height(postPixels),1);
-% 
-% for i=1:height(prePixels)
-%     pre_area(i)=sum(pre_in(prePixels{i})==1);
-% end
-% 
-% for i=1:height(postPixels)
-%     post_area(i)=sum(post_in(postPixels{i})==1);
-% end
-% 
-% %calculate the area of pre- and post-shocked cells
-% pre_area2=cellfun(@height, prePixels);
-% post_area2=cellfun(@height, postPixels);
-
-%% how sufficient is the overlap between the binary image and the CY5 and GFP images?
-% figure(3)
-% imshowpair(pre_bw, imCpre)
-% 
-% figure(4)
-% imshowpair(pre_bw, imGpre)
-% 
-% figure(5)
-% imshowpair(post_bw, imCpost)
-% 
-% figure(6)
-% imshowpair(post_bw, imGpost)
-% 
-% pause, close all
-%% Generate a binary image of the GFP labelled cytoplasm
-preBay=zeros(size(pre_in));
-postBay=zeros(size(post_in));
-
-preCyto=zeros(size(pre_in));
-postCyto=zeros(size(post_in));
-
 %generate binary image of pre-shocked cells
-pre_level = graythresh(imGpre);
-preMat = imbinarize(imGpre, pre_level);
-
-%generate binary image of post-shocked cells
-post_level = graythresh(imGpost);
-postMat = imbinarize(imGpost, post_level);
-
-%calculate area
-preMat_area=nan(height(pre_area),1);
-postMat_area=nan(height(post_area),1);
-
-prebp={};
-postbp={};
-
-for i=1:height(prePixels)
-    preMat_area(i)=sum(preMat(prePixels{i})==1);
-    idx=find(preMat(prePixels{i})==0);
-    preBay(prePixels{i}(idx))=1;
+for i=1:height(preP)
+    preMat_area(i)=sum(preMat(preP{i})==1);
+    idx=find(preMat(preP{i})==0);
+    preBay(preP{i}(idx))=1;
     
-    [x,y]=ind2sub(size(im), prePixels{i}(idx));
+    [x,y]=ind2sub(size(im), preP{i}(idx));
     prebp{i,1}=[x,y];
-    
-    idx=find(preMat(prePixels{i})==1);
-    preCyto(prePixels{i}(idx))=1;
 end
 
-for i=1:height(postPixels)
-    postMat_area(i)=sum(postMat(postPixels{i})==1);
-    idx=find(postMat(postPixels{i})==0);
-    postBay(postPixels{i}(idx))=1;
+for i=1:height(postP)
+    postMat_area(i)=sum(postMat(postP{i})==1);
+    idx=find(postMat(postP{i})==0);
+    postBay(postP{i}(idx))=1;
     
-    [x,y]=ind2sub(size(im), postPixels{i}(idx));
+    [x,y]=ind2sub(size(im), postP{i}(idx));
     postbp{i,1}=[x,y];
-    
-    idx=find(postMat(postPixels{i})==1);
-    postCyto(postPixels{i}(idx))=1;
 end
 
 %% Calculate the percent plasmolysis
