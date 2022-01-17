@@ -72,13 +72,13 @@ lscale=0.08;%%Microns per pixel.
 multiScale=0;
 tscale=30;
 thresh=0;%For default, enter zero.
-IntThresh=2000;%Threshold used to enhance contrast. Default:35000
+IntThresh=35000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width, default 0.2
 maxW=1.5;%Maximum cell width
-minA=100;%Minimum cell area. default 50
+minA=50;%Minimum cell area. default 50
 maxA=2000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
@@ -321,78 +321,91 @@ for t=1:T
     end
 end
 
-
-%Extract timepoints from metadata if it exists
-if exist('metaname')==1
-    if exist(metaname)==2
-        %Extract timepoints from metadata
-        tpoints=metadata(metaname);
-        
-        %Fix bug where micromanager screws up its timing
-        dtime=diff(tpoints(1,:));
-        fdt=find(dtime>2*(dtime(1)));
-        if isempty(fdt)~=1
-            fdt=fdt(1);
-            tpoints(:,fdt+1:end)=tpoints(:,fdt+1:end)-tpoints(1,fdt+1)+tpoints(1,fdt)+(tpoints(1,fdt)-tpoints(1,fdt-1));
-        end
-    else
-        tpoints=[0:T-1]*tscale;
-    end
-else
-    if multiScale==0
-        tpoints=[0:T-1]*tscale;
-     elseif multiScale==1
-        tpoints=[tpoint1, tpoint2];
-    end
-end
-
-time=tpoints(1,1:T);
-time2=tpoints(end,1:T);
-
-%Fix bug where micromanager screws up its timing
-dtime=diff(time);
-fdt=find(dtime>2*(dtime(1)));
-if isempty(fdt)~=1
-    fdt=fdt(1);
-    time(fdt+1:end)=time(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
-    time2(fdt+1:end)=time2(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
-end
-
-%Track cells frame to frame
-tracks=zeros(size(im));
-rcents=round(allcentroids);
-linind=sub2ind(size(im),rcents(:,2),rcents(:,1));
-tracks(linind)=1;
-
-nhood=[0,1,0;1,1,1;0,1,0];
-tracks=imdilate(tracks,strel('disk',cellLink));
-overlay1=imoverlay(im,tracks,[.3 1 .3]);
-
-[tracksL,ncells]=bwlabel(tracks,8);
-
-lcell=zeros(ncells,T);
-wcell=zeros(ncells,T);
-acell=zeros(ncells,T);
-pcell=zeros(ncells,T);
-B=cell(ncells,T);
-pixels=cell(ncells,T);
-mlines=cell(ncells,T);
-lcents=length(allcentroids);
-
-for i=1:lcents
-    cellid=tracksL(linind(i));
-    lcell(cellid,tstamp(i))=l(cellnum(i),tstamp(i));
-    wcell(cellid,tstamp(i))=w(cellnum(i),tstamp(i));
-    acell(cellid,tstamp(i))=a(cellnum(i),tstamp(i));
-    B{cellid,tstamp(i)}=boun{cellnum(i),tstamp(i)};
-    pixels{cellid,tstamp(i)}=pxls{cellnum(i),tstamp(i)};
-    mlines{cellid,tstamp(i)}=mline{cellnum(i),tstamp(i)};
-    pcell(cellid,tstamp(i))=pole(cellnum(i),tstamp(i));
-end
+%Tic
+% %Extract timepoints from metadata if it exists
+% if exist('metaname')==1
+%     if exist(metaname)==2
+%         %Extract timepoints from metadata
+%         tpoints=metadata(metaname);
+%         
+%         %Fix bug where micromanager screws up its timing
+%         dtime=diff(tpoints(1,:));
+%         fdt=find(dtime>2*(dtime(1)));
+%         if isempty(fdt)~=1
+%             fdt=fdt(1);
+%             tpoints(:,fdt+1:end)=tpoints(:,fdt+1:end)-tpoints(1,fdt+1)+tpoints(1,fdt)+(tpoints(1,fdt)-tpoints(1,fdt-1));
+%         end
+%     else
+%         tpoints=[0:T-1]*tscale;
+%     end
+% else
+%     if multiScale==0
+%         tpoints=[0:T-1]*tscale;
+%      elseif multiScale==1
+%         tpoints=[tpoint1, tpoint2];
+%     end
+% end
+% 
+% time=tpoints(1,1:T);
+% time2=tpoints(end,1:T);
+% 
+% %Fix bug where micromanager screws up its timing
+% dtime=diff(time);
+% fdt=find(dtime>2*(dtime(1)));
+% if isempty(fdt)~=1
+%     fdt=fdt(1);
+%     time(fdt+1:end)=time(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
+%     time2(fdt+1:end)=time2(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
+% end
+% 
+% %Track cells frame to frame
+% tracks=zeros(size(im));
+% rcents=round(allcentroids);
+% linind=sub2ind(size(im),rcents(:,2),rcents(:,1));
+% tracks(linind)=1;
+% 
+% nhood=[0,1,0;1,1,1;0,1,0];
+% tracks=imdilate(tracks,strel('disk',cellLink));
+% overlay1=imoverlay(im,tracks,[.3 1 .3]);
+% 
+% [tracksL,ncells]=bwlabel(tracks,8);
+% 
+% lcell=zeros(ncells,T);
+% wcell=zeros(ncells,T);
+% acell=zeros(ncells,T);
+% pcell=zeros(ncells,T);
+% B=cell(ncells,T);
+% pixels=cell(ncells,T);
+% mlines=cell(ncells,T);
+% lcents=length(allcentroids);
+% 
+% for i=1:lcents
+%     cellid=tracksL(linind(i));
+%     lcell(cellid,tstamp(i))=l(cellnum(i),tstamp(i));
+%     wcell(cellid,tstamp(i))=w(cellnum(i),tstamp(i));
+%     acell(cellid,tstamp(i))=a(cellnum(i),tstamp(i));
+%     B{cellid,tstamp(i)}=boun{cellnum(i),tstamp(i)};
+%     pixels{cellid,tstamp(i)}=pxls{cellnum(i),tstamp(i)};
+%     mlines{cellid,tstamp(i)}=mline{cellnum(i),tstamp(i)};
+%     pcell(cellid,tstamp(i))=pole(cellnum(i),tstamp(i));
+% end
+%Toc
 
 %Throw away cells with only one or two time points, or less time points than
 %we want in general
 %throw away cells that lyse pre-maturely
+ncells=height(w); 
+lcell=l;
+wcell=w;
+acell=a;
+pcell=pole;
+B=boun;
+pixels=pxls;
+mlines=mline;
+[ncells,~]=size(lcell);
+
+%remove post analysis !!!
+
 delind=[];
 for i=1:ncells
     %if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1
@@ -425,21 +438,23 @@ lcell(lcell<minL|wcell>maxW|wcell<minW)=NaN;
 wcell(lcell<minL|wcell>maxW|wcell<minW)=NaN;
 acell(lcell<minL|wcell>maxW|wcell<minW)=NaN;
 
-%Calculate circumferential strain
-wcell(isnan(wcell))=0;
-ew=zeros(size(lcell));
-for i=1:ncells
-    ew(i,:)=wcell(i,:)/mean(wcell(i,:));
-end
-
-%Calculate the growth rate
-deltat=time(2:end)-time(1:end-1);
-v=(lcell(:,2:end)-lcell(:,1:end-1))./((lcell(:,1:end-1)+lcell(:,2:end))/2);
-av=(acell(:,2:end)-acell(:,1:end-1))./((acell(:,1:end-1)+acell(:,2:end))/2);
-for i=1:ncells
-    v(i,:)=v(i,:)./deltat;
-    av(i,:)=av(i,:)./deltat;
-end
+%Tic
+% %Calculate circumferential strain
+% wcell(isnan(wcell))=0;
+% ew=zeros(size(lcell));
+% for i=1:ncells
+%     ew(i,:)=wcell(i,:)/mean(wcell(i,:));
+% end
+% 
+% %Calculate the growth rate
+% deltat=time(2:end)-time(1:end-1);
+% v=(lcell(:,2:end)-lcell(:,1:end-1))./((lcell(:,1:end-1)+lcell(:,2:end))/2);
+% av=(acell(:,2:end)-acell(:,1:end-1))./((acell(:,1:end-1)+acell(:,2:end))/2);
+% for i=1:ncells
+%     v(i,:)=v(i,:)./deltat;
+%     av(i,:)=av(i,:)./deltat;
+% end
+%Toc
 
 %Calculate total length of all cells
 lcell(isnan(lcell))=0;
@@ -453,53 +468,56 @@ acell(acell==0)=NaN;
 
 %Throw out outliers and calculate the average width,strain and strain rate 
 %across cells
-v(isnan(v))=0;
-av(isnan(av))=0;
-ew(isnan(ew))=0;
-
-for t=1:T-1
-    vav(t)=mean(nonzeros(v(:,t)));
-    vstd(t)=std(nonzeros(v(:,t)));
-end
-vavm=ones(ncells,1)*vav;
-vstdm=ones(ncells,1)*vstd;
-
-inddel=abs(v-vavm)>2*vstdm&vstdm~=0;
-
-v(inddel)=0;
-av(inddel)=0;
-lcell(inddel)=0;
-acell(inddel)=0;
-wcell(inddel)=0;
-ew(inddel)=0;
-
-for t=1:T
-    wav(t)=mean(nonzeros(wcell(:,t)));
-    wstd(t)=std(nonzeros(wcell(:,t)));
-    wste(t)=wstd(t)./length(nonzeros(wcell(:,t)));
-    ewav(t)=mean(nonzeros(ew(:,t)));
-    ewstd(t)=std(nonzeros(ew(:,t)));
-    ewste(t)=ewstd(t)./length(nonzeros(ew(:,t)));
-end
-
-for t=1:T-1
-    vav(t)=mean(nonzeros(v(:,t)));
-    vstd(t)=std(nonzeros(v(:,t)));
-    ndp(t)=length(nonzeros(v(:,t)));
-    vste(t)=vstd(t)/sqrt(ndp(t));
-    avav(t)=mean(nonzeros(av(:,t)));
-    avstd(t)=std(nonzeros(av(:,t)));
-    avste(t)=avstd(t)/ndp(t);
-end
-
-v(v==0)=NaN;
-av(av==0)=NaN;
+%Tic
+% v(isnan(v))=0;
+% av(isnan(av))=0;
+% ew(isnan(ew))=0;
+% 
+% for t=1:T-1
+%     vav(t)=mean(nonzeros(v(:,t)));
+%     vstd(t)=std(nonzeros(v(:,t)));
+% end
+% vavm=ones(ncells,1)*vav;
+% vstdm=ones(ncells,1)*vstd;
+% 
+% inddel=abs(v-vavm)>2*vstdm&vstdm~=0;
+% 
+% v(inddel)=0;
+% av(inddel)=0;
+% lcell(inddel)=0;
+% acell(inddel)=0;
+% wcell(inddel)=0;
+% ew(inddel)=0;
+% 
+% for t=1:T
+%     wav(t)=mean(nonzeros(wcell(:,t)));
+%     wstd(t)=std(nonzeros(wcell(:,t)));
+%     wste(t)=wstd(t)./length(nonzeros(wcell(:,t)));
+%     ewav(t)=mean(nonzeros(ew(:,t)));
+%     ewstd(t)=std(nonzeros(ew(:,t)));
+%     ewste(t)=ewstd(t)./length(nonzeros(ew(:,t)));
+% end
+% 
+% for t=1:T-1
+%     vav(t)=mean(nonzeros(v(:,t)));
+%     vstd(t)=std(nonzeros(v(:,t)));
+%     ndp(t)=length(nonzeros(v(:,t)));
+%     vste(t)=vstd(t)/sqrt(ndp(t));
+%     avav(t)=mean(nonzeros(av(:,t)));
+%     avstd(t)=std(nonzeros(av(:,t)));
+%     avste(t)=avstd(t)/ndp(t);
+% end
+% 
+% v(v==0)=NaN;
+% av(av==0)=NaN;
+% ew(ew==0)=NaN;
+%Toc
 lcell(lcell==0)=NaN;
 wcell(wcell==0)=NaN;
 acell(acell==0)=NaN;
-ew(ew==0)=NaN;
 
-tmid=(time(2:end)+time(1:end-1))/2;
+
+%tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
 save([basename '_BTlab'],'labels','labels2','-v7.3')
