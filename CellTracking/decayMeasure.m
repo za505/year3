@@ -22,17 +22,17 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='01202022_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01202022_analysis/'  basename '/'  basename '_colony3/' basename '_TADA/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01202022_analysis/'  basename '/'  basename '_colony3/' basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01202022_analysis/'  basename '/'  basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='10232021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/'  basename '/'  basename '_colony6/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/'  basename '/'  basename '_colony6/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/'  basename '/'  basename '_colony6/' basename '_phase/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
-troubleshoot=2;
+troubleshoot=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony3_dm.mat'])
+    load([basename '_colony6_pc.mat'])
     replot=0;
     troubleshoot=2;
 else
@@ -44,7 +44,7 @@ else
     
     %go to directory where .mat files are stored
     cd(dirname)
-    load([basename '_colony3_WT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
+    load([basename '_BTphase'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
     icell_intensity=nan(ncells, T);
@@ -183,7 +183,7 @@ if replot==1
 end
 
 cd(savedir)
-save([basename '_colony3_dm.mat'])
+save([basename '_colony6_pc.mat'])
 
 cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/01252022_analysis/MatFiles/')
-save([basename '_colony3_dm.mat'])
+save([basename '_colony6_pc.mat'])
