@@ -22,10 +22,10 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='01262022_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01262022_analysis/'  basename '_colony3/' basename '_TADA/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01262022_analysis/'  basename '_colony3/' basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01262022_analysis/'  basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='01282022_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01282022_analysis/'  basename '_colony3/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01282022_analysis/'  basename '_colony3/' basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01282022_analysis/'  basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
 troubleshoot=2;
@@ -44,7 +44,7 @@ else
     
     %go to directory where .mat files are stored
     cd(dirname)
-    load([basename '_colony3_WT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
+    load([basename '_BT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
     icell_intensity=nan(ncells, T);
@@ -130,13 +130,13 @@ if replot==1
     
     cd(savedir)
     
-    %plot mNeonGreen fluorescence traces
+    %plot phase fluorescence traces
         figure(1), hold on
     for i=1:height(icell_intensity)
         plot(time, icell_intensity(i,:), '-g')
     end
     %xline(tpt, '--', {'Membrane Lysis'})
-    title('Intensity of mNeonGreen vs Time')
+    title('Intensity of phase vs Time')
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
@@ -148,20 +148,20 @@ if replot==1
 %         plot(time, adj_intensity(i,:), '-g')
 %     end
 %     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Adjusted Intensity of mNeonGreen vs Time')
+%     title('Adjusted Intensity of phase vs Time')
 %     %subtitle('blue = halved','Color','blue')
 %     xlabel('Time (min)')
 %     ylabel('Cellular Intensity (A.U.)')
 %     saveas(gcf, [basename,'_adjIntensity_dm.fig'])
 %     saveas(gcf, [basename,'_adjIntensity_dm.png'])
 %     
-%     %plot to see single traces of mNeonGreen cells
+%     %plot to see single traces of phase cells
 %     figure(3), hold on
 %     for i=1:height(norm_intensity)
 %         plot(time, norm_intensity(i,:), '-g')
 %     end
 %     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Normalized Intensity of mNeonGreen vs Time')
+%     title('Normalized Intensity of phase vs Time')
 %     %subtitle('blue = halved','Color','blue')
 %     xlabel('Time (min)')
 %     ylabel('Cellular Intensity (A.U.)')
