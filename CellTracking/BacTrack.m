@@ -64,15 +64,15 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='01282022_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01282022_analysis/'  basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/01282022_analysis/'  basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='02012022_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02012022_analysis/'  basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02012022_analysis/'  basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
 %tscale=60;
 tscale1=60;
-tscale2=60*20;
+tscale2=60*5;
 tpoint1=[0:tscale1:4*60]; 
 tpoint2=[4*60+tscale2:tscale2:104*60];
 thresh=0;%For default, enter zero.
@@ -399,10 +399,21 @@ end
 %throw away cells that lyse pre-maturely
 delind=[];
 for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.2|sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
+    if length(nonzeros(lcell(i,:)))<=9|sum(cellfun(@isempty, B(i,:)))/T>0.2|sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
         delind=[delind;i];
     end
 end
+
+lcell(delind,:)=[];
+wcell(delind,:)=[];
+acell(delind,:)=[];
+pcell(delind,:)=[];
+B(delind,:)=[];
+pixels(delind,:)=[];
+mlines(delind,:)=[];
+[ncells,~]=size(lcell);
+
+delind=[6, 17];
 
 lcell(delind,:)=[];
 wcell(delind,:)=[];
@@ -566,23 +577,23 @@ saveas(gcf,[basename,'_lTraces.png'])
 % % end
 % saveas(gcf,[basename,'_lTracesAVG.png'])
 
-figure(5), title('Elongation Rate vs. Time')
-hold on
-for i=1:ncells
-    plot(tmid,v(i,:))
-end
-plot(tmid,vav,'-r')
-xlabel('Time (s)')
-ylabel('Elongation Rate (s^{-1})')
-fig2pretty
-saveas(gcf, [basename,'_eTraces.png'])
- 
-figure(6), title('Elongation Rate vs. Time')
-hold on
-ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
-plot(tmid,vav*3600,'-r')
-xlabel('Time (s)')
-ylabel('Elongation (hr^{-1})')
-yline(2, '--b')
-fig2pretty
-saveas(gcf, [basename,'_ET.png'])
+% figure(5), title('Elongation Rate vs. Time')
+% hold on
+% for i=1:ncells
+%     plot(tmid,v(i,:))
+% end
+% plot(tmid,vav,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation Rate (s^{-1})')
+% fig2pretty
+% saveas(gcf, [basename,'_eTraces.png'])
+%  
+% figure(6), title('Elongation Rate vs. Time')
+% hold on
+% ciplot((vav-vstd)*3600,(vav+vstd)*3600,tmid,[0.75 0.75 1])
+% plot(tmid,vav*3600,'-r')
+% xlabel('Time (s)')
+% ylabel('Elongation (hr^{-1})')
+% yline(2, '--b')
+% fig2pretty
+% saveas(gcf, [basename,'_ET.png'])
