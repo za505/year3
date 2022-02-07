@@ -64,6 +64,7 @@ cd([dirsave '/MatFiles'])
 LBa=dir(['10232021_Exp1' '*dm.mat']); %LB, rep 1
 LBb=dir(['10262021_Exp1' '*dm.mat']); %LB, rep 2
 LB5a=dir(['02012022_Exp1' '*dm.mat']); %LB, 5 min frame rate
+LB20a=dir(['02042022_Exp1' '*dm.mat']); %LB, 20 min frame rate
 PBS120=dir(['01142022_Exp1' '*dm.mat']); %PBS 120 min
 PBS60a=dir(['10232021_Exp2' '*dm.mat']); %PBS 60 min, rep 1
 PBS60b=dir(['10262021_Exp2' '*dm.mat']); %PBS 60 min, rep 2
@@ -81,13 +82,7 @@ LBvanco=dir(['01262022_Exp1' '*dm.mat']); %LB, 1 ug/mL vancomycin
 %direct the code to the location of the pc.mat files 
 LBc=dir(['10232021_Exp1' '*pc.mat']); %LB, rep 1
 LBd=dir(['10262021_Exp1' '*pc.mat']); %LB, rep 2
-PBS120c=dir(['01142022_Exp1' '*pc.mat']); %PBS 120 min, since the cell
-%tracking is done using WT, the alignment with phase is poor so the ratio
-%is artifically low. Update: 01272022: I check this again for both phase
-%and mNeonGreen and it doesn't look bad. It's difficult to compare the
-%tracking with other phase images because all of them are so dark. In
-%conclusion, the overlap is sufficient but not optimal for this case
-%specifically
+PBS120c=dir(['01142022_Exp1' '*pc.mat']); %PBS 120 min
 PBS60c=dir(['10232021_Exp2' '*pc.mat']); %PBS 60 min, rep 1
 PBS60d=dir(['10262021_Exp2' '*pc.mat']); %PBS 60 min, rep 2
 PBS20c=dir(['11192021_Exp1' '*pc.mat']); %PBS 20 min, rep 1
@@ -104,39 +99,40 @@ LBvanc=dir(['01262022_Exp1' '*pc.mat']); %LB + 1 ug/mL vancomycin, since the cel
 %Strangely, there are huge spikes after 40 minutes (around the time there's a sudden expansion in cell length
 
 %% Calculate phase contrast ratio
-[initial_LBc, final_LBc, gamma_LBc]=phaseRatio(LBc, 5);
-[initial_LBd, final_LBd, gamma_LBd]=phaseRatio(LBd, 4);
-[initial_PBS120, final_PBS120, gamma_PBS120]=phaseRatio(PBS120, 4);
-[initial_PBS60c, final_PBS60c, gamma_PBS60c]=phaseRatio(PBS60c, 2);
-[initial_PBS60d, final_PBS60d, gamma_PBS60d]=phaseRatio(PBS60d, 4);
-[initial_PBS20c, final_PBS20c, gamma_PBS20c]=phaseRatio(PBS20c, 3);
-[initial_PBS20d, final_PBS20d, gamma_PBS20d]=phaseRatio(PBS20d, 3);
-[initial_PBS2c, final_PBS2c, gamma_PBS2c]=phaseRatio(PBS2c, 9);
-[initial_PBS2d, final_PBS2d, gamma_PBS2d]=phaseRatio(PBS2d, 9);
-
-[initial_LBMgc, final_LBMgc, gamma_LBMgc]=phaseRatio(LBMgc, 5);
-[initial_LBEc, final_LBEc, gamma_LBEc]=phaseRatio(LBEc, 5);
-[initial_LBtunc, final_LBtunc, gamma_LBtunc]=phaseRatio(LBtunc, 2);
-[initial_LBdetc, final_LBdetc, gamma_LBdetc]=phaseRatio(LBdetc, 5);
-[initial_LBvanc, final_LBvanc, gamma_LBvanc]=phaseRatio(LBvanc, 5, 49); %the numbers get too low at the end so truncating it is the best way to get data that makes sense
+% [initial_LBc, final_LBc, gamma_LBc]=phaseRatio(LBc, 5);
+% [initial_LBd, final_LBd, gamma_LBd]=phaseRatio(LBd, 4);
+% [initial_PBS120, final_PBS120, gamma_PBS120]=phaseRatio(PBS120, 4);
+% [initial_PBS60c, final_PBS60c, gamma_PBS60c]=phaseRatio(PBS60c, 2);
+% [initial_PBS60d, final_PBS60d, gamma_PBS60d]=phaseRatio(PBS60d, 4);
+% [initial_PBS20c, final_PBS20c, gamma_PBS20c]=phaseRatio(PBS20c, 3);
+% [initial_PBS20d, final_PBS20d, gamma_PBS20d]=phaseRatio(PBS20d, 3);
+% [initial_PBS2c, final_PBS2c, gamma_PBS2c]=phaseRatio(PBS2c, 9);
+% [initial_PBS2d, final_PBS2d, gamma_PBS2d]=phaseRatio(PBS2d, 9);
+% 
+% [initial_LBMgc, final_LBMgc, gamma_LBMgc]=phaseRatio(LBMgc, 5);
+% [initial_LBEc, final_LBEc, gamma_LBEc]=phaseRatio(LBEc, 5);
+% [initial_LBtunc, final_LBtunc, gamma_LBtunc]=phaseRatio(LBtunc, 2);
+% [initial_LBdetc, final_LBdetc, gamma_LBdetc]=phaseRatio(LBdetc, 5);
+% [initial_LBvanc, final_LBvanc, gamma_LBvanc]=phaseRatio(LBvanc, 5, 49); %the numbers get too low at the end so truncating it is the best way to get data that makes sense
 
 %% Calculate normalized fluorescence traces
-[normintensity_LBa, intensity_LBa, time_LBa, tme_LBa]=dataNormalize(LBa, 5);
-[normintensity_LBb, intensity_LBb, time_LBb, tme_LBb]=dataNormalize(LBb, 4);
-[normintensity_LB5a, intensity_LB5a, time_LB5a, tme_LB5a]=dataNormalize(LB5a, 6, 25);
-[normintensity_PBS120, intensity_PBS120, time_PBS120, tme_PBS120]=dataNormalize(PBS120, 4);
-[normintensity_PBS60a, intensity_PBS60a, time_PBS60a, tme_PBS60a]=dataNormalize(PBS60a, 2);
-[normintensity_PBS60b, intensity_PBS60b, time_PBS60b, tme_PBS60b]=dataNormalize(PBS60b, 4);
-[normintensity_PBS20a, intensity_PBS20a, time_PBS20a, tme_PBS20a]=dataNormalize(PBS20a, 3);
-[normintensity_PBS20b, intensity_PBS20b, time_PBS20b, tme_PBS20b]=dataNormalize(PBS20b, 3);
-[normintensity_PBS2a, intensity_PBS2a, time_PBS2a, tme_PBS2a]=dataNormalize(PBS2a, 9);
-[normintensity_PBS2b, intensity_PBS2b, time_PBS2b, tme_PBS2b]=dataNormalize(PBS2b, 9);
+[normintensity_LBa, intensity_LBa, time_LBa, tme_LBa, imend_LBa]=dataNormalize(LBa, 5);
+[normintensity_LBb, intensity_LBb, time_LBb, tme_LBb, imend_LBb]=dataNormalize(LBb, 4);
+[normintensity_LB5a, intensity_LB5a, time_LB5a, tme_LB5a, imend_LB5a]=dataNormalize(LB5a, 7);
+[normintensity_LB20a, intensity_LB20a, time_LB20a, tme_LB20a, imend_LB20a]=dataNormalize(LB20a, 9);
+[normintensity_PBS120, intensity_PBS120, time_PBS120, tme_PBS120, imend_PBS120]=dataNormalize(PBS120, 4);
+[normintensity_PBS60a, intensity_PBS60a, time_PBS60a, tme_PBS60a, imend_PBS60a]=dataNormalize(PBS60a, 2);
+[normintensity_PBS60b, intensity_PBS60b, time_PBS60b, tme_PBS60b, imend_PBS60b]=dataNormalize(PBS60b, 4);
+[normintensity_PBS20a, intensity_PBS20a, time_PBS20a, tme_PBS20a, imend_PBS20a]=dataNormalize(PBS20a, 3);
+[normintensity_PBS20b, intensity_PBS20b, time_PBS20b, tme_PBS20b, imend_PBS20b]=dataNormalize(PBS20b, 3);
+[normintensity_PBS2a, intensity_PBS2a, time_PBS2a, tme_PBS2a, imend_PBS2a]=dataNormalize(PBS2a, 9);
+[normintensity_PBS2b, intensity_PBS2b, time_PBS2b, tme_PBS2b, imend_PBS2b]=dataNormalize(PBS2b, 9);
 
-[normintensity_LBMga, intensity_LBMga, time_LBMga, tme_LBMga]=dataNormalize(LBMga, 5);
-[normintensity_LBEa, intensity_LBEa, time_LBEa, tme_LBEa]=dataNormalize(LBEa, 5);
-[normintensity_LBtuna, intensity_LBtuna, time_LBtuna, tme_LBtuna]=dataNormalize(LBtuna, 2);
-[normintensity_LBdeta, intensity_LBdeta, time_LBdeta, tme_LBdeta]=dataNormalize(LBdeta, 5);
-[normintensity_LBvanco, intensity_LBvanco, time_LBvanco, tme_LBvanco]=dataNormalize(LBvanco, 5, 49);
+[normintensity_LBMga, intensity_LBMga, time_LBMga, tme_LBMga, imend_LBMga]=dataNormalize(LBMga, 5);
+[normintensity_LBEa, intensity_LBEa, time_LBEa, tme_LBEa, imend_LBEa]=dataNormalize(LBEa, 5);
+[normintensity_LBtuna, intensity_LBtuna, time_LBtuna, tme_LBtuna, imend_LBtuna]=dataNormalize(LBtuna, 2);
+[normintensity_LBdeta, intensity_LBdeta, time_LBdeta, tme_LBdeta, imend_LBdeta]=dataNormalize(LBdeta, 5);
+[normintensity_LBvanco, intensity_LBvanco, time_LBvanco, tme_LBvanco, imend_LBvanco]=dataNormalize(LBvanco, 5);
 
 %% combine datasets
 time_LB=time_LBb;
@@ -144,25 +140,30 @@ time_PBS60=time_PBS60a;
 time_PBS20=time_PBS20a;
 time_PBS2=time_PBS2a;
 
-tme_LB=tme_LBb;
-tme_PBS60=tme_PBS60a;
+tme_LB=tme_LBa;
+tme_PBS60=tme_PBS60b;
 tme_PBS20=tme_PBS20a;
-tme_PBS2=tme_PBS2a;
+tme_PBS2=tme_PBS2b;
+
+imend_LB=imend_LBa;
+imend_PBS60=imend_PBS60b;
+imend_PBS20=imend_PBS20a;
+imend_PBS2=imend_PBS2b;
 
 intensity_LB=[intensity_LBa(:, 1:length(time_LB)); intensity_LBb];
 intensity_PBS60=[intensity_PBS60a; intensity_PBS60b(:, 1:length(time_PBS60))];
 intensity_PBS20=[intensity_PBS20a; intensity_PBS20b(:, 1:length(time_PBS20))];
 intensity_PBS2=[intensity_PBS2a; intensity_PBS2b(:, 1:length(time_PBS2))];
 
-normintensity_LB=[normintensity_LBa(:, 1:length(tme_LB)); normintensity_LBb];
-normintensity_PBS60=[normintensity_PBS60a; normintensity_PBS60b(:, 1:length(tme_PBS60))];
+normintensity_LB=[normintensity_LBa; normintensity_LBb(:, 1:length(tme_LBa))];
+normintensity_PBS60=[normintensity_PBS60a(:, 1:length(tme_PBS60)); normintensity_PBS60b];
 normintensity_PBS20=[normintensity_PBS20a; normintensity_PBS20b(:, 1:length(tme_PBS20))];
-normintensity_PBS2=[normintensity_PBS2a; normintensity_PBS2b(:, 1:length(tme_PBS2))];
+normintensity_PBS2=[normintensity_PBS2a(:, 1:length(tme_PBS2)); normintensity_PBS2b];
 
-gamma_LB=[gamma_LBc;gamma_LBd];
-gamma_PBS60=[gamma_PBS60c;gamma_PBS60d;];
-gamma_PBS20=[gamma_PBS20c;gamma_PBS20d];
-gamma_PBS2=[gamma_PBS2c;gamma_PBS20d];
+% gamma_LB=[gamma_LBc;gamma_LBd];
+% gamma_PBS60=[gamma_PBS60c;gamma_PBS60d;];
+% gamma_PBS20=[gamma_PBS20c;gamma_PBS20d];
+% gamma_PBS2=[gamma_PBS2c;gamma_PBS20d];
 
 %% Correct for photobleaching
 parameter=28.9210;
@@ -179,28 +180,30 @@ parameter=28.9210;
 [Cnew_LBvanco, beta_LBvanco, dCB_LBvanco, dCT_LBvanco, dCP_LBvanco, CblExp_LBvanco, unbFrac_LBvanco, midx_LBvanco]=photoCorrect(tme_LBvanco, normintensity_LBvanco, parameter);
 
 [Cnew_LB5a, beta_LB5a, dCB_LB5a, dCT_LB5a, dCP_LB5a, CblExp_LB5a, unbFrac_LB5a, midx_LB5a]=photoCorrect(tme_LB5a, normintensity_LB5a, parameter);
+[Cnew_LB20a, beta_LB20a, dCB_LB20a, dCT_LB20a, dCP_LB20a, CblExp_LB20a, unbFrac_LB20a, midx_LB20a]=photoCorrect(tme_LB20a, normintensity_LB20a, parameter);
 %% fit corrected plot to exponential decay function to calculate tau
-tau0_LB=30;
-tau0_PBS120=1;
-tau0_PBS60=1;
-tau0_PBS20=10;
-tau0_PBS2=25;
-tau0_LBMga=30;
-tau0_LBEa=10;
-tau0_LBtuna=10;
-tau0_LBdeta=20;
-tau0_LBvanco=1;
-
-[tau_LB, yhat_LB]=expFit(tme_LB, Cnew_LB, beta_LB, tau0_LB);
-[tau_PBS120, yhat_PBS120]=expFit(tme_PBS120, Cnew_PBS120, beta_PBS120, tau0_PBS120);
-[tau_PBS60, yhat_PBS60]=expFit(tme_PBS60, Cnew_PBS60, beta_PBS60, tau0_PBS60);
-[tau_PBS20, yhat_PBS20]=expFit(tme_PBS20, Cnew_PBS20, beta_PBS20, tau0_PBS20);
-[tau_PBS2, yhat_PBS2]=expFit(tme_PBS2, Cnew_PBS2, beta_PBS2, tau0_PBS2);
-[tau_LBMga, yhat_LBMga]=expFit(tme_LBMga, Cnew_LBMga, beta_LBMga, tau0_LBMga);
-[tau_LBEa, yhat_LBEa]=expFit(tme_LBEa, Cnew_LBEa, beta_LBEa, tau0_LBEa);
-[tau_LBtuna, yhat_LBtuna]=expFit(tme_LBtuna, Cnew_LBtuna, beta_LBtuna, tau0_LBtuna);
-[tau_LBdeta, yhat_LBdeta]=expFit(tme_LBdeta, Cnew_LBdeta, beta_LBdeta, tau0_LBdeta);
-[tau_LBvanco, yhat_LBvanco]=expFit(tme_LBvanco, Cnew_LBvanco, beta_LBvanco, tau0_LBvanco);
+% tau0_LB=30;
+% tau0_PBS120=1;
+% tau0_PBS60=1;
+% tau0_PBS20=10;
+% tau0_PBS2=25;
+% tau0_LBMga=30;
+% tau0_LBEa=10;
+% tau0_LBtuna=10;
+% tau0_LBdeta=20;
+% tau0_LBvanco=1;
+% 
+% [tau_LB, yhat_LB]=expFit(tme_LB, Cnew_LB, tau0_LB);
+% [tau_LB5a, yhat_LB5a]=expFit(tme_LB5a, Cnew_LB5a);
+% [tau_PBS120, yhat_PBS120]=expFit(tme_PBS120, Cnew_PBS120, tau0_PBS120);
+% [tau_PBS60, yhat_PBS60]=expFit(tme_PBS60, Cnew_PBS60, tau0_PBS60);
+% [tau_PBS20, yhat_PBS20]=expFit(tme_PBS20, Cnew_PBS20, tau0_PBS20);
+% [tau_PBS2, yhat_PBS2]=expFit(tme_PBS2, Cnew_PBS2, tau0_PBS2);
+% [tau_LBMga, yhat_LBMga]=expFit(tme_LBMga, Cnew_LBMga, tau0_LBMga);
+% [tau_LBEa, yhat_LBEa]=expFit(tme_LBEa, Cnew_LBEa, tau0_LBEa);
+% [tau_LBtuna, yhat_LBtuna]=expFit(tme_LBtuna, Cnew_LBtuna, tau0_LBtuna);
+% [tau_LBdeta, yhat_LBdeta]=expFit(tme_LBdeta, Cnew_LBdeta, tau0_LBdeta);
+% [tau_LBvanco, yhat_LBvanco]=expFit(tme_LBvanco, Cnew_LBvanco, tau0_LBvanco);
 
 % %% Plot the corrected fluorescent traces
 % cd(dirsave)
@@ -397,7 +400,7 @@ tau0_LBvanco=1;
 % saveas(gcf, 'tau_vs_gamma.fig')
 
 %% Functions
-function [normintensity, intensity, time, tme]=dataNormalize(datadir, imstart, imend)
+function [normintensity, intensity, time, tme, imend]=dataNormalize(datadir, imstart)
         
         %pre-allocate variables
         intensity=[];
@@ -408,40 +411,48 @@ function [normintensity, intensity, time, tme]=dataNormalize(datadir, imstart, i
             %load decayMeasure .mat file
             cd(datadir(i).folder)
             load(datadir(i).name, 'icell_intensity', 'time')
-
-            if nargin<3
-                imend=length(icell_intensity);
-            end
             
             for n=1:height(icell_intensity)
 
-                %make sure there are fluor readings during the initial frame and the final frame, otherwise the adjust. and norm. will look off
-                if ~isnan(icell_intensity(n, imstart))&~isnan(icell_intensity(n, imend)) 
+                %make sure there are fluor readings during the initial frame, otherwise the adjust. and norm. will look off
+                if ~isnan(icell_intensity(n, imstart))
                     intensity=[intensity; icell_intensity(n, :)];
                 end
             end
             
             if i==1
-                tme=time(imstart:imend)-time(imstart); %new time vector
+                tme=time; %pre-set new time vector
             end
 
         end
         
+        %set the limit of detection 
+        lmt=1300;
+        adjintensity=intensity;
+        adjintensity(adjintensity<=lmt)=NaN; 
+        idx=sum(isnan(adjintensity));
+        imend=find(idx>=(height(adjintensity)*0.5)); %the time point where half the values are nan
+        imend=imend(min(find(imend>imstart))); 
+            
+        %adjust the time vector
+        tme=tme(imstart:end)-tme(imstart);
+                                                                      
         %interpolate the fluor values during detergent perfusion
-        if length(tme)>25 & imstart<6 | length(tme)<25 & imstart<6
+        if imstart<9
             omit=[2:5]+imstart;
             idx=setdiff(1:length(time), omit);
-            v=intensity(:, idx);
+            v=adjintensity(:, idx);
             vq=nan(height(v), length(omit));
             for n=1:height(v)
                 vq(n, :)=interp1(idx, v(n, :), omit);
             end
-            intensity(:, omit)=vq;
+            adjintensity(:, omit)=vq;
         end
-        
-        %adjust the background
-        adjintensity = intensity(:, 1:imend)-intensity(:, imend);
 
+        %adjust the background
+        adjintensity = adjintensity(:, 1:imend);
+        adjintensity = adjintensity-lmt;
+        
         %normalize to the initial pre-lysis frame
         normintensity=adjintensity(:, imstart:end)./adjintensity(:,imstart);
         normintensity(normintensity<0)=0;
@@ -460,16 +471,10 @@ function [initial, final, gamma]=phaseRatio(datadir, imstart, imend)
             cd(datadir(i).folder)
             load(datadir(i).name, 'icell_intensity')
 
-            if nargin<3
-                imend=length(icell_intensity);
-            end
-
             for n=1:height(icell_intensity)
+                
+                intensity=[intensity; icell_intensity(n, :)];
 
-                %make sure there are readings during the initial frame and the final frame
-                %if ~isnan(icell_intensity(n, 1))&~isnan(icell_intensity(n, end)) 
-                    intensity=[intensity; icell_intensity(n, :)];
-                %end
             end
             %the tricky thing about this is that I don't know if the ratio
             %belongs to a corresponding cell in Cnew because some may have
@@ -482,19 +487,16 @@ function [initial, final, gamma]=phaseRatio(datadir, imstart, imend)
         
 end
 
-function [Cnew, beta, dCB, dCT, dCP, Cbl_exp, unb_frac, midx]=photoCorrect(tme, normintensity, parameter)
+function [Cnew, beta, dCB, dCT, dCP, Cbl_exp, unb_frac, midx]=photoCorrect(tme, normintensity, alpha)
         
         %Correct for photobleaching
-        %calculate dt (it's easier to use end values)
-        dt=tme(end)-tme(end-1);
+        %calculate dt (the dt between frames may vary in a single run)
+        dt=diff(tme);
         
-        %this value is the slope and intercept calculated from the 1.2, 2,
-        %and 3 second controls (I made the names incredibly confusing--but to clarify, this
-        %is based on the linear equation tau = d(tau)/d(frame rate) * frame
-        %rate + intercept)
+        %this formula comes from the slope and intercept calculated for the 1.2, 2,
+        %and 3 second tau vs frame rate controls 
        
-        alpha = (parameter*dt) + 0.2482; %multipy dt?
-        %alpha = parameter + 0.2482;
+        parameter = (alpha.*dt) + 0.2482; 
         
         %assume that the initial 'measured' fluorescence values and corrected
         %fluor. values will be equal. I prefer to pre-allocate with nan in case 
@@ -518,7 +520,7 @@ function [Cnew, beta, dCB, dCT, dCP, Cbl_exp, unb_frac, midx]=photoCorrect(tme, 
            
             for i=1:length(tme)-1
                 
-                dCB(n,i) = normintensity(n,i)/alpha; %this is the amount of photobleaching that occured in our measured value
+                dCB(n,i) = normintensity(n,i)/parameter(i); %this is the amount of photobleaching that occured in our measured value
 
                 dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
 
@@ -534,18 +536,10 @@ function [Cnew, beta, dCB, dCT, dCP, Cbl_exp, unb_frac, midx]=photoCorrect(tme, 
                 
             end  
             
-        end
+        end      
         
-        %calculate beta from corrected values
-        beta=Cnew(:, end);
-        
-        %remove outlier values (there cannot be more fluor than what the
-        %cell started with)
-        midx=find(beta<=0.9 & ~isnan(beta));
-        beta=beta(midx);
-        Cnew=Cnew(midx, :);
-        beta_mean=mean(beta, 'omitnan');
-        
+        beta=1;
+        midx=1;
 end
 
 function correctionCheck(tme, dCB, dCT, dCP, Cbl_exp, unb_frac)
@@ -579,30 +573,32 @@ title('Does the unbleached fraction reach zero at the same time the bleached con
 pause, close
 end
 
-function [tau, yhat]=expFit(tme, Cnew, beta0, tau0)
-        %fit normalized traces to exponential decay function
-        %y=(1-beta)*exp(-t./tau)+beta
-        %modelfun=@(tau,t)(1-beta)*exp(-t./tau)+beta;
+function [tau, yhat]=expFit(tme, Cnew, tau0)
         
         %pre-allocate variables
         tau=[];
         yhat=[];
-        fidx=[];
         
-        for i=1:height(Cnew)
-     
-            if ~isnan(beta0(i,1))
-                fidx=[fidx i];
-                %modelfun=@(tau,t)(1-parameter)*exp(-t./tau)+parameter;
-                parameter=beta0(i,1);
-                modelfun=@(tau,t)(1-parameter)*exp(-t./tau)+parameter;
+        if nargin < 3
+            for i=1:height(Cnew)
+                linearCoef = polyfit(tme, Cnew(i,:), 1);
+                linearFit = polyval(linearCoef, tme);  
+
+                tau=[tau, linearCoef(1)];
+                yhat=[yhat; linearFit]; 
+            end
+        else         
+            for i=1:height(Cnew)
+
+                modelfun=@(tau,t)exp(-t./tau);
                 tau_temp=nlinfit(tme, Cnew(i,:), modelfun, tau0);
                 y_hat=modelfun(tau_temp, tme);   
 
                 tau=[tau, tau_temp];
                 yhat=[yhat; y_hat]; 
-            end
-        end       
+
+            end           
+        end
 end
 
 function [DF] = tauProb(tau)
@@ -619,4 +615,3 @@ function [DF] = tauProb(tau)
     DF = fnder(F);
     
 end
-
