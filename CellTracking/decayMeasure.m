@@ -22,17 +22,17 @@ clear, close all
 %f=cell of coeff for exponential eqxn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='02042022_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony1/' basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony1/' basename '_mNeonGreen/' basename '_aligned']}; 
+basename='02052022_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02052022_analysis/'  basename '/' basename '_colony3/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02052022_analysis/'  basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02052022_analysis/'  basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; 
 recrunch=0;
 replot=1;
 troubleshoot=2;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony1_dm.mat'])
+    load([basename '_colony3_dm.mat'])
     replot=0;
     troubleshoot=2;
 else
@@ -183,7 +183,7 @@ if replot==1
 end
 
 cd(savedir)
-save([basename '_colony1_dm.mat'])
+save([basename '_colony3_dm.mat'])
 
 cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/01252022_analysis/MatFiles/')
-save([basename '_colony1_dm.mat'])
+save([basename '_colony3_dm.mat'])
