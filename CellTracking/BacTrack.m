@@ -64,17 +64,17 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='02042022_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='02052022_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02052022_analysis/'  basename '/' basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02052022_analysis/'  basename '/' basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
 %tscale=60;
 tscale1=60;
-tscale2=60*20;
-tpoint1=[0:tscale1:8*60]; 
-tpoint2=[8*60+tscale2:tscale2:130*60];
+tscale2=60*5;
+tpoint1=[0:tscale1:7*60]; 
+tpoint2=[7*60+tscale2:tscale2:95*60];
 thresh=0;%For default, enter zero.
 IntThresh=200;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -268,7 +268,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
     
-if vis==1 %& (t >= T-10 | t <= 6)
+if vis==1 & (t >= T-5 | t <= 5)
    figure
    imshow(im)
    hold on
@@ -566,16 +566,16 @@ saveas(gcf,[basename,'_lTraces.png'])
 % % end
 % saveas(gcf,[basename,'_lTracesAVG.png'])
 
-% figure(5), title('Elongation Rate vs. Time')
-% hold on
-% for i=1:ncells
-%     plot(tmid,v(i,:))
-% end
-% plot(tmid,vav,'-r')
-% xlabel('Time (s)')
-% ylabel('Elongation Rate (s^{-1})')
-% fig2pretty
-% saveas(gcf, [basename,'_eTraces.png'])
+figure(5), title('Elongation Rate vs. Time')
+hold on
+for i=1:ncells
+    plot(tmid,v(i,:))
+end
+plot(tmid,vav,'-r')
+xlabel('Time (s)')
+ylabel('Elongation Rate (s^{-1})')
+fig2pretty
+saveas(gcf, [basename,'_eTraces.png'])
 %  
 % figure(6), title('Elongation Rate vs. Time')
 % hold on
