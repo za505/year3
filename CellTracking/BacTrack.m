@@ -64,17 +64,17 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='02012022_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02012022_analysis/'  basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02012022_analysis/'  basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='02042022_Exp1';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
 multiScale=1;
 %tscale=60;
 tscale1=60;
-tscale2=60*5;
-tpoint1=[0:tscale1:4*60]; 
-tpoint2=[4*60+tscale2:tscale2:104*60];
+tscale2=60*20;
+tpoint1=[0:tscale1:8*60]; 
+tpoint2=[8*60+tscale2:tscale2:130*60];
 thresh=0;%For default, enter zero.
 IntThresh=200;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
@@ -86,7 +86,7 @@ minA=100;%Minimum cell area. default 50
 maxA=2000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-vis=0;%Display cell tracking? 0=No, 1=Yes.
+vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 troubleshooting=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -399,21 +399,10 @@ end
 %throw away cells that lyse pre-maturely
 delind=[];
 for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=9|sum(cellfun(@isempty, B(i,:)))/T>0.2|sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
+    if length(nonzeros(lcell(i,:)))<=3|sum(cellfun(@isempty, B(i,:)))/T>0.3|sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
         delind=[delind;i];
     end
 end
-
-lcell(delind,:)=[];
-wcell(delind,:)=[];
-acell(delind,:)=[];
-pcell(delind,:)=[];
-B(delind,:)=[];
-pixels(delind,:)=[];
-mlines(delind,:)=[];
-[ncells,~]=size(lcell);
-
-delind=[6, 17];
 
 lcell(delind,:)=[];
 wcell(delind,:)=[];
