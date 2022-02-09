@@ -132,7 +132,6 @@ figure, plot(tme_LB, normintensity_LB, '-g');
 figure, plot(tme_LB5, normintensity_LB5, '-g');
 figure, plot(tme_LB20, normintensity_LB20, '-g'); 
 
-
 figure, hold on
 ciplot(mean(normintensity_LB, 1, 'omitnan')-std(normintensity_LB, 0, 1, 'omitnan'), mean(normintensity_LB, 1, 'omitnan')+std(normintensity_LB, 0, 1, 'omitnan'), tme_LB, colorcode2{1}, transparency)
 plot(tme_LB, mean(normintensity_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
@@ -151,6 +150,50 @@ plot(tme_LB1s, normintensity_LB1s, '-r');
 plot(tme_LB2s, normintensity_LB2s, '-b');
 plot(tme_LB3s, normintensity_LB3s, '-g'); 
 
+%% calculate alpha
+[tau1, yhat_LB1s]=tauCalc(tme_LB1s, normintensity_LB1s);
+[tau2, yhat_LB2s]=tauCalc(tme_LB2s, normintensity_LB2s);
+[tau3, yhat_LB3s]=tauCalc(tme_LB3s, normintensity_LB3s);
+
+figure, hold on
+plot(tme_LB1s, normintensity_LB1s, '-k')
+plot(tme_LB1s, yhat_LB1s, '--r')
+
+figure, hold on
+plot(tme_LB2s, normintensity_LB2s, '-k')
+plot(tme_LB2s, yhat_LB2s, '--r')
+
+figure, hold on
+plot(tme_LB3s, normintensity_LB3s, '-k')
+plot(tme_LB3s, yhat_LB3s, '--r')
+
+tau_means = [mean(tau1, 'omitnan'), mean(tau2, 'omitnan'), mean(tau3, 'omitnan')];
+tau_std = [std(tau1, 0, 'omitnan'), std(tau2, 0, 'omitnan'), std(tau3, 0, 'omitnan')];
+
+dt1=tme_LB1s(end)-tme_LB1s(end-1);
+dt2=tme_LB2s(end)-tme_LB2s(end-1);
+dt3=tme_LB3s(end)-tme_LB3s(end-1);
+
+linearCoef1 = polyfit([repelem(dt1, length(tau1)), repelem(dt2, length(tau2)), repelem(dt3, length(tau3))],[tau1', tau2', tau3'],1);
+linearFit1= polyval(linearCoef1,[0 dt1 dt2 dt3]);
+
+figure, hold on
+scatter(repelem(dt1, length(tau1)), tau1, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(repelem(dt2, length(tau2)), tau2, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(repelem(dt3, length(tau3)), tau3, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+
+scatter([dt1, dt2, dt3], tau_means, 'MarkerFaceColor', 'black')
+errorbar(dt1, tau_means(1), tau_std(1), 'Color', 'black')
+errorbar(dt2, tau_means(2), tau_std(2), 'Color', 'black')
+errorbar(dt3, tau_means(3), tau_std(3), 'Color', 'black')
+
+plot([0 dt1 dt2 dt3], linearFit1, '--b')
+xlim([0, 0.06])
+ylabel('\tau (min^{-1})')
+xticks([0 dt1 dt2 dt3])
+xticklabels({'0', '1.2 s', '2 s', '3 s'})
+title('Tau vs Frame Rate')
+ 
 %% correct for photobleaching
 alpha=28.9210;
 [Cnew_LB, dCB_LB, dCT_LB, dCP_LB, CblExp_LB, unbFrac_LB]=photoCorrect(tme_LB, normintensity_LB, alpha);
@@ -185,7 +228,7 @@ plot(tme_LB2s, Cnew_LB2s, '-b');
 plot(tme_LB3s, Cnew_LB3s, '-g'); 
 
 %% Functions
-%to normalize experimental traces with consistent frame rates
+%to aggregate dat and normalize fluor. traces
 function [normintensity, intensity, lCell, time, tme, imstart, imend]=dataNormalize(datadir)
         
         %pre-allocate variables
@@ -208,18 +251,31 @@ function [normintensity, intensity, lCell, time, tme, imstart, imend]=dataNormal
 
         end
         
-        %find the pre-lysis frame (the max length)
-        dl=diff(lCell, 1, 2); 
-        dlvg=mean(dl, 1, 'omitnan');
-        [~, imstart] = min(dlvg);
-        imstart=imstart-1;
+        %find the initial post-lysis frame 
+        dt=round(diff(time), 2);
+        if dt(1)==dt(end)
+            dl=diff(lCell, 1, 2); 
+            dlvg=mean(dl, 1, 'omitnan');
+            [~, imstart] = min(dlvg);
+            imstart=imstart+1;
+        else
+            if dt(end)<1 %discrepancies in dt might be found in the meta data, this is the ad hoc fix
+                imstart=min(find(dt==dt(end)))+2;
+            else 
+                imstart=min(find(dt==dt(end)));
+            end
+        end
         
         %remove cells without a value for imstart
         idx=find(~isnan(intensity(:, imstart)));
         intensity=intensity(idx,:);
         
+        %remove the autofluorescence value
+        auto=150;
+        intensity=intensity-150;
+        
         %set the limit of detection ignore values below it
-        lmt=1400;
+        lmt=1350;
         adjintensity=intensity;
         adjintensity(adjintensity<=lmt)=-1; %to distinguish between true NaN values and those below the limit of detection 
         
@@ -235,79 +291,12 @@ function [normintensity, intensity, lCell, time, tme, imstart, imend]=dataNormal
         %adjust the time vector
         tme=tme(imstart:imend)-tme(imstart);
                          
-        %normalize to the initial pre-lysis frame
+        %normalize to the initial post-lysis frame
         normintensity=adjintensity(:, imstart:imend)./adjintensity(:,imstart);
         normintensity(normintensity<0)=NaN; %there are some cells that may have reached the limit of detection sooner than others
         
-        %interpolate the fluor values during detergent perfusion
-        for n=1:height(normintensity)
-            idx=find(normintensity(n,:)>1);
-            if ~isempty(idx)
-                [nrow, ncol]=size(normintensity);
-                x=setdiff(1:ncol, idx); %x=time
-                v=normintensity(n, x); %v=intensity
-                vq=interp1(x, v, idx); %vq=interpolation at query time pts
-                normintensity(n,idx)=vq;
-            end
-        end
-        
-end
-
-%to normalize control traces without consistent frame rates
-function [normintensity, intensity, lCell, time, tme, imstart, imend]=dataNormalize(datadir)
-        
-        %pre-allocate variables
-        intensity=[];
-        lCell=[];
-      
-        %go through the data for each position
-        for i=1:length(datadir)
-            
-            %load decayMeasure .mat file
-            cd(datadir(i).folder)
-            load(datadir(i).name, 'icell_intensity', 'time', 'lcell')
-
-            intensity=[intensity; icell_intensity];
-            lCell=[lCell; lcell];
-     
-            if i==1
-                tme=time; %pre-set new time vector
-            end
-
-        end
-        
-        %find the pre-lysis frame (the max length)
-        dl=diff(lCell, 1, 2); 
-        dlvg=mean(dl, 1, 'omitnan');
-        [~, imstart] = min(dlvg);
-        imstart=imstart-1;
-        
-        %remove cells without a value for imstart
-        idx=find(~isnan(intensity(:, imstart)));
-        intensity=intensity(idx,:);
-        
-        %set the limit of detection ignore values below it
-        lmt=1400;
-        adjintensity=intensity;
-        adjintensity(adjintensity<=lmt)=-1; %to distinguish between true NaN values and those below the limit of detection 
-        
-        %find the end time point (where most of the cells are below the
-        %limit of detection)
-        nsum=sum(adjintensity, 1);
-        if min(nsum) < 0
-            [~, imend]=min(nsum);
-        else
-            [~, imend]=size(adjintensity);
-        end
-            
-        %adjust the time vector
-        tme=tme(imstart:imend)-tme(imstart);
-                         
-        %normalize to the initial pre-lysis frame
-        normintensity=adjintensity(:, imstart:imend)./adjintensity(:,imstart);
-        normintensity(normintensity<0)=NaN; %there are some cells that may have reached the limit of detection sooner than others
-        
-        %interpolate the fluor values during detergent perfusion
+        %interpolate the fluor values during detergent perfusion, this
+        %should not be needed, but just in case
         for n=1:height(normintensity)
             idx=find(normintensity(n,:)>1);
             if ~isempty(idx)
@@ -344,11 +333,12 @@ function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensit
         
         %calculate dt (the dt between frames may vary in a single run).
         %Note: this is also the frame rate
-        dt=diff(tme);
+        dt=round(diff(tme), 2);
         
         %this formula comes from the slope and intercept calculated for the 1.2, 2,
         %and 3 second tau vs frame rate controls 
        dC=@(C, alpha, dt, b)(C/(alpha*dt+b))*dt;
+       %dC=@(C, alpha, dt, b)(C/(alpha*dt+b));
         
         %the correction
         for n=1:height(normintensity)
@@ -375,3 +365,17 @@ function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensit
 
 end
 
+%do not fit to y=(1-beta)*exp(-t./tau)+beta (beta=normalized limit of detection)
+%fit to y=Ae^(-t/tau)
+function [tau, yhat]=tauCalc(tme, normintensity)
+    
+    [nrow, ~]=size(normintensity);
+    tau=nan(nrow, 1);
+    modelfun = @(tau, x)exp(-x./tau);
+    for i=1:nrow
+        tau(i, 1)=nlinfit(tme, normintensity(i,:), modelfun, 1);
+    end
+    
+    yhat=modelfun(tau, tme);
+    
+end
