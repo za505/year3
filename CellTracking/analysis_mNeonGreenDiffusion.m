@@ -67,17 +67,18 @@ LB2s=dir(['12082021_Exp1' '*dm.mat']); %LB, frame rate = 2 s
 LB3s=dir(['12082021_Exp2' '*dm.mat']); %LB, frame rate = 3 s
 
 %% calculate normalized fluorescence traces
-[normintensity_LBa, intensity_LBa, lcell_LBa, time_LBa, tme_LBa, imstart_LBa, imend_LBa]=dataNormalize(LBa); %5
-[normintensity_LBb, intensity_LBb, lcell_LBb, time_LBb, tme_LBb, imstart_LBb, imend_LBb]=dataNormalize(LBb); %4
-[normintensity_LB20, intensity_LB20, lcell_LB20, time_LB20, tme_LB20, imstart_LB20, imend_LB20]=dataNormalize(LB20); %5
-[normintensity_LB5, intensity_LB5, lcell_LB5, time_LB5, tme_LB5, imstart_LB5, imend_LB5]=dataNormalize(LB5); %5
+[normintensity_LBa, adjintensity_LBa, intensity_LBa, lcell_LBa, time_LBa, tme_LBa, imstart_LBa, imend_LBa]=preNormalize(LBa); %5
+[normintensity_LBb, adjintensity_LBb, intensity_LBb, lcell_LBb, time_LBb, tme_LBb, imstart_LBb, imend_LBb]=preNormalize(LBb); %4
+[normintensity_LB20, adjintensity_LB20, intensity_LB20, lcell_LB20, time_LB20, tme_LB20, imstart_LB20, imend_LB20]=preNormalize(LB20); %5
+[normintensity_LB5, adjintensity_LB5, intensity_LB5, lcell_LB5, time_LB5, tme_LB5, imstart_LB5, imend_LB5]=preNormalize(LB5); %5
 
-[normintensity_LB1s, intensity_LB1s, lcell_LB1s, time_LB1s, tme_LB1s, imstart_LB1s, imend_LB1s]=dataNormalize(LB1s); 
-[normintensity_LB2s, intensity_LB2s, lcell_LB2s, time_LB2s, tme_LB2s, imstart_LB2s, imend_LB2s]=dataNormalize(LB2s); 
-[normintensity_LB3s, intensity_LB3s, lcell_LB3s, time_LB3s, tme_LB3s, imstart_LB3s, imend_LB3s]=dataNormalize(LB3s); 
+[normintensity_LB1s, adjintensity_LB1s, intensity_LB1s, lcell_LB1s, time_LB1s, tme_LB1s, imstart_LB1s, imend_LB1s]=postNormalize(LB1s); 
+[normintensity_LB2s, adjintensity_LB2s, intensity_LB2s, lcell_LB2s, time_LB2s, tme_LB2s, imstart_LB2s, imend_LB2s]=postNormalize(LB2s); 
+[normintensity_LB3s, adjintensity_LB3s, intensity_LB3s, lcell_LB3s, time_LB3s, tme_LB3s, imstart_LB3s, imend_LB3s]=postNormalize(LB3s); 
 
 %% combine datasets
 normintensity_LB = [normintensity_LBa(:, 1:length(tme_LBb)); normintensity_LBb];
+adjintensity_LB = [adjintensity_LBa(:, 1:length(tme_LBb)); adjintensity_LBb];
 intensity_LB = [intensity_LBa(:, 1:length(time_LBb)); intensity_LBb];
 lcell_LB = [lcell_LBa(:, 1:length(time_LBb)); lcell_LBb];
 time_LB=time_LBb;
@@ -127,6 +128,15 @@ plot(time_LB1s, intensity_LB1s, '-r');
 plot(time_LB2s, intensity_LB2s, '-b');
 plot(time_LB3s, intensity_LB3s, '-g'); 
 
+%% plot adjusted intensity traces
+figure, plot(tme_LB, adjintensity_LB, '-r');
+figure, plot(tme_LB5, adjintensity_LB5, '-r');
+figure, plot(tme_LB20, adjintensity_LB20, '-r'); 
+
+figure, hold on
+plot(tme_LB1s, adjintensity_LB1s, '-r');
+plot(tme_LB2s, adjintensity_LB2s, '-b');
+plot(tme_LB3s, adjintensity_LB3s, '-g'); 
 %% plot normalized fluorescence traces
 figure, plot(tme_LB, normintensity_LB, '-g');
 figure, plot(tme_LB5, normintensity_LB5, '-g');
@@ -195,20 +205,25 @@ xticklabels({'0', '1.2 s', '2 s', '3 s'})
 title('Tau vs Frame Rate')
  
 %% correct for photobleaching
-alpha=28.9210;
-[Cnew_LB, dCB_LB, dCT_LB, dCP_LB, CblExp_LB, unbFrac_LB]=photoCorrect(tme_LB, normintensity_LB, alpha);
-[Cnew_LB5, dCB_LB5, dCT_LB5, dCP_LB5, CblExp_LB5, unbFrac_LB5]=photoCorrect(tme_LB5, normintensity_LB5, alpha);
-[Cnew_LB20, dCB_LB20, dCT_LB20, dCP_LB20, CblExp_LB20, unbFrac_LB20]=photoCorrect(tme_LB20, normintensity_LB20, alpha);
+alpha=30.3866;
+intercept=0.2191;
 
-[Cnew_LB1s, dCB_LB1s, dCT_LB1s, dCP_LB1s, CblExp_LB1s, unbFrac_LB1s]=photoCorrect(tme_LB1s, normintensity_LB1s, alpha);
-[Cnew_LB2s, dCB_LB2s, dCT_LB2s, dCP_LB2s, CblExp_LB2s, unbFrac_LB2s]=photoCorrect(tme_LB2s, normintensity_LB2s, alpha);
-[Cnew_LB3s, dCB_LB3s, dCT_LB3s, dCP_LB3s, CblExp_LB3s, unbFrac_LB3s]=photoCorrect(tme_LB3s, normintensity_LB3s, alpha);
+% alpha=28.9210;
+% intercept=0.2482;
+
+[Cnew_LB, dCB_LB, dCT_LB, dCP_LB, CblExp_LB, unbFrac_LB]=photoCorrect(tme_LB, normintensity_LB, alpha, intercept);
+[Cnew_LB5, dCB_LB5, dCT_LB5, dCP_LB5, CblExp_LB5, unbFrac_LB5]=photoCorrect(tme_LB5, normintensity_LB5, alpha, intercept);
+[Cnew_LB20, dCB_LB20, dCT_LB20, dCP_LB20, CblExp_LB20, unbFrac_LB20]=photoCorrect(tme_LB20, normintensity_LB20, alpha, intercept);
+
+[Cnew_LB1s, dCB_LB1s, dCT_LB1s, dCP_LB1s, CblExp_LB1s, unbFrac_LB1s]=photoCorrect(tme_LB1s, normintensity_LB1s, alpha, intercept);
+[Cnew_LB2s, dCB_LB2s, dCT_LB2s, dCP_LB2s, CblExp_LB2s, unbFrac_LB2s]=photoCorrect(tme_LB2s, normintensity_LB2s, alpha, intercept);
+[Cnew_LB3s, dCB_LB3s, dCT_LB3s, dCP_LB3s, CblExp_LB3s, unbFrac_LB3s]=photoCorrect(tme_LB3s, normintensity_LB3s, alpha, intercept);
+
 
 %% plot corrected traces
 figure, plot(tme_LB, Cnew_LB, '-r');
 figure, plot(tme_LB5, Cnew_LB5, '-r');
 figure, plot(tme_LB20, Cnew_LB20, '-r'); 
-
 
 figure, hold on
 ciplot(mean(Cnew_LB, 1, 'omitnan')-std(Cnew_LB, 0, 1, 'omitnan'), mean(Cnew_LB, 1, 'omitnan')+std(Cnew_LB, 0, 1, 'omitnan'), tme_LB, colorcode2{1}, transparency)
@@ -228,8 +243,8 @@ plot(tme_LB2s, Cnew_LB2s, '-b');
 plot(tme_LB3s, Cnew_LB3s, '-g'); 
 
 %% Functions
-%to aggregate dat and normalize fluor. traces
-function [normintensity, intensity, lCell, time, tme, imstart, imend]=dataNormalize(datadir)
+%to aggregate data and normalize to the post-lysis frame
+function [normintensity, adjintensity, intensity, lCell, time, tme, imstart, imend]=postNormalize(datadir)
         
         %pre-allocate variables
         intensity=[];
@@ -270,33 +285,64 @@ function [normintensity, intensity, lCell, time, tme, imstart, imend]=dataNormal
         idx=find(~isnan(intensity(:, imstart)));
         intensity=intensity(idx,:);
         
-        %remove the autofluorescence value
-        auto=150;
-        intensity=intensity-150;
-        
-        %set the limit of detection ignore values below it
-        lmt=1350;
-        adjintensity=intensity;
-        adjintensity(adjintensity<=lmt)=-1; %to distinguish between true NaN values and those below the limit of detection 
-        
-        %find the end time point (where most of the cells are below the
-        %limit of detection)
-        nsum=sum(adjintensity, 1);
-        if min(nsum) < 0
-            [~, imend]=min(nsum);
-        else
-            [~, imend]=size(adjintensity);
-        end
+        %subtract the final fluor value
+        adjintensity=intensity(:, imstart:end)-intensity(:, end);
             
         %adjust the time vector
-        tme=tme(imstart:imend)-tme(imstart);
+        tme=tme(imstart:end)-tme(imstart);
                          
         %normalize to the initial post-lysis frame
-        normintensity=adjintensity(:, imstart:imend)./adjintensity(:,imstart);
-        normintensity(normintensity<0)=NaN; %there are some cells that may have reached the limit of detection sooner than others
+        normintensity=adjintensity./adjintensity(:,1);
+        normintensity(normintensity<0)=NaN; 
+               
+        %find when the plateau starts
+        imend=min(find(mean(adjintensity, 1, 'omitnan')<1));
         
-        %interpolate the fluor values during detergent perfusion, this
-        %should not be needed, but just in case
+end
+
+%to aggregate data and normalize to the pre-lysis frame
+function [normintensity, adjintensity, intensity, lCell, time, tme, imstart, imend]=preNormalize(datadir)
+        
+        %pre-allocate variables
+        intensity=[];
+        lCell=[];
+      
+        %go through the data for each position
+        for i=1:length(datadir)
+            
+            %load decayMeasure .mat file
+            cd(datadir(i).folder)
+            load(datadir(i).name, 'icell_intensity', 'time', 'lcell')
+
+            intensity=[intensity; icell_intensity];
+            lCell=[lCell; lcell];
+     
+            if i==1
+                tme=time; %pre-set new time vector
+            end
+
+        end
+        
+        %find the final pre-lysis frame 
+        dl=diff(lCell, 1, 2);
+        lvg=mean(dl, 1, 'omitnan');
+        [~, imstart]=min(lvg);
+        
+        %remove cells without a value for imstart
+        idx=find(~isnan(intensity(:, imstart)));
+        intensity=intensity(idx,:);
+        
+        %subtract the final fluor. value
+        adjintensity=intensity(:, imstart:end)-intensity(:, end);
+                     
+        %adjust the time vector
+        tme=tme(imstart:end)-tme(imstart);
+                         
+        %normalize to the initial post-lysis frame
+        normintensity=adjintensity./adjintensity(:,1);
+        normintensity(normintensity<0)=NaN; 
+        
+        %interpolate the fluor values during detergent perfusion
         for n=1:height(normintensity)
             idx=find(normintensity(n,:)>1);
             if ~isempty(idx)
@@ -308,10 +354,12 @@ function [normintensity, intensity, lCell, time, tme, imstart, imend]=dataNormal
             end
         end
         
+        %find when the plateau starts
+        imend=min(find(mean(adjintensity, 1, 'omitnan')<1));
 end
 
 %to correct for photobleaching
-function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha)
+function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha, intercept)
         
         %pre-allocate variables
         %assume that the initial 'measured' fluorescence values and corrected
@@ -338,14 +386,14 @@ function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensit
         %this formula comes from the slope and intercept calculated for the 1.2, 2,
         %and 3 second tau vs frame rate controls 
        dC=@(C, alpha, dt, b)(C/(alpha*dt+b))*dt;
-       %dC=@(C, alpha, dt, b)(C/(alpha*dt+b));
+       %dC=@(C, alpha, intercept, dt, b)(C/(alpha*dt+b));
         
         %the correction
         for n=1:height(normintensity)
            
             for i=1:length(tme)-1
                 
-                dCB(n,i) = dC(normintensity(n,i), alpha, dt(i), 0.2482); %this is the amount of photobleaching that occured in our measured value
+                dCB(n,i) = dC(normintensity(n,i), alpha, dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
 
                 dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
 
