@@ -1,5 +1,5 @@
 %Author: Zarina Akbary
-%Date: 02/09/2022
+%Date: 02/10/2022
 %Purpose: To combine and analyze decayMeasure (dm.mat) data from mNeonGreen diffusion
 %experiments. 
 
@@ -12,10 +12,21 @@ clear, close all
 %Outputs
 %intensity = cell x time matrix of raw intensity values; concatenated
 %icell_intensity variable from dm.mat files
+
 %time = 1 x time matrix of time (minutes) values that correspond to
 %intensity traces
 
+%bgintensity = m x time matrix of background intensity values; concatenated
+%bg_intensity variable from dm.mat files
 
+%tme = 1 x n matrix of time (minutes) values that correspond to
+%the pre- or post-lysis time point (imstart) and imend
+
+%adjintensity = cell x tme maxtrix of intensity values minus bg intensity
+%values from imstart to imend
+
+%normintensity = cell x tme matrix of adjintensity values normalized to the
+%initial value
 
 %% User Input 
 
@@ -29,47 +40,50 @@ colorcode2=cellfun(@(x)(x./255), colorcode2, 'UniformOutput', false);
 transparency = 0.3; %this is the alpha argument for the ciplot function
 
 %location of the dm.mat files 
-dirsave='/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/02072022_analysis';
-cd([dirsave '/MatFiles'])
+dirsave='/Users/zarina/Downloads/NYU/Year3_2022_Spring/02102022_reanalysis';
+cd(dirsave)
 
-LBa=dir(['10232021_Exp1' '*dm.mat']); %LB, fr = 1 min, rep 1
-LBb=dir(['10262021_Exp1' '*dm.mat']); %LB, fr = 1 min, rep 2
-LB20=dir(['02042022_Exp1' '*dm.mat']); %LB, fr = 20 min
-LB5=dir(['02052022_Exp1' '*dm.mat']); %LB, fr = 5 min
+LB1a=dir(['10232021_Exp1' '*dm.mat']); %LB, fr = 1 min, rep 1, full priming
+LB1b=dir(['10262021_Exp1' '*dm.mat']); %LB, fr = 1 min, rep 2, full priming
+LB1c=dir(['02092022_Exp1' '*dm.mat']); %LB, fr = 1 min, rep 2, short priming
+LB20a=dir(['02082022_Exp1' '*dm.mat']); %LB, fr = 20 min, full priming
+LB20b=dir(['02042022_Exp1' '*dm.mat']); %LB, fr = 20 min, short priming
 
 LB1s=dir(['11202021_Exp1' '*dm.mat']); %LB, frame rate = 1.2 s
 LB2s=dir(['12082021_Exp1' '*dm.mat']); %LB, frame rate = 2 s
 LB3s=dir(['12082021_Exp2' '*dm.mat']); %LB, frame rate = 3 s
 
 %% calculate normalized fluorescence traces
-[normintensity_LBa, adjintensity_LBa, intensity_LBa, lcell_LBa, time_LBa, tme_LBa, imstart_LBa, imend_LBa]=preNormalize(LBa); %5
-[normintensity_LBb, adjintensity_LBb, intensity_LBb, lcell_LBb, time_LBb, tme_LBb, imstart_LBb, imend_LBb]=preNormalize(LBb); %4
-[normintensity_LB20, adjintensity_LB20, intensity_LB20, lcell_LB20, time_LB20, tme_LB20, imstart_LB20, imend_LB20]=preNormalize(LB20); %5
-[normintensity_LB5, adjintensity_LB5, intensity_LB5, lcell_LB5, time_LB5, tme_LB5, imstart_LB5, imend_LB5]=preNormalize(LB5); %5
-
-[normintensity_LB1s, adjintensity_LB1s, intensity_LB1s, lcell_LB1s, time_LB1s, tme_LB1s, imstart_LB1s, imend_LB1s]=postNormalize(LB1s); 
-[normintensity_LB2s, adjintensity_LB2s, intensity_LB2s, lcell_LB2s, time_LB2s, tme_LB2s, imstart_LB2s, imend_LB2s]=postNormalize(LB2s); 
-[normintensity_LB3s, adjintensity_LB3s, intensity_LB3s, lcell_LB3s, time_LB3s, tme_LB3s, imstart_LB3s, imend_LB3s]=postNormalize(LB3s); 
+[intensity_LB1a, bgintensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lcell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize1(LB1a, 1); %5
+[intensity_LB1b, bgintensity_LB1b, adjintensity_LB1b, normintensity_LB1b, lcell_LB1b, time_LB1b, tme_LB1b, imstart_LB1b]=dataNormalize1(LB1b, 1); %4
+% [intensity_LB1a, bgintensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lCell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize1(LB1c, 1); %5
+% [intensity_LB1a, bgintensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lCell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize1(LB20a, 1); %5
+% [intensity_LB1a, bgintensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lCell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize1(LB20b, 1); %5
+% 
+% [intensity_LB1a, bgintensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lCell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize1(LB1s, 2); 
+% [intensity_LB1a, bgintensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lCell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize1(LB2s, 2); 
+% [intensity_LB1a, bgintensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lCell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize1(LB3s, 2); 
 
 %% combine datasets
-normintensity_LB = [normintensity_LBa(:, 1:length(tme_LBb)); normintensity_LBb];
-adjintensity_LB = [adjintensity_LBa(:, 1:length(tme_LBb)); adjintensity_LBb];
-intensity_LB = [intensity_LBa(:, 1:length(time_LBb)); intensity_LBb];
-lcell_LB = [lcell_LBa(:, 1:length(time_LBb)); lcell_LBb];
-time_LB=time_LBb;
-tme_LB=tme_LBb;
+normintensity_LB = [normintensity_LB1a(:, 1:length(tme_LB1b)); normintensity_LB1b];
+adjintensity_LB = [adjintensity_LB1a(:, 1:length(time_LB1b)); adjintensity_LB1b];
+bgintensity_LB = [bgintensity_LB1a(:, 1:length(time_LB1b)); bgintensity_LB1b];
+intensity_LB = [intensity_LB1a(:, 1:length(time_LB1b)); intensity_LB1b];
+lcell_LB = [lcell_LB1a(:, 1:length(time_LB1b)); lcell_LB1b];
+time_LB=time_LB1b;
+tme_LB=tme_LB1b;
 
 %% plot length traces
 figure, plot(time_LB, lcell_LB, '-b');
-figure, plot(time_LB5, lcell_LB5, '-b');
+figure, plot(time_LB1c, lcell_LB1c, '-b');
 figure, plot(time_LB20, lcell_LB20, '-b'); 
 
 figure, hold on
 ciplot(mean(lcell_LB, 1, 'omitnan')-std(lcell_LB, 0, 1, 'omitnan'), mean(lcell_LB, 1, 'omitnan')+std(lcell_LB, 0, 1, 'omitnan'), time_LB, colorcode2{1}, transparency)
 plot(time_LB, mean(lcell_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
 
-ciplot(mean(lcell_LB5, 1, 'omitnan')-std(lcell_LB5, 0, 1, 'omitnan'), mean(lcell_LB5, 1, 'omitnan')+std(lcell_LB5, 0, 1, 'omitnan'), time_LB5, colorcode2{5}, transparency)
-plot(time_LB5, mean(lcell_LB5, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
+ciplot(mean(lcell_LB1c, 1, 'omitnan')-std(lcell_LB1c, 0, 1, 'omitnan'), mean(lcell_LB1c, 1, 'omitnan')+std(lcell_LB1c, 0, 1, 'omitnan'), time_LB1c, colorcode2{5}, transparency)
+plot(time_LB1c, mean(lcell_LB1c, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
 
 ciplot(mean(lcell_LB20, 1, 'omitnan')-std(lcell_LB20, 0, 1, 'omitnan'), mean(lcell_LB20, 1, 'omitnan')+std(lcell_LB20, 0, 1, 'omitnan'), time_LB20, colorcode2{3}, transparency)
 plot(time_LB20, mean(lcell_LB20, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
@@ -82,16 +96,16 @@ plot(time_LB2s, lcell_LB2s, '-b');
 plot(time_LB3s, lcell_LB3s, '-g'); 
 
 %% plot the raw fluorescence intensity
-figure, plot(time_LB, intensity_LB, '-b');
-figure, plot(time_LB5, intensity_LB5, '-b');
+figure, hold on, plot(time_LB, intensity_LB, '-b'), plot(time_LB, bgintensity_LB, '--k');
+figure, plot(time_LB1c, intensity_LB1c, '-b');
 figure, plot(time_LB20, intensity_LB20, '-b'); 
 
 figure, hold on
 ciplot(mean(intensity_LB, 1, 'omitnan')-std(intensity_LB, 0, 1, 'omitnan'), mean(intensity_LB, 1, 'omitnan')+std(intensity_LB, 0, 1, 'omitnan'), time_LB, colorcode2{1}, transparency)
 plot(time_LB, mean(intensity_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
 
-ciplot(mean(intensity_LB5, 1, 'omitnan')-std(intensity_LB5, 0, 1, 'omitnan'), mean(intensity_LB5, 1, 'omitnan')+std(intensity_LB5, 0, 1, 'omitnan'), time_LB5, colorcode2{5}, transparency)
-plot(time_LB5, mean(intensity_LB5, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
+ciplot(mean(intensity_LB1c, 1, 'omitnan')-std(intensity_LB1c, 0, 1, 'omitnan'), mean(intensity_LB1c, 1, 'omitnan')+std(intensity_LB1c, 0, 1, 'omitnan'), time_LB1c, colorcode2{5}, transparency)
+plot(time_LB1c, mean(intensity_LB1c, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
 
 ciplot(mean(intensity_LB20, 1, 'omitnan')-std(intensity_LB20, 0, 1, 'omitnan'), mean(intensity_LB20, 1, 'omitnan')+std(intensity_LB20, 0, 1, 'omitnan'), time_LB20, colorcode2{3}, transparency)
 plot(time_LB20, mean(intensity_LB20, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
@@ -104,8 +118,8 @@ plot(time_LB2s, intensity_LB2s, '-b');
 plot(time_LB3s, intensity_LB3s, '-g'); 
 
 %% plot adjusted intensity traces
-figure, plot(tme_LB, adjintensity_LB, '-r');
-figure, plot(tme_LB5, adjintensity_LB5, '-r');
+figure, plot(time_LB, adjintensity_LB, '-r');
+figure, plot(tme_LB1c, adjintensity_LB1c, '-r');
 figure, plot(tme_LB20, adjintensity_LB20, '-r'); 
 
 figure, hold on
@@ -115,15 +129,15 @@ plot(tme_LB3s, adjintensity_LB3s, '-g');
 
 %% plot normalized fluorescence traces
 figure, plot(tme_LB, normintensity_LB, '-g');
-figure, plot(tme_LB5, normintensity_LB5, '-g');
+figure, plot(tme_LB1c, normintensity_LB1c, '-g');
 figure, plot(tme_LB20, normintensity_LB20, '-g'); 
 
 figure, hold on
 ciplot(mean(normintensity_LB, 1, 'omitnan')-std(normintensity_LB, 0, 1, 'omitnan'), mean(normintensity_LB, 1, 'omitnan')+std(normintensity_LB, 0, 1, 'omitnan'), tme_LB, colorcode2{1}, transparency)
 plot(tme_LB, mean(normintensity_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
 
-ciplot(mean(normintensity_LB5, 1, 'omitnan')-std(normintensity_LB5, 0, 1, 'omitnan'), mean(normintensity_LB5, 1, 'omitnan')+std(normintensity_LB5, 0, 1, 'omitnan'), tme_LB5, colorcode2{5}, transparency)
-plot(tme_LB5, mean(normintensity_LB5, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
+ciplot(mean(normintensity_LB1c, 1, 'omitnan')-std(normintensity_LB1c, 0, 1, 'omitnan'), mean(normintensity_LB1c, 1, 'omitnan')+std(normintensity_LB1c, 0, 1, 'omitnan'), tme_LB1c, colorcode2{5}, transparency)
+plot(tme_LB1c, mean(normintensity_LB1c, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
 
 ciplot(mean(normintensity_LB20, 1, 'omitnan')-std(normintensity_LB20, 0, 1, 'omitnan'), mean(normintensity_LB20, 1, 'omitnan')+std(normintensity_LB20, 0, 1, 'omitnan'), tme_LB20, colorcode2{3}, transparency)
 plot(tme_LB20, mean(normintensity_LB20, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
@@ -191,7 +205,7 @@ alpha=39.1226;
 intercept=-0.0827;
 
 [Cnew_LB, dCB_LB, dCT_LB, dCP_LB, CblExp_LB, unbFrac_LB]=photoCorrect(tme_LB, normintensity_LB, alpha, intercept);
-[Cnew_LB5, dCB_LB5, dCT_LB5, dCP_LB5, CblExp_LB5, unbFrac_LB5]=photoCorrect(tme_LB5, normintensity_LB5, alpha, intercept);
+[Cnew_LB1c, dCB_LB1c, dCT_LB1c, dCP_LB1c, CblExp_LB1c, unbFrac_LB1c]=photoCorrect(tme_LB1c, normintensity_LB1c, alpha, intercept);
 [Cnew_LB20, dCB_LB20, dCT_LB20, dCP_LB20, CblExp_LB20, unbFrac_LB20]=photoCorrect(tme_LB20, normintensity_LB20, alpha, intercept);
 
 [Cnew_LB1s, dCB_LB1s, dCT_LB1s, dCP_LB1s, CblExp_LB1s, unbFrac_LB1s]=photoCorrect(tme_LB1s, normintensity_LB1s, alpha, intercept);
@@ -200,15 +214,15 @@ intercept=-0.0827;
 
 %% plot corrected traces
 figure, plot(tme_LB, Cnew_LB, '-r');
-figure, plot(tme_LB5, Cnew_LB5, '-r');
+figure, plot(tme_LB1c, Cnew_LB1c, '-r');
 figure, plot(tme_LB20, Cnew_LB20, '-r'); 
 
 figure, hold on
 ciplot(mean(Cnew_LB, 1, 'omitnan')-std(Cnew_LB, 0, 1, 'omitnan'), mean(Cnew_LB, 1, 'omitnan')+std(Cnew_LB, 0, 1, 'omitnan'), tme_LB, colorcode2{1}, transparency)
 plot(tme_LB, mean(Cnew_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
 
-ciplot(mean(Cnew_LB5, 1, 'omitnan')-std(Cnew_LB5, 0, 1, 'omitnan'), mean(Cnew_LB5, 1, 'omitnan')+std(Cnew_LB5, 0, 1, 'omitnan'), tme_LB5, colorcode2{5}, transparency)
-plot(tme_LB5, mean(Cnew_LB5, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
+ciplot(mean(Cnew_LB1c, 1, 'omitnan')-std(Cnew_LB1c, 0, 1, 'omitnan'), mean(Cnew_LB1c, 1, 'omitnan')+std(Cnew_LB1c, 0, 1, 'omitnan'), tme_LB1c, colorcode2{5}, transparency)
+plot(tme_LB1c, mean(Cnew_LB1c, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
 
 ciplot(mean(Cnew_LB20, 1, 'omitnan')-std(Cnew_LB20, 0, 1, 'omitnan'), mean(Cnew_LB20, 1, 'omitnan')+std(Cnew_LB20, 0, 1, 'omitnan'), tme_LB20, colorcode2{3}, transparency)
 plot(tme_LB20, mean(Cnew_LB20, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
@@ -221,77 +235,91 @@ plot(tme_LB2s, Cnew_LB2s, '-b');
 plot(tme_LB3s, Cnew_LB3s, '-g'); 
 
 %% Functions
-%to aggregate data and normalize to the post-lysis frame
-function [normintensity, adjintensity, intensity, lCell, time, tme, imstart, imend]=postNormalize(datadir)
+%to aggregate data, subtract background, and normalize
+function [intensity, bgintensity, adjintensity, normintensity, lCell, time, tme, imstart]=dataNormalize1(datadir, set)
+        
+        %set 1=pre-lysis
+        %set 2=post-lysis 
         
         %pre-allocate variables
         intensity=[];
         lCell=[];
-      
+        bgintensity=[];
+        adjintensity=[];
+        
         %go through the data for each position
         for i=1:length(datadir)
             
             %load decayMeasure .mat file
             cd(datadir(i).folder)
             load(datadir(i).name, 'icell_intensity', 'bg_intensity', 'time', 'lcell')
-
+            
+            adj_intensity=icell_intensity-bg_intensity;
+            adjintensity=[adjintensity; adj_intensity];
             intensity=[intensity; icell_intensity];
             lCell=[lCell; lcell];
-     
+            bgintensity=[bgintensity; bg_intensity];
+            
             if i==1
                 tme=time; %pre-set new time vector
             end
 
         end
         
-        %find the initial post-lysis frame 
-        dt=round(diff(time), 2);
-        if dt(1)==dt(end)
-            dl=diff(lCell, 1, 2); 
-            dlvg=mean(dl, 1, 'omitnan');
-            [~, imstart] = min(dlvg);
-            imstart=imstart+1;
+        if set==1
+            %find the final pre-lysis frame 
+            dl=diff(lCell, 1, 2);
+            lvg=mean(dl, 1, 'omitnan');
+            [~, imstart]=min(lvg);
         else
-            if dt(end)<1 %discrepancies in dt might be found in the meta data, this is the ad hoc fix
-                imstart=min(find(dt==dt(end)))+2;
-            else 
-                imstart=min(find(dt==dt(end)));
+            %find the initial post-lysis frame 
+            dt=round(diff(time), 2);
+            if dt(1)==dt(end)
+                dl=diff(lCell, 1, 2); 
+                dlvg=mean(dl, 1, 'omitnan');
+                [~, imstart] = min(dlvg);
+                imstart=imstart+2;
+            else
+                if dt(end)<1 %discrepancies in dt might be found in the meta data, this is the ad hoc fix
+                    imstart=min(find(dt==dt(end)))+2;
+                else 
+                    imstart=min(find(dt==dt(end)));
+                end
             end
         end
         
         %remove cells without a value for imstart
         idx=find(~isnan(intensity(:, imstart)));
         intensity=intensity(idx,:);
-        
-        %subtract the final fluor value
-        adjintensity=intensity-bg_intensity;
+        adjintensity=adjintensity(idx, :);
+        lCell=lCell(idx,:);
             
         %set the limit of detection at 200 AU
-        adjintensity(adjintensity<200)=NaN;
+        %adjintensity(adjintensity<200)=NaN;
         %adjintensity(adjintensity<0)=NaN;
 
         %find when all values are below the limit of detection
-        [nrow, ncol]=size(adjintensity);
-        nsum=sum(isnan(adjintensity), 1);
-        if max(find(nsum==0))>1
-            imend=max(find(nsum==0));
-        else 
-            imend=ncol;
-        end
+%         [nrow, ncol]=size(adjintensity);
+%         nsum=sum(isnan(adjintensity), 1);
+%         if max(find(nsum==0))>1
+%             imend=max(find(nsum==0));
+%         else 
+%             imend=ncol;
+%         end
         
-        %adjust the time points in the fluor matrix
-        adjintensity=adjintensity(:, imstart:imend);
+%         %adjust the time points in the fluor matrix
+%         adjintensity=adjintensity(:, imstart:imend);
 
         %adjust the time vector
-        tme=tme(imstart:imend)-tme(imstart);
+        tme=tme(imstart:end)-tme(imstart);
                          
         %normalize to the initial post-lysis frame
-        normintensity=adjintensity./adjintensity(:,1);              
+        normintensity=adjintensity(:, imstart:end)./adjintensity(:,1);              
         
 end
 
 %to aggregate data and normalize to the pre-lysis frame
-function [normintensity, adjintensity, intensity, lCell, time, tme, imstart, imend]=preNormalize(datadir)
+function [normintensity, adjintensity, intensity, lCell, time, tme, imstart, imend]=dataNormalize2(datadir)
         
         %pre-allocate variables
         intensity=[];
