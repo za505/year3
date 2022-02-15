@@ -64,19 +64,31 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='02122022_Exp3';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02122022_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02122022_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+basename='10232021_Exp1';%Name of the image stack, used to save file.
+multiExp=1;
+multiScale=0;
+
+if multiExp==1
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+else
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+end
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-multiScale=1;
-%tscale=60;
-tscale1=60;
-tscale2=60*10;
-tpoint1=[0:tscale1:7*60]; 
-tpoint2=[7*60+tscale2:tscale2:140*60];
+    
+if multiScale==0
+    tscale=60;
+elseif multiScale==1
+    tscale1=60;
+    tscale2=60*10;
+    tpoint1=[0:tscale1:7*60]; 
+    tpoint2=[7*60+tscale2:tscale2:140*60];
+end
+
 thresh=0;%For default, enter zero.
-IntThresh=5000;%Threshold used to enhance contrast. Default:35000
+IntThresh=4000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=3;%Parameter used in edge detection, default=2
 minL=2;%Minimum cell length
@@ -325,42 +337,49 @@ for t=1:T
     end
 end
 
+%set up time vector
+if multiScale==0
+    time=[0:T-1]*tscale;
+ elseif multiScale==1
+    time=[tpoint1, tpoint2];
+    time=tpoints(1,1:T);
+end
 
 %Extract timepoints from metadata if it exists
-if exist('metaname')==1
-    if exist(metaname)==2
-        %Extract timepoints from metadata
-        tpoints=metadata(metaname);
-        
-        %Fix bug where micromanager screws up its timing
-        dtime=diff(tpoints(1,:));
-        fdt=find(dtime>2*(dtime(1)));
-        if isempty(fdt)~=1
-            fdt=fdt(1);
-            tpoints(:,fdt+1:end)=tpoints(:,fdt+1:end)-tpoints(1,fdt+1)+tpoints(1,fdt)+(tpoints(1,fdt)-tpoints(1,fdt-1));
-        end
-    else
-        tpoints=[0:T-1]*tscale;
-    end
-else
-    if multiScale==0
-        tpoints=[0:T-1]*tscale;
-     elseif multiScale==1
-        tpoints=[tpoint1, tpoint2];
-    end
-end
+% if exist('metaname')==1
+%     if exist(metaname)==2
+%         %Extract timepoints from metadata
+%         tpoints=metadata(metaname);
+%         
+%         %Fix bug where micromanager screws up its timing
+%         dtime=diff(tpoints(1,:));
+%         fdt=find(dtime>2*(dtime(1)));
+%         if isempty(fdt)~=1
+%             fdt=fdt(1);
+%             tpoints(:,fdt+1:end)=tpoints(:,fdt+1:end)-tpoints(1,fdt+1)+tpoints(1,fdt)+(tpoints(1,fdt)-tpoints(1,fdt-1));
+%         end
+%     else
+%         tpoints=[0:T-1]*tscale;
+%     end
+% else
+%     if multiScale==0
+%         time=[0:T-1]*tscale;
+%      elseif multiScale==1
+%         time=[tpoint1, tpoint2];
+%     end
+% end
 
-time=tpoints(1,1:T);
-time2=tpoints(end,1:T);
+%time=tpoints(1,1:T);
+%time2=tpoints(end,1:T);
 
 %Fix bug where micromanager screws up its timing
-dtime=diff(time);
-fdt=find(dtime>2*(dtime(1)));
-if isempty(fdt)~=1
-    fdt=fdt(1);
-    time(fdt+1:end)=time(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
-    time2(fdt+1:end)=time2(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
-end
+% dtime=diff(time);
+% fdt=find(dtime>2*(dtime(1)));
+% if isempty(fdt)~=1
+%     fdt=fdt(1);
+%     time(fdt+1:end)=time(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
+%     time2(fdt+1:end)=time2(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
+% end
 
 %Track cells frame to frame
 tracks=zeros(size(im));
@@ -505,10 +524,10 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_BTlab'],'labels','labels2','-v7.3')
+save([basename '_colony1_BTlab'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_BT'])
+save([basename '_colony1_BT'])
 end
 
 %% Troubleshooting
@@ -535,21 +554,24 @@ end
 %% Plot data
 cd(savedir);
 
+%lcell2=lcell;
+
 figure(1), title('Cell Length vs. Time')
 clf
 hold on
 for i=1:ncells  
-    lcell(i,:)=movingaverage(lcell(i,:),3);
+    %lcell2(i,:)=movingaverage(lcell(i,:),3);
     %indx=isnan(lcell(i,:))~=1;
     %indx=find(indx);
     %plot(time(indx),lcell(i,indx))
+    %plot(time./60,lcell2(i,:)) 
     plot(time./60,lcell(i,:)) 
 end
 xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_lTraces.png'])
-saveas(gcf,[basename,'_lTraces.fig'])
+saveas(gcf,[basename,'_colony1_lTraces.png'])
+saveas(gcf,[basename,'_colony1_lTraces.fig'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
@@ -570,13 +592,14 @@ saveas(gcf,[basename,'_lTraces.fig'])
 figure(5), title('Elongation Rate vs. Time')
 hold on
 for i=1:ncells
-    plot(tmid,v(i,:))
+    plot(tmid./60,v(i,:))
 end
-plot(tmid,vav,'-r')
-xlabel('Time (s)')
+plot(tmid./60,vav,'-r')
+xlabel('Time (min)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_eTraces.png'])
+saveas(gcf, [basename,'_colony1_eTraces.png'])
+saveas(gcf, [basename,'_colony1_eTraces.fig'])
 %  
 % figure(6), title('Elongation Rate vs. Time')
 % hold on
