@@ -46,6 +46,7 @@ cd([dirsave '/MatFiles'])
 LB1a=dir(['10232021_Exp1' '*dm.mat']); %LB, fr = 1 min, rep 1
 LB1b=dir(['10262021_Exp1' '*dm.mat']); %LB, fr = 1 min, rep 2
 LB5a=dir(['02122022_Exp1' '*dm.mat']); %LB, fr = 5 min
+LB10a=dir(['02122022_Exp2' '*dm.mat']); %LB, fr = 10 min
 LB20a=dir(['02092022_Exp1' '*dm.mat']); %LB, fr = 20 min
 
 PBS2a=dir(['11192021_Exp2' '*dm.mat']); %PBS 2 min, rep 1
@@ -54,39 +55,58 @@ PBS20a=dir(['11192021_Exp1' '*dm.mat']); %PBS 20 min, rep 1
 PBS20b=dir(['11302021_Exp1' '*dm.mat']); %PBS 20 min, rep 2
 PBS60a=dir(['10232021_Exp2' '*dm.mat']); %PBS 60 min, rep 1
 PBS60b=dir(['10262021_Exp2' '*dm.mat']); %PBS 60 min, rep 2
-PBS120a=dir(['01142022_Exp1' '*dm.mat']); %PBS 120 min
+PBS120a=dir(['01142022_Exp1' '*dm.mat']); %PBS 120 min, based on WT not BT
 
 LBMga=dir(['01172022_Exp1' '*dm.mat']); %LB, 20 mM Mg2+
 LBEa=dir(['01172022_Exp2' '*dm.mat']); %LB, 10 mM EDTA
 LBtuna=dir(['01242022_Exp1' '*dm.mat']); %LB, 0.5 ug/mL tunicamycin
 LBvana=dir(['01262022_Exp1' '*dm.mat']); %LB, 1 ug/mL vancomycin
+LBspnt=dir(['02122022_Exp3' '*dm.mat']); %LB, spent media
 
 LB1s=dir(['11202021_Exp1' '*dm.mat']); %LB, frame rate = 1.2 s
 LB2s=dir(['12082021_Exp1' '*dm.mat']); %LB, frame rate = 2 s
 LB3s=dir(['12082021_Exp2' '*dm.mat']); %LB, frame rate = 3 s
 
+i100_1s=dir(['02052022_Exp2_i100_fr001_dm.mat']); %LB, frame rate = 1.2 s
+i100_2s=dir(['02052022_Exp2_i100_fr002_dm.mat']); %LB, frame rate = 2 s
+i100_3s=dir(['02052022_Exp2_i100_fr003_dm.mat']); %LB, frame rate = 3 s
+
+i050_1s=dir(['02052022_Exp2_i050_fr001_dm.mat']); %LB, frame rate = 1.2 s
+i050_2s=dir(['02052022_Exp2_i050_fr002_dm.mat']); %LB, frame rate = 2 s
+i050_3s=dir(['02052022_Exp2_i050_fr003_dm.mat']); %LB, frame rate = 3 s
+
 %% calculate normalized fluorescence traces
-[intensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lcell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize(LB1a, 6); 
-[intensity_LB1b, adjintensity_LB1b, normintensity_LB1b, lcell_LB1b, time_LB1b, tme_LB1b, imstart_LB1b]=dataNormalize(LB1b, 5); 
-[intensity_LB5a, adjintensity_LB5a, normintensity_LB5a, lcell_LB5a, time_LB5a, tme_LB5a, imstart_LB5a]=dataNormalize(LB5a, 5); 
-[intensity_LB20a, adjintensity_LB20a, normintensity_LB20a, lcell_LB20a, time_LB20a, tme_LB20a, imstart_LB20a]=dataNormalize(LB20a, 6); 
+[intensity_LB1a, adjintensity_LB1a, normintensity_LB1a, lcell_LB1a, time_LB1a, tme_LB1a, imstart_LB1a]=dataNormalize(LB1a, 6); %02/15/2022, correct imstart
+[intensity_LB1b, adjintensity_LB1b, normintensity_LB1b, lcell_LB1b, time_LB1b, tme_LB1b, imstart_LB1b]=dataNormalize(LB1b, 5); %02/15/2022, correct imstart
+[intensity_LB5a, adjintensity_LB5a, normintensity_LB5a, lcell_LB5a, time_LB5a, tme_LB5a, imstart_LB5a]=dataNormalize(LB5a, 6); %02/15/2022, correct imstart
+[intensity_LB10a, adjintensity_LB10a, normintensity_LB10a, lcell_LB10a, time_LB10a, tme_LB10a, imstart_LB10a]=dataNormalize(LB10a, 6); %02/15/2022, correct imstart
+[intensity_LB20a, adjintensity_LB20a, normintensity_LB20a, lcell_LB20a, time_LB20a, tme_LB20a, imstart_LB20a]=dataNormalize(LB20a, 6); %02/15/2022, correct imstart
 
-[intensity_PBS2a, adjintensity_PBS2a, normintensity_PBS2a, lcell_PBS2a, time_PBS2a, tme_PBS2a, imstart_PBS2a]=dataNormalize(PBS2a, 10); 
-[intensity_PBS2b, adjintensity_PBS2b, normintensity_PBS2b, lcell_PBS2b, time_PBS2b, tme_PBS2b, imstart_PBS2b]=dataNormalize(PBS2b, 10); 
-[intensity_PBS20a, adjintensity_PBS20a, normintensity_PBS20a, lcell_PBS20a, time_PBS20a, tme_PBS20a, imstart_PBS20a]=dataNormalize(PBS20a, 4); 
-[intensity_PBS20b, adjintensity_PBS20b, normintensity_PBS20b, lcell_PBS20b, time_PBS20b, tme_PBS20b, imstart_PBS20b]=dataNormalize(PBS20b, 4); 
-[intensity_PBS60a, adjintensity_PBS60a, normintensity_PBS60a, lcell_PBS60a, time_PBS60a, tme_PBS60a, imstart_PBS60a]=dataNormalize(PBS60a, 3); 
-[intensity_PBS60b, adjintensity_PBS60b, normintensity_PBS60b, lcell_PBS60b, time_PBS60b, tme_PBS60b, imstart_PBS60b]=dataNormalize(PBS60b, 5); 
-[intensity_PBS120a, adjintensity_PBS120a, normintensity_PBS120a, lcell_PBS120a, time_PBS120a, tme_PBS120a, imstart_PBS120a]=dataNormalize(PBS120a, 9); 
+[intensity_PBS2a, adjintensity_PBS2a, normintensity_PBS2a, lcell_PBS2a, time_PBS2a, tme_PBS2a, imstart_PBS2a]=dataNormalize(PBS2a, 10); %02/15/2022, correct imstart
+[intensity_PBS2b, adjintensity_PBS2b, normintensity_PBS2b, lcell_PBS2b, time_PBS2b, tme_PBS2b, imstart_PBS2b]=dataNormalize(PBS2b, 10); %02/15/2022, correct imstart
+[intensity_PBS20a, adjintensity_PBS20a, normintensity_PBS20a, lcell_PBS20a, time_PBS20a, tme_PBS20a, imstart_PBS20a]=dataNormalize(PBS20a, 4); %02/15/2022, correct imstart
+[intensity_PBS20b, adjintensity_PBS20b, normintensity_PBS20b, lcell_PBS20b, time_PBS20b, tme_PBS20b, imstart_PBS20b]=dataNormalize(PBS20b, 4); %02/15/2022, correct imstart
+[intensity_PBS60a, adjintensity_PBS60a, normintensity_PBS60a, lcell_PBS60a, time_PBS60a, tme_PBS60a, imstart_PBS60a]=dataNormalize(PBS60a, 3); %02/15/2022, correct imstart
+[intensity_PBS60b, adjintensity_PBS60b, normintensity_PBS60b, lcell_PBS60b, time_PBS60b, tme_PBS60b, imstart_PBS60b]=dataNormalize(PBS60b, 5); %02/15/2022, correct imstart
+[intensity_PBS120a, adjintensity_PBS120a, normintensity_PBS120a, lcell_PBS120a, time_PBS120a, tme_PBS120a, imstart_PBS120a]=dataNormalize(PBS120a, 4); %02/15/2022, correct imstart
 
-[intensity_LBMga, adjintensity_LBMga, normintensity_LBMga, lcell_LBMga, time_LBMga, tme_LBMga, imstart_LBMga]=dataNormalize(LBMga, 6); 
+[intensity_LBMga, adjintensity_LBMga, normintensity_LBMga, lcell_LBMga, time_LBMga, tme_LBMga, imstart_LBMga]=dataNormalize(LBMga, 6);  %02/15/2022, correct imstart
 [intensity_LBEa, adjintensity_LBEa, normintensity_LBEa, lcell_LBEa, time_LBEa, tme_LBEa, imstart_LBEa]=dataNormalize(LBEa, 6); 
 [intensity_LBtuna, adjintensity_LBtuna, normintensity_LBtuna, lcell_LBtuna, time_LBtuna, tme_LBtuna, imstart_LBtuna]=dataNormalize(LBtuna, 3); 
 [intensity_LBvana, adjintensity_LBvana, normintensity_LBvana, lcell_LBvana, time_LBvana, tme_LBvana, imstart_LBvana]=dataNormalize(LBvana, 5); %the true pre-lysis frame is t=4, but there are no fluor readings 
+[intensity_LBspnt, adjintensity_LBspnt, normintensity_LBspnt, lcell_LBspnt, time_LBspnt, tme_LBspnt, imstart_LBspnt]=dataNormalize(LBspnt, 6); %02/15/2022, correct imstart
 
 [intensity_LB1s, bgintensity_LB1s, adjintensity_LB1s, normintensity_LB1s, lcell_LB1s, time_LB1s, tme_LB1s, imstart_LB1s]=controlNormalize(LB1s); 
 [intensity_LB2s, bgintensity_LB2s, adjintensity_LB2s, normintensity_LB2s, lcell_LB2s, time_LB2s, tme_LB2s, imstart_LB2s]=controlNormalize(LB2s); 
 [intensity_LB3s, bgintensity_LB3s, adjintensity_LB3s, normintensity_LB3s, lcell_LB3s, time_LB3s, tme_LB3s, imstart_LB3s]=controlNormalize(LB3s); 
+
+[intensity_i1001s, bgintensity_i1001s, adjintensity_i1001s, normintensity_i1001s, lcell_i1001s, time_i1001s, tme_i1001s, imstart_i1001s]=controlNormalize(i100_1s); 
+[intensity_i1002s, bgintensity_i1002s, adjintensity_i1002s, normintensity_i1002s, lcell_i1002s, time_i1002s, tme_i1002s, imstart_i1002s]=controlNormalize(i100_2s); 
+[intensity_i1003s, bgintensity_i1003s, adjintensity_i1003s, normintensity_i1003s, lcell_i1003s, time_i1003s, tme_i1003s, imstart_i1003s]=controlNormalize(i100_3s);
+
+[intensity_i0501s, bgintensity_i0501s, adjintensity_i0501s, normintensity_i0501s, lcell_i0501s, time_i0501s, tme_i0501s, imstart_i0501s]=controlNormalize(i050_1s); 
+[intensity_i0502s, bgintensity_i0502s, adjintensity_i0502s, normintensity_i0502s, lcell_i0502s, time_i0502s, tme_i0502s, imstart_i0502s]=controlNormalize(i050_2s); 
+[intensity_i0503s, bgintensity_i0503s, adjintensity_i0503s, normintensity_i0503s, lcell_i0503s, time_i0503s, tme_i0503s, imstart_i0503s]=controlNormalize(i050_3s); 
 
 %% Controls
 % plot the raw fluorescence intensity 
@@ -100,7 +120,7 @@ plot(time_LB3s, intensity_LB3s, '-g');
 plot(time_LB3s, bgintensity_LB3s, '--g')
 xlabel('Time (minutes)')
 ylabel('Fluorescence (A.U.)')
-saveas(gcf, 'control_intensity.png');
+%saveas(gcf, 'control_intensity.png');
 
 % plot the adjusted intensity
 figure, hold on
@@ -109,7 +129,7 @@ plot(time_LB2s, adjintensity_LB2s, '-b');
 plot(time_LB3s, adjintensity_LB3s, '-g'); 
 xlabel('Time (minutes)')
 ylabel('Adjusted Fluorescence (A.U.)')
-saveas(gcf, 'control_adjintensity.png');
+%saveas(gcf, 'control_adjintensity.png');
 
 % plot the normalized intensity
 figure, hold on
@@ -119,12 +139,36 @@ plot(tme_LB3s, normintensity_LB3s, '-g');
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'control_normintensity.png');
+%saveas(gcf, 'control_normintensity.png');
 
+%% plot the normalized intensity for the agarose pad controls
+figure, hold on
+plot(tme_i1001s, normintensity_i1001s, '-r');
+plot(tme_i1002s, normintensity_i1002s, '-b');
+plot(tme_i1003s, normintensity_i1003s, '-g'); 
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+
+figure, hold on
+plot(tme_i0501s, normintensity_i0501s, '-r');
+plot(tme_i0502s, normintensity_i0502s, '-b');
+plot(tme_i0503s, normintensity_i0503s, '-g'); 
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
 %% calculate alpha
-[tau1, yhat_LB1s]=tauCalc(tme_LB1s, normintensity_LB1s);
-[tau2, yhat_LB2s]=tauCalc(tme_LB2s, normintensity_LB2s);
-[tau3, yhat_LB3s]=tauCalc(tme_LB3s, normintensity_LB3s);
+[tau1, yhat_LB1s]=tauCalc(tme_LB1s, normintensity_LB1s, 1);
+[tau2, yhat_LB2s]=tauCalc(tme_LB2s, normintensity_LB2s, 1);
+[tau3, yhat_LB3s]=tauCalc(tme_LB3s, normintensity_LB3s, 1);
+
+[tau_i1001s, yhat_i1001s]=tauCalc(tme_i1001s, normintensity_i1001s, 0.8);
+[tau_i1002s, yhat_i1002s]=tauCalc(tme_i1002s, normintensity_i1002s, 2);
+[tau_i1003s, yhat_i1003s]=tauCalc(tme_i1003s, normintensity_i1003s, 2); 
+
+[tau_i0501s, yhat_i0501s]=tauCalc(tme_i0501s, normintensity_i0501s, 0.8);
+[tau_i0502s, yhat_i0502s]=tauCalc(tme_i0502s, normintensity_i0502s, 0.01);
+[tau_i0503s, yhat_i0503s]=tauCalc(tme_i0503s, normintensity_i0503s, 0.01); 
 
 %% plots for tau
 figure, hold on
@@ -133,7 +177,7 @@ plot(tme_LB1s, yhat_LB1s, '--k')
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'tauFit_LB1s.png')
+%saveas(gcf, 'tauFit_LB1s.png')
 
 figure, hold on
 plot(tme_LB2s, normintensity_LB2s, '-b')
@@ -141,7 +185,7 @@ plot(tme_LB2s, yhat_LB2s, '--k')
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'tauFit_LB2s.png')
+%saveas(gcf, 'tauFit_LB2s.png')
 
 figure, hold on
 plot(tme_LB3s, normintensity_LB3s, '-g')
@@ -149,7 +193,7 @@ plot(tme_LB3s, yhat_LB3s, '--k')
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'tauFit_LB3s.png')
+%saveas(gcf, 'tauFit_LB3s.png')
 
 tau_means = [mean(tau1, 'omitnan'), mean(tau2, 'omitnan'), mean(tau3, 'omitnan')];
 tau_std = [std(tau1, 0, 'omitnan'), std(tau2, 0, 'omitnan'), std(tau3, 0, 'omitnan')];
@@ -177,7 +221,51 @@ ylabel('\tau (min^{-1})')
 xticks([0 dt1 dt2 dt3])
 xticklabels({'0', '1.2 s', '2 s', '3 s'})
 title('Tau vs Frame Rate')
-saveas(gcf, 'tau_vs_frameRate.png')
+%saveas(gcf, 'tau_vs_frameRate.png')
+
+%% plot for agarose pad controls (i100)
+figure, hold on
+plot(tme_i1001s, normintensity_i1001s, '-r')
+plot(tme_i1001s, yhat_i1001s, '--k')
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+
+figure, hold on
+plot(tme_i1002s, normintensity_i1002s, '-b')
+plot(tme_i1002s, yhat_i1002s, '--k')
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+
+figure, hold on
+plot(tme_i1003s, normintensity_i1003s, '-g')
+plot(tme_i1003s, yhat_i1003s, '--k')
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+
+%% plot for agarose pad controls (i050)
+figure, hold on
+plot(tme_i0501s, normintensity_i0501s, '-r')
+plot(tme_i0501s, yhat_i0501s, '--k')
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+
+figure, hold on
+plot(tme_i0502s, normintensity_i0502s, '-b')
+plot(tme_i0502s(1:23), yhat_i0502s(1:23), '--k')
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+
+figure, hold on
+plot(tme_i0503s, intensity_i0503s, '-g')
+plot(tme_i0503s(1:14), yhat_i0503s(1:14), '--k')
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
 
 %% correct for photobleaching
 alpha=32.2114;
@@ -186,6 +274,7 @@ intercept=0.1614;
 [Cnew_LB1a, dCB_LB1a, dCT_LB1a, dCP_LB1a, CblExp_LB1a, unbFrac_LB1a]=photoCorrect(tme_LB1a, normintensity_LB1a, alpha, intercept);
 [Cnew_LB1b, dCB_LB1b, dCT_LB1b, dCP_LB1b, CblExp_LB1b, unbFrac_LB1b]=photoCorrect(tme_LB1b, normintensity_LB1b, alpha, intercept);
 [Cnew_LB5a, dCB_LB5a, dCT_LB5a, dCP_LB5a, CblExp_LB5a, unbFrac_LB5a]=photoCorrect(tme_LB5a, normintensity_LB5a, alpha, intercept);
+[Cnew_LB10a, dCB_LB10a, dCT_LB10a, dCP_LB10a, CblExp_LB10a, unbFrac_LB10a]=photoCorrect(tme_LB10a, normintensity_LB10a, alpha, intercept);
 [Cnew_LB20a, dCB_LB20a, dCT_LB20a, dCP_LB20a, CblExp_LB20a, unbFrac_LB20a]=photoCorrect(tme_LB20a, normintensity_LB20a, alpha, intercept);
 
 [Cnew_PBS2a, dCB_PBS2a, dCT_PBS2a, dCP_PBS2a, CblExp_PBS2a, unbFrac_PBS2a]=photoCorrect(tme_PBS2a, normintensity_PBS2a, alpha, intercept);
@@ -200,6 +289,7 @@ intercept=0.1614;
 [Cnew_LBEa, dCB_LBEa, dCT_LBEa, dCP_LBEa, CblExp_LBEa, unbFrac_LBEa]=photoCorrect(tme_LBEa, normintensity_LBEa, alpha, intercept);
 [Cnew_LBtuna, dCB_LBtuna, dCT_LBtuna, dCP_LBtuna, CblExp_LBtuna, unbFrac_LBtuna]=photoCorrect(tme_LBtuna, normintensity_LBtuna, alpha, intercept);
 [Cnew_LBvana, dCB_LBvana, dCT_LBvana, dCP_LBvana, CblExp_LBvana, unbFrac_LBvana]=photoCorrect(tme_LBvana, normintensity_LBvana, alpha, intercept);
+[Cnew_LBspnt, dCB_LBspnt, dCT_LBspnt, dCP_LBspnt, CblExp_LBspnt, unbFrac_LBspnt]=photoCorrect(tme_LBspnt, normintensity_LBspnt, alpha, intercept);
 
 [Cnew_LB1s, dCB_LB1s, dCT_LB1s, dCP_LB1s, CblExp_LB1s, unbFrac_LB1s]=photoCorrect(tme_LB1s, normintensity_LB1s, alpha, intercept);
 [Cnew_LB2s, dCB_LB2s, dCT_LB2s, dCP_LB2s, CblExp_LB2s, unbFrac_LB2s]=photoCorrect(tme_LB2s, normintensity_LB2s, alpha, intercept);
@@ -213,7 +303,7 @@ plot(tme_LB3s, Cnew_LB3s, '-g');
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'control_corrected.png')
+%saveas(gcf, 'control_corrected.png')
 
 %% plot the LB frame rate experiments
 cd([dirsave '/LB'])
@@ -222,78 +312,191 @@ figure, hold on
 plot(time_LB1a, intensity_LB1a, 'Color', colorcode{1});
 plot(time_LB1b, intensity_LB1b, 'Color', colorcode{3});
 plot(time_LB5a, intensity_LB5a, 'Color', colorcode{4}); 
+plot(time_LB10a, intensity_LB10a, 'Color', colorcode{6}); 
 plot(time_LB20a, intensity_LB20a, 'Color', colorcode{5}); 
 xlabel('Time (minutes)')
 ylabel('Fluorescence (A.U.)')
-saveas(gcf, 'frameRate_intensity.png');
+%saveas(gcf, 'frameRate_intensity.png');
 
 figure, hold on
 plot(time_LB1a, adjintensity_LB1a, 'Color', colorcode{1});
 plot(time_LB1b, adjintensity_LB1b, 'Color', colorcode{3});
 plot(time_LB5a, adjintensity_LB5a, 'Color', colorcode{4});
+plot(time_LB10a, adjintensity_LB10a, 'Color', colorcode{6}); 
 plot(time_LB20a, adjintensity_LB20a,  'Color', colorcode{5}); 
 xlabel('Time (minutes)')
 ylabel('Adjusted Fluorescence (A.U.)')
-saveas(gcf, 'frameRate_adjintensity.png');
+%saveas(gcf, 'frameRate_adjintensity.png');
 
 figure, hold on
 plot(tme_LB1a, normintensity_LB1a, 'Color', colorcode{1});
 plot(tme_LB1b, normintensity_LB1b, 'Color', colorcode{3});
 plot(tme_LB5a, normintensity_LB5a, 'Color', colorcode{4});
+plot(tme_LB10a, normintensity_LB10a, 'Color', colorcode{6}); 
 plot(tme_LB20a, normintensity_LB20a, 'Color', colorcode{5}); 
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'frameRate_normintensity.png');
+%saveas(gcf, 'frameRate_normintensity.png');
 
 figure, hold on
 plot(tme_LB1a, Cnew_LB1a, 'Color', colorcode{1});
 plot(tme_LB1b, Cnew_LB1b, 'Color', colorcode{3});
 plot(tme_LB5a, Cnew_LB5a, 'Color', colorcode{4});
+plot(tme_LB10a, Cnew_LB10a, 'Color', colorcode{6}); 
 plot(tme_LB20a, Cnew_LB20a, 'Color', colorcode{5}); 
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'frameRate_corrected.png');
+%saveas(gcf, 'frameRate_corrected.png');
+
+figure, hold on
+%ciplot(mean(Cnew_LB1a, 1, 'omitnan')-std(Cnew_LB1a, 0, 1, 'omitnan'), mean(Cnew_LB1a, 1, 'omitnan')+std(Cnew_LB1a, 0, 1, 'omitnan'), tme_LB1a, colorcode2{1}, transparency)
+plot(tme_LB1a, mean(Cnew_LB1a, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+
+%ciplot(mean(Cnew_LB1b, 1, 'omitnan')-std(Cnew_LB1b, 0, 1, 'omitnan'), mean(Cnew_LB1b, 1, 'omitnan')+std(Cnew_LB1b, 0, 1, 'omitnan'), tme_LB1b, colorcode2{3}, transparency)
+plot(tme_LB1b, mean(Cnew_LB1b, 1, 'omitnan'), 'Color', colorcode{3}, 'LineWidth', 1)
+
+%ciplot(mean(Cnew_LB5a, 1, 'omitnan')-std(Cnew_LB5a, 0, 1, 'omitnan'), mean(Cnew_LB5a, 1, 'omitnan')+std(Cnew_LB5a, 0, 1, 'omitnan'), tme_LB5a, colorcode2{4}, transparency)
+plot(tme_LB5a, mean(Cnew_LB5a, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
+
+%ciplot(mean(Cnew_LB10a, 1, 'omitnan')-std(Cnew_LB10a, 0, 1, 'omitnan'), mean(Cnew_LB10a, 1, 'omitnan')+std(Cnew_LB10a, 0, 1, 'omitnan'), tme_LB10a, colorcode2{5}, transparency)
+plot(tme_LB10a, mean(Cnew_LB10a, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
+
+%ciplot(mean(Cnew_LB20a, 1, 'omitnan')-std(Cnew_LB20a, 0, 1, 'omitnan'), mean(Cnew_LB20a, 1, 'omitnan')+std(Cnew_LB20a, 0, 1, 'omitnan'), tme_LB20a, colorcode2{6}, transparency)
+plot(tme_LB20a, mean(Cnew_LB20a, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
+legend({'LB 1 min, rep 1', 'LB 1 min, rep 2', 'LB 5 min', 'LB 10 min', 'LB 20 min'})
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+%saveas(gcf, 'frameRate_correctedAvg.png');
+
+%% find where the mean traces plateau
+[avg_LB1a, imend_LB1a]=traceAvg(Cnew_LB1a);
+[avg_LB1b, imend_LB1b]=traceAvg(Cnew_LB1b);
+[avg_LB5a, imend_LB5a]=traceAvg(Cnew_LB5a);
+[avg_LB10a, imend_LB10a]=traceAvg(Cnew_LB10a);
+[avg_LB20a, imend_LB20a]=traceAvg(Cnew_LB20a);
+
+%combine to see the entire time trace
+tme_LB = union(tme_LB1a(1:imend_LB1a), tme_LB1b(1:imend_LB1b));
+tme_LB = union(tme_LB, tme_LB5a(1:imend_LB5a));
+tme_LB = union(tme_LB, tme_LB10a(1:imend_LB10a));
+tme_LB = union(tme_LB, tme_LB20a(1:imend_LB20a));
+
+%create a new matrix to combine the mean traces
+avg_LB = nan(5, length(tme_LB));
+
+[~, ia, ib] = intersect(tme_LB1a(1:imend_LB1a), tme_LB);
+avg_LB(1, ib)=avg_LB1a(1, ia);
+
+[~, ia, ib] = intersect(tme_LB1b(1:imend_LB1b), tme_LB);
+avg_LB(2, ib)=avg_LB1b(1, ia);
+
+[~, ia, ib] = intersect(tme_LB5a(1:imend_LB5a), tme_LB);
+avg_LB(3, ib)=avg_LB5a(1, ia);
+
+[~, ia, ib] = intersect(tme_LB10a(1:imend_LB10a), tme_LB);
+avg_LB(4, ib)=avg_LB10a(1, ia);
+
+[~, ia, ib] = intersect(tme_LB20a(1:imend_LB20a), tme_LB);
+avg_LB(5, ib)=avg_LB20a(1, ia);
+
+%now calculate the standard error of the mean
+smple_sz =  sum(~isnan(avg_LB), 1);
+ste_LB = std(avg_LB, 0, 1, 'omitnan')./sqrt(smple_sz);
+
+%% plot the mean and ste of the mean for the corrected untreated LB trace
+figure, hold on
+ciplot(mean(avg_LB, 1, 'omitnan')-ste_LB, mean(avg_LB, 1, 'omitnan')+ste_LB, tme_LB, colorcode2{1}, transparency)
+plot(tme_LB, mean(avg_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+%saveas(gcf, 'frameRate_concatAvg.png');
+
+%% fit the corrected untreated average
+[tau_LB, yhat_LB]=tauCalc(tme_LB, mean(avg_LB, 1, 'omitnan'), 1);
+
+%find when fluor goes to zero
+xpred = 0:420;
+modelfun = @(tau, x)exp(-x./tau);
+ypred = modelfun(tau_LB, xpred);
+
+%% plot to see the fit
+figure, hold on
+plot(tme_LB, mean(avg_LB, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+%plot(tme_LB, yhat_LB, '--k', 'LineWidth', 1)
+plot(xpred, ypred, '--m', 'LineWidth', 1)
+ylim([0 1.1])
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+%saveas(gcf, 'tauFit_LBavg.png')
 
 %% plot the LB treatment experiments
 figure, hold on
-plot(time_LBMga, intensity_LBMga, '-r');
-plot(time_LBEa, intensity_LBEa, '-b');
-plot(time_LBtuna, intensity_LBtuna, '-g'); 
-plot(time_LBvana, intensity_LBvana, '-m'); 
+plot(time_LBMga, intensity_LBMga, 'Color', colorcode{1});
+plot(time_LBEa, intensity_LBEa, 'Color', colorcode{3});
+plot(time_LBtuna, intensity_LBtuna,'Color', colorcode{4}); 
+plot(time_LBvana, intensity_LBvana, 'Color', colorcode{5}); 
+plot(time_LBspnt, intensity_LBspnt, 'Color', colorcode{6}); 
 xlabel('Time (minutes)')
 ylabel('Fluorescence (A.U.)')
-saveas(gcf, 'treated_intensity.png');
+%saveas(gcf, 'treated_intensity.png');
 
 figure, hold on
-plot(time_LBMga, adjintensity_LBMga, '-r');
-plot(time_LBEa, adjintensity_LBEa, '-b');
-plot(time_LBtuna, adjintensity_LBtuna, '-g'); 
-plot(time_LBvana, adjintensity_LBvana, '-m'); 
+plot(time_LBMga, adjintensity_LBMga, 'Color', colorcode{1});
+plot(time_LBEa, adjintensity_LBEa, 'Color', colorcode{3});
+plot(time_LBtuna, adjintensity_LBtuna, 'Color', colorcode{4}); 
+plot(time_LBvana, adjintensity_LBvana, 'Color', colorcode{5}); 
+plot(time_LBspnt, adjintensity_LBspnt, 'Color', colorcode{6}); 
 xlabel('Time (minutes)')
 ylabel('Adjusted Fluorescence (A.U.)')
-saveas(gcf, 'treated_adjintensity.png');
+%saveas(gcf, 'treated_adjintensity.png');
 
 figure, hold on
-plot(tme_LBMga, normintensity_LBMga, '-r');
-plot(tme_LBEa, normintensity_LBEa, '-b');
-plot(tme_LBtuna, normintensity_LBtuna, '-g'); 
-plot(tme_LBvana, normintensity_LBvana, '-m'); 
+plot(tme_LBMga, normintensity_LBMga,'Color', colorcode{1});
+plot(tme_LBEa, normintensity_LBEa, 'Color', colorcode{3});
+plot(tme_LBtuna, normintensity_LBtuna, 'Color', colorcode{4}); 
+plot(tme_LBvana, normintensity_LBvana, 'Color', colorcode{5}); 
+plot(tme_LBspnt, normintensity_LBspnt, 'Color', colorcode{6}); 
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'treated_normintensity.png');
+%saveas(gcf, 'treated_normintensity.png');
 
 figure, hold on
-plot(tme_LBMga, Cnew_LBMga, '-r');
-plot(tme_LBEa, Cnew_LBEa, '-b');
-plot(tme_LBtuna, Cnew_LBtuna, '-g'); 
-plot(tme_LBvana, Cnew_LBvana, '-m'); 
+plot(tme_LBMga, Cnew_LBMga,'Color', colorcode{1});
+plot(tme_LBEa, Cnew_LBEa, 'Color', colorcode{3});
+plot(tme_LBtuna, Cnew_LBtuna, 'Color', colorcode{4}); 
+plot(tme_LBvana, Cnew_LBvana, 'Color', colorcode{5}); 
+plot(tme_LBspnt, Cnew_LBspnt, 'Color', colorcode{6}); 
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'treated_corrected.png');
+%saveas(gcf, 'treated_corrected.png');
+
+%% find where the mean traces plateau
+[avg_LBMga, imend_LBMga]=traceAvg(Cnew_LBMga(:, 1:end-3));
+[avg_LBEa, imend_LBEa]=traceAvg(Cnew_LBEa(:, 1:end-3));
+[avg_LBtuna, imend_LBtuna]=traceAvg(Cnew_LBtuna);
+[avg_LBvana, imend_LBvana]=traceAvg(Cnew_LBvana);
+[avg_LBspnt, imend_LBspnt]=traceAvg(Cnew_LBspnt);
+
+%% plot the mean traces
+figure, hold on
+plot(tme_LBMga(1:imend_LBMga), avg_LBMga, 'Color', colorcode{1})
+plot(tme_LBEa(1:imend_LBEa), avg_LBEa, 'Color', colorcode{3})
+plot(tme_LBtuna(1:imend_LBtuna), avg_LBtuna, 'Color', colorcode{4})
+plot(tme_LBvana(1:imend_LBvana), avg_LBvana, 'Color', colorcode{6})
+plot(tme_LBspnt(1:imend_LBspnt), avg_LBspnt, 'Color', colorcode{8})
+ylim([0 1.1])
+
+%% compare the spnt to the 10 min control
+figure, hold on
+plot(tme_LB10a(1:imend_LB10a), avg_LB10a, 'Color', colorcode{6})
+plot(tme_LBspnt(1:imend_LBspnt), avg_LBspnt, 'Color', colorcode{8})
+ylim([0 1.1])
 
 %% plot the PBS experiments
 cd([dirsave '/PBS'])
@@ -308,7 +511,7 @@ plot(time_PBS60a, intensity_PBS60a, 'Color', colorcode{6});
 plot(time_PBS120a, intensity_PBS120a, 'Color', colorcode{8}); 
 xlabel('Time (minutes)')
 ylabel('Fluorescence (A.U.)')
-saveas(gcf, 'PBS_intensity.png');
+%saveas(gcf, 'PBS_intensity.png');
 
 figure, hold on
 plot(time_PBS2a, adjintensity_PBS2a, 'Color', colorcode{1});
@@ -320,7 +523,7 @@ plot(time_PBS60a, adjintensity_PBS60a, 'Color', colorcode{6});
 plot(time_PBS120a, adjintensity_PBS120a, 'Color', colorcode{8}); 
 xlabel('Time (minutes)')
 ylabel('Adjusted Fluorescence (A.U.)')
-saveas(gcf, 'PBS_adjintensity.png');
+%saveas(gcf, 'PBS_adjintensity.png');
 
 figure, hold on
 plot(tme_PBS2a, normintensity_PBS2a, 'Color', colorcode{1});
@@ -333,7 +536,7 @@ plot(tme_PBS120a, normintensity_PBS120a, 'Color', colorcode{8});
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'PBS_normintensity.png');
+%saveas(gcf, 'PBS_normintensity.png');
 
 figure, hold on
 plot(tme_PBS2a,Cnew_PBS2a, 'Color', colorcode{1});
@@ -346,7 +549,25 @@ plot(tme_PBS120a, Cnew_PBS120a, 'Color', colorcode{8});
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
-saveas(gcf, 'PBS_corrected.png');
+%saveas(gcf, 'PBS_corrected.png');
+
+%% find where the mean traces plateau
+[avg_PBS2a, imend_PBS2a]=traceAvg(Cnew_PBS2a);
+[avg_PBS2b, imend_PBS2b]=traceAvg(Cnew_PBS2b);
+[avg_PBS20a, imend_PBS20a]=traceAvg(Cnew_PBS20a);
+[avg_PBS20b, imend_PBS20b]=traceAvg(Cnew_PBS20b);
+[avg_PBS60a, imend_PBS60a]=traceAvg(Cnew_PBS60a);
+[avg_PBS120a, imend_PBS120a]=traceAvg(Cnew_PBS120a);
+
+%% plot the mean traces
+figure, hold on
+plot(tme_PBS2a(1:imend_PBS2a), avg_PBS2a, 'Color', colorcode{1})
+plot(tme_PBS2b(1:imend_PBS2b), avg_PBS2b, 'Color', colorcode{3})
+plot(tme_PBS20a(1:imend_PBS20a), avg_PBS20a, 'Color', colorcode{4})
+plot(tme_PBS20b(1:imend_PBS20b), avg_PBS20b, 'Color', colorcode{5})
+plot(tme_PBS60a(1:imend_PBS60a), avg_PBS60a, 'Color', colorcode{6})
+plot(tme_PBS120a(1:imend_PBS120a), avg_PBS120a, 'Color', colorcode{8})
+ylim([0 1.1])
 
 %% Functions
 %to aggregate data and normalize
@@ -387,22 +608,40 @@ function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dat
     adjintensity=intensity-intensity(:, end); 
     adjintensity(adjintensity<0)=NaN;      
 
-    %interpolate the fluor values during detergent perfusion
-    for n=1:height(adjintensity)
-        idx=find(adjintensity(n,:)>adjintensity(n, imstart));
-            if ~isempty(idx)
-                [nrow, ncol]=size(adjintensity);
-                x=setdiff(1:ncol, idx); %x=time
-                v=adjintensity(n, x); %v=intensity
-                vq=interp1(x, v, idx); %vq=interpolation at query time pts
-                adjintensity(n,idx)=vq;
-            end
-    end
+%     %interpolate the fluor values during detergent perfusion
+%     for n=1:height(adjintensity)
+%         idx=find(adjintensity(n,:)>adjintensity(n, imstart));
+%             if ~isempty(idx)
+%                 [nrow, ncol]=size(adjintensity);
+%                 x=setdiff(1:ncol, idx); %x=time
+%                 v=adjintensity(n, x); %v=intensity
+%                 vq=interp1(x, v, idx); %vq=interpolation at query time pts
+%                 adjintensity(n,idx)=vq;
+%             end
+%     end
         
     %adjust the time points in the fluor matrix and initialize to first
     %frame
     normintensity=adjintensity(:, imstart:end)./adjintensity(:, imstart);
-
+    [nrow, ncol]=size(normintensity);
+    
+    %interpolate the fluor values during detergent perfusion (& other noisy
+    %spike in fluor.)
+    for n=1:height(normintensity)
+        
+        dv=diff(normintensity(n,:), 1, 2);
+        idx1=find(dv>0)+1;
+        idx2=find(normintensity(n,:)>1);
+        idx=union(idx1, idx2);
+        
+            if ~isempty(idx)
+                x=setdiff(1:ncol, idx); %x=time
+                v=normintensity(n, x); %v=intensity
+                vq=interp1(x, v, idx); %vq=interpolation at query time pts
+                normintensity(n,idx)=vq;
+            end
+    end
+    
     %adjust the time vector
     tme=tme(imstart:end)-tme(imstart);     
         
@@ -438,16 +677,28 @@ function [intensity, bgintensity, adjintensity, normintensity, lCell, time, tme,
     %time point where dt matches the final dt
     dt=round(diff(time));
     if dt(1)==dt(end)
-        dl=diff(lCell, 1);
-        lvg=mean(dl, 1, 'omitnan');
-        imstart=find(lvg<0, 1, 'first')+2;
+%         dl=diff(lCell, 1);
+%         lvg=mean(dl, 1, 'omitnan');
+%         imstart=find(lvg<0, 1, 'first')+2;
+        imstart=1;
+        
+        %remove cells without a value for imstart
+        idx=find(~isnan(intensity(:, imstart)));
+        intensity=intensity(idx,:);
+        lCell=lCell(idx,:);    
+
+        %subtract final fluor. value from the trace and set limit of
+        %detection
+        adjintensity=intensity-bgintensity; 
+        adjintensity(adjintensity<200)=NaN; 
+    
     else
         if dt(end)<1 %discrepancies in dt might be found in the meta data, this is the ad hoc fix
             imstart=find(dt==dt(end), 1, 'first')+2;
         else 
             imstart=find(dt==dt(end), 1, 'first');
         end
-    end
+    
   
     %remove cells without a value for imstart
     idx=find(~isnan(intensity(:, imstart)));
@@ -458,7 +709,8 @@ function [intensity, bgintensity, adjintensity, normintensity, lCell, time, tme,
     %detection
     adjintensity=intensity-intensity(:, end); 
     adjintensity(adjintensity<200)=NaN; 
-
+    
+    end
         
     %find when all values are below the limit of detection
     [~, ncol]=size(adjintensity);
@@ -468,7 +720,7 @@ function [intensity, bgintensity, adjintensity, normintensity, lCell, time, tme,
     else 
         imend=ncol;
     end
-        
+    
     %adjust the time points in the fluor matrix and initialize to first
     %frame
     normintensity=adjintensity(:, imstart:imend)./adjintensity(:, imstart);
@@ -480,14 +732,14 @@ end
 
 %do not fit to y=(1-beta)*exp(-t./tau)+beta (beta=normalized limit of detection)
 %fit to y=Ae^(-t/tau)
-function [tau, yhat]=tauCalc(tme, normintensity)
+function [tau, yhat]=tauCalc(tme, normintensity, tau0)
     
     [nrow, ~]=size(normintensity);
     tau=nan(nrow,1);
     yhat=nan(size(normintensity));
     modelfun = @(tau, x)exp(-x./tau);
     for i=1:nrow
-        tau(i, 1)=nlinfit(tme, normintensity(i,:), modelfun, 1);
+        tau(i, 1)=nlinfit(tme, normintensity(i,:), modelfun, tau0);
          yhat(i, :)=modelfun(tau(i), tme);
     end
     
@@ -545,4 +797,16 @@ function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensit
             
         end      
 
+end
+
+%to find the time point at which the corrected trace plateaus and calculate
+%the average
+function [avg, imend]=traceAvg(Cnew)
+    cmean=mean(Cnew, 1, 'omitnan');
+    imend=find(cmean-cmean(end)<0.01, 1, 'first');
+    if isempty(imend)
+        lidx=find(cmean>=0, 1, 'last');
+        imend=find(cmean-cmean(lidx)<0.01, 1, 'first');
+    end
+    avg=cmean(:, 1:imend);
 end
