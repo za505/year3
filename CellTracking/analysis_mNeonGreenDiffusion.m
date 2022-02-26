@@ -56,6 +56,102 @@ transparency = 0.3; %this is the alpha argument for the ciplot function
 dirsave='/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis';
 basenames={'10232021_Exp1', '10262021_Exp1', '02212022_Exp2', '02122022_Exp1','02122022_Exp2', '02092022_Exp1', '02212022_Exp1', '11192021_Exp2', '12082021_Exp3', '11192021_Exp1', '11302021_Exp1', '10232021_Exp2', '10262021_Exp2', '01142022_Exp1', '01172022_Exp1', '01172022_Exp2', '01242022_Exp1', '01262022_Exp1', '02122022_Exp3', '02192022_Exp1','11202021_Exp1', '12082021_Exp1', '12082021_Exp2', '02192022_Exp2', '02192022_Exp3', '02192022_Exp4'};
 
+%% normalize data
+imstarts=[6, 5, 6, 6, 6, 6, 6, 10, 10, 4, 4, 3, 5, 4, 6, 6, 3, 5, 6, 6, NaN, NaN, NaN, NaN, NaN, NaN];
+
+for i=1:length(basenames)
+    basename=basenames{i};
+    cd([dirsave '/rawFiles'])
+    
+    datadir=dir([basename '*']);
+    imstart=imstarts(i);
+    
+    if ismember(i, [21:26]) %controls
+        
+        intensity=[];
+        bgintensity=[];
+        adjintensity=[];
+        normintensity=[];
+        lcell=[];
+        
+        for j=1:height(datadir)
+            cd([dirsave '/rawFiles']);
+            load(datadir(j).name);
+            
+            
+            [intensity1, bgintensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=controlNormalize(datadir);
+            intensity=[intensity;intensity1];
+            bgintensity=[bgintensity; bgintensity1];
+            adjintensity=[adjintensity; adjintensity1];
+            normintensity=[normintensity; normintensity1];
+            lcell=[lcell; lCell];
+            
+        end
+        
+        cd([dirsave '/normalizedFiles'])
+        save([basename '_norm.mat'], 'intensity', 'bgintensity', 'adjintensity', 'normintensity', 'lcell', 'imstart', 'time', 'tme');
+    
+    else
+        
+        intensity=[];
+        adjintensity=[];
+        normintensity=[];
+        lcell=[];
+        
+        for j=1:height(datadir)
+            cd([dirsave '/rawFiles'])
+            load(datadir(j).name);
+            
+            
+            [intensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=dataNormalize(datadir, imstart);
+            intensity=[intensity;intensity1];
+            adjintensity=[adjintensity; adjintensity1];
+            normintensity=[normintensity; normintensity1];
+            lcell=[lcell; lCell];
+            
+        end
+        
+        cd([dirsave '/normalizedFiles'])
+        save([basename '_norm.mat'], 'intensity', 'adjintensity', 'normintensity', 'lcell', 'imstart', 'time', 'tme');
+    end
+    
+end
+
+
+%% correct data
+for i=1:length(basenames)
+    
+    basename=basenames{i};
+    cd([dirsave '/normalizedFiles'])
+    datadir=dir([basename '*']);
+    
+    if ismember(i, [3, 7, 24:26]) % 20% intensity
+        
+        %for photobleach correction (20% intensity)
+        alpha=152.6455;
+        intercept=-1.0976;
+
+        load(datadir.name)
+        [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha, intercept);
+
+        cd([dirsave '/correctedFiles'])
+        save([basename '_corrected.mat'], 'time', 'tme', 'alpha', 'intercept', 'Cnew', 'dCB', 'dCT', 'dCP', 'Cbl_exp', 'unb_frac');
+    
+    else
+        
+        %for photobleach correction (100% intensity)
+        alpha=32.2114;
+        intercept=0.1614;
+        
+        load(datadir.name);
+        [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha, intercept);
+
+        cd([dirsave '/correctedFiles'])
+        save([basename '_corrected.mat'], 'time', 'tme', 'alpha', 'intercept', 'Cnew', 'dCB', 'dCT', 'dCP', 'Cbl_exp', 'unb_frac');
+    end
+    
+end
+
 %% compare the control traces
 %each row is a different frame rate (1, 2, and 3 second), each column is a
 %different variable (time, tme, intensity, bgintensity, adjintensity,
@@ -159,6 +255,7 @@ for i=1:length(basenames)
         untreated_100{idx1, 4}=adjintensity;
         untreated_100{idx1, 5}=normintensity;
         untreated_100{idx1, 6}=lcell;
+        untreated_100{idx1, 8}=imstart;
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -175,6 +272,7 @@ for i=1:length(basenames)
         untreated_20{idx2, 4}=adjintensity;
         untreated_20{idx2, 5}=normintensity;
         untreated_20{idx2, 6}=lcell;
+        untreated_20{idx2, 8}=imstart;
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -187,6 +285,48 @@ for i=1:length(basenames)
     
 end
 
+%% Compare the 20 minute frame rate data
+figure, hold on
+%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
+plot(untreated_100{5,1}, mean(untreated_100{5,3}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
+plot(untreated_20{2,1}, mean(untreated_20{2,3}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
+title('Raw Intensity Plots')
+
+figure, hold on
+%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
+plot(untreated_100{5,1}, mean(untreated_100{5,4}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
+plot(untreated_20{2,1}, mean(untreated_20{2,4}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
+title('Adjusted Intensity Plots')
+
+figure, hold on
+%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
+plot(untreated_100{5,2}, mean(untreated_100{5,5}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
+plot(untreated_20{2,2}, mean(untreated_20{2,5}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
+title('Normalized Intensity Plots')
+
+
+%normalize the adjusted trace
+imstart=untreated_100{5,8};
+sc100=mean(untreated_100{5,4}, 1, 'omitnan');
+sc100=sc100./sc100(:, imstart);
+sc100=sc100(imstart:end);
+time100=untreated_100{5,1}(imstart:end);
+
+imstart=untreated_20{2,8};
+sc20=mean(untreated_20{2,4}, 1, 'omitnan');
+sc20=sc20./sc20(:, imstart);
+sc20=sc20(imstart:end);
+time20=untreated_20{2,1}(imstart:end);
+
+figure, hold on
+plot(time100, sc100, 'Color', colorcode{1}, 'LineWidth', 1)
+plot(time20, sc20, 'Color', colorcode{2}, 'LineWidth', 1)
+title('Mean Normalized Intensity Plots')
+
+pause
 %% plot to compare the untreated experiments
 cd(dirsave)
 
@@ -526,8 +666,8 @@ function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dat
     
     %interpolate the fluor values during detergent perfusion (& other noisy
     %spike in fluor.)
-    for n=1:height(normintensity)
-        
+    for n=1:height(adjintensity)
+
         dv=diff(normintensity(n,:), 1, 2);
         idx1=find(dv>0)+1;
         idx2=find(normintensity(n,:)>1);
