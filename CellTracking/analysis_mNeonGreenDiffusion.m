@@ -497,6 +497,12 @@ plot(PBS_100{1,2}, mean(PBS_100{1,7}, 1, 'omitnan'), 'Color', colorcode{1}, 'Lin
 %ciplot(mean(PBS_100{2,7}, 1, 'omitnan')-std(PBS_100{2,7}, 0, 1, 'omitnan'), mean(PBS_100{2,7}, 1, 'omitnan')+std(PBS_100{2,7}, 0, 1, 'omitnan'), PBS_100{2,2}, colorcode2{2}, transparency)
 plot(PBS_100{2,2}, mean(PBS_100{2,7}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
 
+%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
+plot(untreated_100{1,2}, mean(untreated_100{1,7}, 1, 'omitnan'), '--', 'Color', colorcode{1}, 'LineWidth', 1)
+
+%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
+plot(untreated_100{2,2}, mean(untreated_100{2,7}, 1, 'omitnan'), '--', 'Color', colorcode{2}, 'LineWidth', 1)
+
 %ciplot(mean(PBS_100{3,7}, 1, 'omitnan')-std(PBS_100{3,7}, 0, 1, 'omitnan'), mean(PBS_100{3,7}, 1, 'omitnan')+std(PBS_100{3,7}, 0, 1, 'omitnan'), PBS_100{3,2}, colorcode2{4}, transparency)
 plot(PBS_100{3,2}, mean(PBS_100{3,7}, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
 
@@ -513,7 +519,7 @@ plot(PBS_100{6,2}, mean(PBS_100{6,7}, 1, 'omitnan'), 'Color', colorcode{7}, 'Lin
 plot(PBS_100{7,2}, mean(PBS_100{7,7}, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
 
 %legend({'1 s, 100% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', '', '1 s, 20% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', ''})
-legend({'PBS 2 min, average', 'PBS 2 min, average', 'PBS 20 min, average', 'PBS 20 min, average', 'PBS 60 min, average', 'PBS 60 min, average', 'PBS 120 min, average'}, 'location', 'northeast')
+legend({'PBS 2 min, average', 'PBS 2 min, average', 'untreated', 'untreated', 'PBS 20 min, average', 'PBS 20 min, average', 'PBS 60 min, average', 'PBS 60 min, average', 'PBS 120 min, average'}, 'location', 'northeast')
 ylim([0 1.1])
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence')
@@ -667,11 +673,8 @@ function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dat
     %interpolate the fluor values during detergent perfusion (& other noisy
     %spike in fluor.)
     for n=1:height(adjintensity)
-
-        dv=diff(normintensity(n,:), 1, 2);
-        idx1=find(dv>0)+1;
-        idx2=find(normintensity(n,:)>1);
-        idx=union(idx1, idx2);
+%         idx=find(adjintensity(n, imstart:end)>adjintensity(n, imstart));
+        idx=2;
         
             if ~isempty(idx)
                 x=setdiff(1:ncol, idx); %x=time
