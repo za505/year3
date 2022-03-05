@@ -1,5 +1,5 @@
 %Author: Zarina Akbary
-%Date: 02/23/2022
+%Date: 03/03/2022
 %Purpose: To model mNeonGreen diffusion out of membrane-lysed cells
 
 clear, close all
@@ -16,7 +16,7 @@ clear, close all
 %20 minute PBS incubation, 1 minute frame rate, 100% intensity = '11192021_Exp1' & '11302021_Exp1'
 %60 minute PBS incubation, 1 minute frame rate, 100% intensity = '10232021_Exp2' & '10262021_Exp2'
 %120 minute PBS incubation, 1 minute frame rate, 100% intensity = '01142022_Exp1'
-% 
+
 % LBMga=dir(['01172022_Exp1' '*dm.mat']); %LB, 20 mM Mg2+
 % LBEa=dir(['01172022_Exp2' '*dm.mat']); %LB, 10 mM EDTA
 % LBtuna=dir(['01242022_Exp1' '*dm.mat']); %LB, 0.5 ug/mL tunicamycin
@@ -38,8 +38,8 @@ clear, close all
 % intercept=0.1614;
 
 %for photobleach correction (20% intensity)
-% alpha=152.6455;
-% intercept=-1.0976;
+% alpha=151.7544;
+% intercept=-1.0566;
 
 %% User Input 
 
@@ -50,6 +50,11 @@ colorcode2={[255 51 51], [255 153 51], [255 255 51], [153 255 51], [51 255 255],
 colorcode=cellfun(@(x)(x./255), colorcode, 'UniformOutput', false);
 colorcode2=cellfun(@(x)(x./255), colorcode2, 'UniformOutput', false);
 
+m=10;
+c1=[0.847 0.427 0.933];
+c2=[0.101 0.101 0.737];
+color_p=[linspace(c1(1), c2(1), m)', linspace(c1(2), c2(2), m)', linspace(c1(3), c2(3), m)'];
+
 transparency = 0.3; %this is the alpha argument for the ciplot function
 
 %location and names of of the *.mat files 
@@ -57,16 +62,21 @@ dirsave='/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis';
 basenames={'10232021_Exp1', '10262021_Exp1', '02212022_Exp2', '02122022_Exp1','02122022_Exp2', '02092022_Exp1', '02212022_Exp1', '11192021_Exp2', '12082021_Exp3', '11192021_Exp1', '11302021_Exp1', '10232021_Exp2', '10262021_Exp2', '01142022_Exp1', '01172022_Exp1', '01172022_Exp2', '01242022_Exp1', '01262022_Exp1', '02122022_Exp3', '02192022_Exp1','11202021_Exp1', '12082021_Exp1', '12082021_Exp2', '02192022_Exp2', '02192022_Exp3', '02192022_Exp4'};
 
 %% normalize data
-imstarts=[6, 5, 6, 6, 6, 6, 6, 10, 10, 4, 4, 3, 5, 4, 6, 6, 3, 5, 6, 6, NaN, NaN, NaN, NaN, NaN, NaN];
+imstarts=[6, 5, 6, 6, 6, 6, 6, 10, 10, 4, 4, 3, 5, 4, 6, 6, 3, 5, 6, 6, NaN, NaN, NaN, NaN, NaN, NaN]; %based on time vector
+%idxes={[2:5], [2:6], [2:3], [2:3], [2:3], [2:3], [2:3], [2:6], [2:6], [2:6], [2:4], [2:4], [2:4], [], [2:7], [2:4], [2:4], [2:3], [2:3], [], [], [], [], [], [], []}; %based on tme vector
+idxes={[2:4], [2:6], [2:4], [2:3], [2:3], [2:3], [2:3], [2:4], [2:5], [2:4], [2:4], [2:4], [2:4], [], [2:7], [2:4], [2:4], [], [2:3], [2:3], [], [], [], [], [], []}; %based on tme vector
 
-for i=1:length(basenames)
-    basename=basenames{i};
+for b=1:length(basenames)
+
+    basename=basenames{b};
+    intp=idxes{b};
+    
     cd([dirsave '/rawFiles'])
     
     datadir=dir([basename '*']);
-    imstart=imstarts(i);
+    imstart=imstarts(b);
     
-    if ismember(i, [21:26]) %controls
+    if ismember(b, [21:26]) %controls
         
         intensity=[];
         bgintensity=[];
@@ -79,7 +89,7 @@ for i=1:length(basenames)
             load(datadir(j).name);
             
             
-            [intensity1, bgintensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=controlNormalize(datadir);
+            [intensity1, bgintensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=controlsNormalize(datadir);
             intensity=[intensity;intensity1];
             bgintensity=[bgintensity; bgintensity1];
             adjintensity=[adjintensity; adjintensity1];
@@ -103,7 +113,7 @@ for i=1:length(basenames)
             load(datadir(j).name);
             
             
-            [intensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=dataNormalize(datadir, imstart);
+            [intensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=dataNormalize(datadir, imstart, intp);
             intensity=[intensity;intensity1];
             adjintensity=[adjintensity; adjintensity1];
             normintensity=[normintensity; normintensity1];
@@ -112,7 +122,7 @@ for i=1:length(basenames)
         end
         
         cd([dirsave '/normalizedFiles'])
-        save([basename '_norm.mat'], 'intensity', 'adjintensity', 'normintensity', 'lcell', 'imstart', 'time', 'tme');
+        save([basename '_norm.mat'], 'intensity', 'adjintensity', 'normintensity', 'lcell', 'imstart', 'time', 'tme', 'intp');
     end
     
 end
@@ -128,9 +138,11 @@ for i=1:length(basenames)
     if ismember(i, [3, 7, 24:26]) % 20% intensity
         
         %for photobleach correction (20% intensity)
-        alpha=152.6455;
-        intercept=-1.0976;
+%         alpha=152.6455;
+%         intercept=-1.0976;
 
+        alpha=151.7544;
+        intercept=-1.0566;
         load(datadir.name)
         [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha, intercept);
 
@@ -152,13 +164,13 @@ for i=1:length(basenames)
     
 end
 
-%% compare the control traces
+%% compare the controls traces
 %each row is a different frame rate (1, 2, and 3 second), each column is a
 %different variable (time, tme, intensity, bgintensity, adjintensity,
-%normintensity, lcell, and Cnew)
+%normintensity, lcell, Cnew, imstart, tau, and yhat)
 
-controls_100 = cell(3, 8);
-controls_20 = cell(3, 8);
+controls_100 = cell(3, 11);
+controls_20 = cell(3, 11);
 
 idx1=1;
 idx2=1;
@@ -176,6 +188,9 @@ for i=1:length(basenames)
         controls_100{idx1, 5}=adjintensity;
         controls_100{idx1, 6}=normintensity;
         controls_100{idx1, 7}=lcell;
+        controls_100{idx1, 9}=imstart;
+        
+        [controls_100{idx1, 10}, controls_100{idx1, 11}]=tauCalc(tme, normintensity, 1);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -184,7 +199,8 @@ for i=1:length(basenames)
         idx1=idx1+1;
         
     elseif ismember(i, [24:26])
-                cd([dirsave '/normalizedFiles'])
+        
+        cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         controls_20{idx2, 1}=time;
         controls_20{idx2, 2}=tme;
@@ -193,6 +209,9 @@ for i=1:length(basenames)
         controls_20{idx2, 5}=adjintensity;
         controls_20{idx2, 6}=normintensity;
         controls_20{idx2, 7}=lcell;
+        controls_20{idx2, 9}=imstart;
+        
+        [controls_20{idx2, 10}, controls_20{idx2, 11}]=tauCalc(tme, normintensity, 1);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -204,34 +223,6 @@ for i=1:length(basenames)
     end
     
 end
-
-%% plot to compare the controls
-figure, hold on
-%ciplot(mean(controls_100{1,8}, 1, 'omitnan')-std(controls_100{1,8}, 0, 1, 'omitnan'), mean(controls_100{1,8}, 1, 'omitnan')+std(controls_100{1,8}, 0, 1, 'omitnan'), controls_100{1,2}, colorcode2{1}, transparency)
-plot(controls_100{1,2}, mean(controls_100{1,8}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-
-%ciplot(mean(controls_100{2,8}, 1, 'omitnan')-std(controls_100{2,8}, 0, 1, 'omitnan'), mean(controls_100{2,8}, 1, 'omitnan')+std(controls_100{2,8}, 0, 1, 'omitnan'), controls_100{2,2}, colorcode2{2}, transparency)
-plot(controls_100{2,2}, mean(controls_100{2,8}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-
-%ciplot(mean(controls_100{3,8}, 1, 'omitnan')-std(controls_100{3,8}, 0, 1, 'omitnan'), mean(controls_100{3,8}, 1, 'omitnan')+std(controls_100{3,8}, 0, 1, 'omitnan'), controls_100{3,2}, colorcode2{4}, transparency)
-plot(controls_100{3,2}, mean(controls_100{3,8}, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-
-%ciplot(mean(controls_20{1,8}, 1, 'omitnan')-std(controls_20{1,8}, 0, 1, 'omitnan'), mean(controls_20{1,8}, 1, 'omitnan')+std(controls_20{1,8}, 0, 1, 'omitnan'), controls_20{1,2}, colorcode2{5}, transparency)
-plot(controls_20{1,2}, mean(controls_20{1,8}, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-
-%ciplot(mean(controls_20{2,8}, 1, 'omitnan')-std(controls_20{2,8}, 0, 1, 'omitnan'), mean(controls_20{2,8}, 1, 'omitnan')+std(controls_20{2,8}, 0, 1, 'omitnan'), controls_20{2,2}, colorcode2{6}, transparency)
-plot(controls_20{2,2}, mean(controls_20{2,8}, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-
-%ciplot(mean(controls_20{3,8}, 1, 'omitnan')-std(controls_20{3,8}, 0, 1, 'omitnan'), mean(controls_20{3,8}, 1, 'omitnan')+std(controls_20{3,8}, 0, 1, 'omitnan'), controls_20{3,2}, colorcode2{7}, transparency)
-plot(controls_20{3,2}, mean(controls_20{3,8}, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
-%legend({'1 s, 100% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', '', '1 s, 20% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', ''})
-legend({'1 s, 100% intensity, average', '2 s, 100% intensity, average', '3 s, 100% intensity, average', '1 s, 20% intensity, average', '2 s, 20% intensity, average', '3 s, 20% intensity, average'}, 'location', 'east')
-ylim([0 1.1])
-xlabel('Time (minutes)')
-ylabel('Normalized Fluorescence')
-title('Control Averaged Corrected Traces')
-% %saveas(gcf, 'frameRate_correctedAvg.png');
 
 %% compare the untreated traces
 %each row is a different frame rate (1 min, 1 min, 5 min, 10 min, and 20 min for 100% intensity and 1 min and 20 min for 20% intensity), each column is a
@@ -264,7 +255,7 @@ for i=1:length(basenames)
         idx1=idx1+1;
         
     elseif ismember(i, [3,7])
-                cd([dirsave '/normalizedFiles'])
+        cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         untreated_20{idx2, 1}=time;
         untreated_20{idx2, 2}=tme;
@@ -284,177 +275,6 @@ for i=1:length(basenames)
     end
     
 end
-
-%% Compare the 20 minute frame rate data
-figure, hold on
-%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
-plot(untreated_100{5,1}, mean(untreated_100{5,3}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
-plot(untreated_20{2,1}, mean(untreated_20{2,3}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-title('Raw Intensity Plots')
-
-figure, hold on
-%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
-plot(untreated_100{5,1}, mean(untreated_100{5,4}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
-plot(untreated_20{2,1}, mean(untreated_20{2,4}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-title('Adjusted Intensity Plots')
-
-figure, hold on
-%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
-plot(untreated_100{5,2}, mean(untreated_100{5,5}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
-plot(untreated_20{2,2}, mean(untreated_20{2,5}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-title('Normalized Intensity Plots')
-
-
-%normalize the adjusted trace
-imstart=untreated_100{5,8};
-sc100=mean(untreated_100{5,4}, 1, 'omitnan');
-sc100=sc100./sc100(:, imstart);
-sc100=sc100(imstart:end);
-time100=untreated_100{5,1}(imstart:end);
-
-imstart=untreated_20{2,8};
-sc20=mean(untreated_20{2,4}, 1, 'omitnan');
-sc20=sc20./sc20(:, imstart);
-sc20=sc20(imstart:end);
-time20=untreated_20{2,1}(imstart:end);
-
-figure, hold on
-plot(time100, sc100, 'Color', colorcode{1}, 'LineWidth', 1)
-plot(time20, sc20, 'Color', colorcode{2}, 'LineWidth', 1)
-title('Mean Normalized Intensity Plots')
-
-pause
-%% plot to compare the untreated experiments
-cd(dirsave)
-
-%compare raw traces
-figure, hold on
-%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
-plot(untreated_100{1,1}, mean(untreated_100{1,3}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
-plot(untreated_100{2,1}, mean(untreated_100{2,3}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{3,3}, 1, 'omitnan')-std(untreated_100{3,3}, 0, 1, 'omitnan'), mean(untreated_100{3,3}, 1, 'omitnan')+std(untreated_100{3,3}, 0, 1, 'omitnan'), untreated_100{3,1}, colorcode2{4}, transparency)
-plot(untreated_100{3,1}, mean(untreated_100{3,3}, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{4,3}, 1, 'omitnan')-std(untreated_100{4,3}, 0, 1, 'omitnan'), mean(untreated_100{4,3}, 1, 'omitnan')+std(untreated_100{4,3}, 0, 1, 'omitnan'), untreated_100{4,1}, colorcode2{5}, transparency)
-plot(untreated_100{4,1}, mean(untreated_100{4,3}, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{5,3}, 1, 'omitnan')-std(untreated_100{5,3}, 0, 1, 'omitnan'), mean(untreated_100{5,3}, 1, 'omitnan')+std(untreated_100{5,3}, 0, 1, 'omitnan'), untreated_100{5,1}, colorcode2{6}, transparency)
-plot(untreated_100{5,1}, mean(untreated_100{5,3}, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{1,3}, 1, 'omitnan')-std(untreated_20{1,3}, 0, 1, 'omitnan'), mean(untreated_20{1,3}, 1, 'omitnan')+std(untreated_20{1,3}, 0, 1, 'omitnan'), untreated_20{1,1}, colorcode2{7}, transparency)
-plot(untreated_20{1,1}, mean(untreated_20{1,3}, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{2,3}, 1, 'omitnan')-std(untreated_20{2,3}, 0, 1, 'omitnan'), mean(untreated_20{2,3}, 1, 'omitnan')+std(untreated_20{2,3}, 0, 1, 'omitnan'), untreated_20{2,1}, colorcode2{8}, transparency)
-plot(untreated_20{2,1}, mean(untreated_20{2,3}, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
-
-%legend({'1 s, 100% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', '', '1 s, 20% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', ''})
-legend({'1 min, 100% intensity, average', '1 min, 100% intensity, average', '5 min, 100% intensity, average', '10 min, 100% intensity, average', '20 min, 100% intensity, average', '1 min, 20% intensity, average', '20 min, 20% intensity, average'}, 'location', 'northeast')
-xlabel('Time (minutes)')
-ylabel('Fluorescence')
-title('Untreated Averaged Traces')
-saveas(gcf, 'untreated_rawAvg.png');
-saveas(gcf, 'untreated_rawAvg.fig');
-
-%compare adjusted traces
-figure, hold on
-%ciplot(mean(untreated_100{1,4}, 1, 'omitnan')-std(untreated_100{1,4}, 0, 1, 'omitnan'), mean(untreated_100{1,4}, 1, 'omitnan')+std(untreated_100{1,4}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
-plot(untreated_100{1,1}, mean(untreated_100{1,4}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{2,4}, 1, 'omitnan')-std(untreated_100{2,4}, 0, 1, 'omitnan'), mean(untreated_100{2,4}, 1, 'omitnan')+std(untreated_100{2,4}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
-plot(untreated_100{2,1}, mean(untreated_100{2,4}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{3,4}, 1, 'omitnan')-std(untreated_100{3,4}, 0, 1, 'omitnan'), mean(untreated_100{3,4}, 1, 'omitnan')+std(untreated_100{3,4}, 0, 1, 'omitnan'), untreated_100{3,1}, colorcode2{4}, transparency)
-plot(untreated_100{3,1}, mean(untreated_100{3,4}, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{4,4}, 1, 'omitnan')-std(untreated_100{4,4}, 0, 1, 'omitnan'), mean(untreated_100{4,4}, 1, 'omitnan')+std(untreated_100{4,4}, 0, 1, 'omitnan'), untreated_100{4,1}, colorcode2{5}, transparency)
-plot(untreated_100{4,1}, mean(untreated_100{4,4}, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{5,4}, 1, 'omitnan')-std(untreated_100{5,4}, 0, 1, 'omitnan'), mean(untreated_100{5,4}, 1, 'omitnan')+std(untreated_100{5,4}, 0, 1, 'omitnan'), untreated_100{5,1}, colorcode2{6}, transparency)
-plot(untreated_100{5,1}, mean(untreated_100{5,4}, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{1,4}, 1, 'omitnan')-std(untreated_20{1,4}, 0, 1, 'omitnan'), mean(untreated_20{1,4}, 1, 'omitnan')+std(untreated_20{1,4}, 0, 1, 'omitnan'), untreated_20{1,1}, colorcode2{7}, transparency)
-plot(untreated_20{1,1}, mean(untreated_20{1,4}, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{2,4}, 1, 'omitnan')-std(untreated_20{2,4}, 0, 1, 'omitnan'), mean(untreated_20{2,4}, 1, 'omitnan')+std(untreated_20{2,4}, 0, 1, 'omitnan'), untreated_20{2,1}, colorcode2{8}, transparency)
-plot(untreated_20{2,1}, mean(untreated_20{2,4}, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
-
-%legend({'1 s, 100% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', '', '1 s, 20% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', ''})
-legend({'1 min, 100% intensity, average', '1 min, 100% intensity, average', '5 min, 100% intensity, average', '10 min, 100% intensity, average', '20 min, 100% intensity, average', '1 min, 20% intensity, average', '20 min, 20% intensity, average'}, 'location', 'northeast')
-xlabel('Time (minutes)')
-ylabel('Adjusted Fluorescence')
-title('Untreated Averaged Adjusted Traces')
-saveas(gcf, 'untreated_adjAvg.png');
-saveas(gcf, 'untreated_adjAvg.fig');
-
-%compare normalized traces
-figure, hold on
-%ciplot(mean(untreated_100{1,5}, 1, 'omitnan')-std(untreated_100{1,5}, 0, 1, 'omitnan'), mean(untreated_100{1,5}, 1, 'omitnan')+std(untreated_100{1,5}, 0, 1, 'omitnan'), untreated_100{1,2}, colorcode2{1}, transparency)
-plot(untreated_100{1,2}, mean(untreated_100{1,5}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{2,5}, 1, 'omitnan')-std(untreated_100{2,5}, 0, 1, 'omitnan'), mean(untreated_100{2,5}, 1, 'omitnan')+std(untreated_100{2,5}, 0, 1, 'omitnan'), untreated_100{2,2}, colorcode2{2}, transparency)
-plot(untreated_100{2,2}, mean(untreated_100{2,5}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{3,5}, 1, 'omitnan')-std(untreated_100{3,5}, 0, 1, 'omitnan'), mean(untreated_100{3,5}, 1, 'omitnan')+std(untreated_100{3,5}, 0, 1, 'omitnan'), untreated_100{3,2}, colorcode2{4}, transparency)
-plot(untreated_100{3,2}, mean(untreated_100{3,5}, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{4,5}, 1, 'omitnan')-std(untreated_100{4,5}, 0, 1, 'omitnan'), mean(untreated_100{4,5}, 1, 'omitnan')+std(untreated_100{4,5}, 0, 1, 'omitnan'), untreated_100{4,2}, colorcode2{5}, transparency)
-plot(untreated_100{4,2}, mean(untreated_100{4,5}, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{5,5}, 1, 'omitnan')-std(untreated_100{5,5}, 0, 1, 'omitnan'), mean(untreated_100{5,5}, 1, 'omitnan')+std(untreated_100{5,5}, 0, 1, 'omitnan'), untreated_100{5,2}, colorcode2{6}, transparency)
-plot(untreated_100{5,2}, mean(untreated_100{5,5}, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{1,5}, 1, 'omitnan')-std(untreated_20{1,5}, 0, 1, 'omitnan'), mean(untreated_20{1,5}, 1, 'omitnan')+std(untreated_20{1,5}, 0, 1, 'omitnan'), untreated_20{1,2}, colorcode2{7}, transparency)
-plot(untreated_20{1,2}, mean(untreated_20{1,5}, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{2,5}, 1, 'omitnan')-std(untreated_20{2,5}, 0, 1, 'omitnan'), mean(untreated_20{2,5}, 1, 'omitnan')+std(untreated_20{2,5}, 0, 1, 'omitnan'), untreated_20{2,2}, colorcode2{8}, transparency)
-plot(untreated_20{2,2}, mean(untreated_20{2,5}, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
-
-%legend({'1 s, 100% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', '', '1 s, 20% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', ''})
-legend({'1 min, 100% intensity, average', '1 min, 100% intensity, average', '5 min, 100% intensity, average', '10 min, 100% intensity, average', '20 min, 100% intensity, average', '1 min, 20% intensity, average', '20 min, 20% intensity, average'}, 'location', 'northeast')
-ylim([0 1.1])
-xlabel('Time (minutes)')
-ylabel('Normalized Fluorescence')
-title('Untreated Averaged Normalized Traces')
-saveas(gcf, 'untreated_normAvg.png');
-saveas(gcf, 'untreated_normAvg.fig');
-
-%compare corrected traces
-figure, hold on
-%ciplot(mean(untreated_100{1,7}, 1, 'omitnan')-std(untreated_100{1,7}, 0, 1, 'omitnan'), mean(untreated_100{1,7}, 1, 'omitnan')+std(untreated_100{1,7}, 0, 1, 'omitnan'), untreated_100{1,2}, colorcode2{1}, transparency)
-plot(untreated_100{1,2}, mean(untreated_100{1,7}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{2,7}, 1, 'omitnan')-std(untreated_100{2,7}, 0, 1, 'omitnan'), mean(untreated_100{2,7}, 1, 'omitnan')+std(untreated_100{2,7}, 0, 1, 'omitnan'), untreated_100{2,2}, colorcode2{2}, transparency)
-plot(untreated_100{2,2}, mean(untreated_100{2,7}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{3,7}, 1, 'omitnan')-std(untreated_100{3,7}, 0, 1, 'omitnan'), mean(untreated_100{3,7}, 1, 'omitnan')+std(untreated_100{3,7}, 0, 1, 'omitnan'), untreated_100{3,2}, colorcode2{4}, transparency)
-plot(untreated_100{3,2}, mean(untreated_100{3,7}, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{4,7}, 1, 'omitnan')-std(untreated_100{4,7}, 0, 1, 'omitnan'), mean(untreated_100{4,7}, 1, 'omitnan')+std(untreated_100{4,7}, 0, 1, 'omitnan'), untreated_100{4,2}, colorcode2{5}, transparency)
-plot(untreated_100{4,2}, mean(untreated_100{4,7}, 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_100{5,7}, 1, 'omitnan')-std(untreated_100{5,7}, 0, 1, 'omitnan'), mean(untreated_100{5,7}, 1, 'omitnan')+std(untreated_100{5,7}, 0, 1, 'omitnan'), untreated_100{5,2}, colorcode2{6}, transparency)
-plot(untreated_100{5,2}, mean(untreated_100{5,7}, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{1,7}, 1, 'omitnan')-std(untreated_20{1,7}, 0, 1, 'omitnan'), mean(untreated_20{1,7}, 1, 'omitnan')+std(untreated_20{1,7}, 0, 1, 'omitnan'), untreated_20{1,2}, colorcode2{7}, transparency)
-plot(untreated_20{1,2}, mean(untreated_20{1,7}, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
-%ciplot(mean(untreated_20{2,7}, 1, 'omitnan')-std(untreated_20{2,7}, 0, 1, 'omitnan'), mean(untreated_20{2,7}, 1, 'omitnan')+std(untreated_20{2,7}, 0, 1, 'omitnan'), untreated_20{2,2}, colorcode2{8}, transparency)
-plot(untreated_20{2,2}, mean(untreated_20{2,7}, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
-
-%legend({'1 s, 100% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', '', '1 s, 20% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', ''})
-legend({'1 min, 100% intensity, average', '1 min, 100% intensity, average', '5 min, 100% intensity, average', '10 min, 100% intensity, average', '20 min, 100% intensity, average', '1 min, 20% intensity, average', '20 min, 20% intensity, average'}, 'location', 'northeast')
-ylim([0 1.1])
-xlabel('Time (minutes)')
-ylabel('Normalized Fluorescence')
-title('Untreated Averaged Corrected Traces')
-saveas(gcf, 'untreated_correctedAvg.png');
-saveas(gcf, 'untreated_correctedAvg.fig');
 
 %% compare the PBS traces
 %each row is a different frame rate (1 min, 1 min, 5 min, 10 min, and 20 min for 100% intensity and 1 min and 20 min for 20% intensity), each column is a
@@ -487,136 +307,392 @@ for i=1:length(basenames)
     
 end
 
-%% plot to compare the PBS experiments
-cd(dirsave)
+%% compare the LB treated traces
+%each row is a different treatment in LB (100% intensity)
 
-figure, hold on
-%ciplot(mean(PBS_100{1,7}, 1, 'omitnan')-std(PBS_100{1,7}, 0, 1, 'omitnan'), mean(PBS_100{1,7}, 1, 'omitnan')+std(PBS_100{1,7}, 0, 1, 'omitnan'), PBS_100{1,2}, colorcode2{1}, transparency)
-plot(PBS_100{1,2}, mean(PBS_100{1,7}, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
+treated_100 = cell(6, 7);
 
-%ciplot(mean(PBS_100{2,7}, 1, 'omitnan')-std(PBS_100{2,7}, 0, 1, 'omitnan'), mean(PBS_100{2,7}, 1, 'omitnan')+std(PBS_100{2,7}, 0, 1, 'omitnan'), PBS_100{2,2}, colorcode2{2}, transparency)
-plot(PBS_100{2,2}, mean(PBS_100{2,7}, 1, 'omitnan'), 'Color', colorcode{2}, 'LineWidth', 1)
+idx1=1;
 
-%ciplot(mean(untreated_100{1,3}, 1, 'omitnan')-std(untreated_100{1,3}, 0, 1, 'omitnan'), mean(untreated_100{1,3}, 1, 'omitnan')+std(untreated_100{1,3}, 0, 1, 'omitnan'), untreated_100{1,1}, colorcode2{1}, transparency)
-plot(untreated_100{1,2}, mean(untreated_100{1,7}, 1, 'omitnan'), '--', 'Color', colorcode{1}, 'LineWidth', 1)
+for i=1:length(basenames)
+    basename=basenames{i};
+    
+     if ismember(i, [15:20])
+        cd([dirsave '/normalizedFiles'])
+        load([basename '_norm.mat'])
+        treated_100{idx1, 1}=time;
+        treated_100{idx1, 2}=tme;
+        treated_100{idx1, 3}=intensity;
+        treated_100{idx1, 4}=adjintensity;
+        treated_100{idx1, 5}=normintensity;
+        treated_100{idx1, 6}=lcell;
+        
+        cd([dirsave '/correctedFiles'])
+        load([basename '_corrected.mat'])
+        treated_100{idx1, 7}=Cnew;
+        
+        idx1=idx1+1;
+        
+     end
+    
+end
 
-%ciplot(mean(untreated_100{2,3}, 1, 'omitnan')-std(untreated_100{2,3}, 0, 1, 'omitnan'), mean(untreated_100{2,3}, 1, 'omitnan')+std(untreated_100{2,3}, 0, 1, 'omitnan'), untreated_100{2,1}, colorcode2{2}, transparency)
-plot(untreated_100{2,2}, mean(untreated_100{2,7}, 1, 'omitnan'), '--', 'Color', colorcode{2}, 'LineWidth', 1)
+%% plot the fit of the exponential on the control traces
+cd([dirsave '/03072022_groupMeeting']);
 
-%ciplot(mean(PBS_100{3,7}, 1, 'omitnan')-std(PBS_100{3,7}, 0, 1, 'omitnan'), mean(PBS_100{3,7}, 1, 'omitnan')+std(PBS_100{3,7}, 0, 1, 'omitnan'), PBS_100{3,2}, colorcode2{4}, transparency)
-plot(PBS_100{3,2}, mean(PBS_100{3,7}, 1, 'omitnan'), 'Color', colorcode{4}, 'LineWidth', 1)
-
-%ciplot(mean(PBS_100{4,7}, 1, 'omitnan')-std(PBS_100{4,7}, 0, 1, 'omitnan'), mean(PBS_100{4,7}, 1, 'omitnan')+std(PBS_100{4,7}, 0, 1, 'omitnan'), PBS_100{4,2}, colorcode2{5}, transparency)
-plot(PBS_100{4,2}(:, 1:60), mean(PBS_100{4,7}(:, 1:60), 1, 'omitnan'), 'Color', colorcode{5}, 'LineWidth', 1)
-
-%ciplot(mean(PBS_100{5,7}, 1, 'omitnan')-std(PBS_100{5,7}, 0, 1, 'omitnan'), mean(PBS_100{5,7}, 1, 'omitnan')+std(PBS_100{5,7}, 0, 1, 'omitnan'), PBS_100{5,2}, colorcode2{6}, transparency)
-plot(PBS_100{5,2}, mean(PBS_100{5,7}, 1, 'omitnan'), 'Color', colorcode{6}, 'LineWidth', 1)
-
-%ciplot(mean(PBS_100{6,7}, 1, 'omitnan')-std(PBS_100{6,7}, 0, 1, 'omitnan'), mean(PBS_100{6,7}, 1, 'omitnan')+std(PBS_100{6,7}, 0, 1, 'omitnan'), PBS_100{6,2}, colorcode2{7}, transparency)
-plot(PBS_100{6,2}, mean(PBS_100{6,7}, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
-%ciplot(mean(PBS_100{7,7}, 1, 'omitnan')-std(PBS_100{7,7}, 0, 1, 'omitnan'), mean(PBS_100{7,7}, 1, 'omitnan')+std(PBS_100{7,7}, 0, 1, 'omitnan'), PBS_100{7,2}, colorcode2{8}, transparency)
-plot(PBS_100{7,2}, mean(PBS_100{7,7}, 1, 'omitnan'), 'Color', colorcode{8}, 'LineWidth', 1)
-
-%legend({'1 s, 100% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', '', '1 s, 20% intensity, average', '', '2 s, 100% intensity, average', '', '3 s, 100% intensity, average', ''})
-legend({'PBS 2 min, average', 'PBS 2 min, average', 'untreated', 'untreated', 'PBS 20 min, average', 'PBS 20 min, average', 'PBS 60 min, average', 'PBS 60 min, average', 'PBS 120 min, average'}, 'location', 'northeast')
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',16)
+subplot(2,3,1)
+plot(controls_100{1,2}, controls_100{1, 6}, 'Color', colorcode{1}), hold on
+plot(controls_100{1,2}, controls_100{1, 11}, '--k')
 ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
-ylabel('Normalized Fluorescence')
-title('PBS-incubated Averaged Corrected Traces')
-saveas(gcf, 'PBS_correctedAvg.png');
-saveas(gcf, 'PBS_correctedAvg.fig');
+title('100% Intensity, 1 s Frame Rate')
+% saveas(gcf, 'fit100_1s.png')
+% saveas(gcf, 'fit100_1s.fig')
 
-%% close all plots
-close all
-
-%% find where the mean traces plateau
-avg_100=cell(height(untreated_100),1);
-imend_100=nan(height(untreated_100),1);
-
-avg_20=cell(height(untreated_20),1);
-imend_20=nan(height(untreated_20),1);
-
-tme_100 = [];
-tme_20 = [];
-
-for i=1:height(untreated_100)
-    [avg_100{i}, imend_100(i)]=traceAvg(untreated_100{i, 7});
-    idx=[1:imend_100(i)];
-    tme_100=union(tme_100, untreated_100{i,2}(idx));
-end
-
-for i=1:height(untreated_20)
-    [avg_20{i}, imend_20(i)]=traceAvg(untreated_20{i, 7});
-    idx=[1:imend_20(i)];
-    tme_20=union(tme_20, untreated_20{i,2}(idx));
-end
-
-%create a new matrix to combine the mean traces
-ftrace_100 = nan(height(untreated_100), length(tme_100));
-ftrace_20 = nan(height(untreated_20), length(tme_20));
-
-for i=1:height(untreated_100)
-    [~, ia, ib] = intersect(untreated_100{i,2}(1:imend_100(i)), tme_100);
-    ftrace_100(i, ib)=avg_100{i}(1, ia);
-end
-
-for i=1:height(untreated_20)
-    [~, ia, ib] = intersect(untreated_20{i,2}(1:imend_20(i)), tme_20);
-    ftrace_20(i, ib)=avg_20{i}(1, ia);
-end
-
-%now calculate the standard error of the mean
-smplesz_100 =  sum(~isnan(ftrace_100), 1);
-ste_100 = std(ftrace_100, 0, 1, 'omitnan')./sqrt(smplesz_100);
-
-smplesz_20 =  sum(~isnan(ftrace_20), 1);
-ste_20 = std(ftrace_20, 0, 1, 'omitnan')./sqrt(smplesz_20);
-
-%% plot the mean and ste of the mean for the corrected untreated LB trace
-figure, hold on
-ciplot(mean(ftrace_100, 1, 'omitnan')-ste_100, mean(ftrace_100, 1, 'omitnan')+ste_100, tme_100, colorcode2{1}, transparency)
-plot(tme_100, mean(ftrace_100, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-
-ciplot(mean(ftrace_20, 1, 'omitnan')-ste_20, mean(ftrace_20, 1, 'omitnan')+ste_20, tme_20, colorcode2{7}, transparency)
-plot(tme_20, mean(ftrace_20, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-
+subplot(2,3,2)
+plot(controls_100{2,2}, controls_100{2, 6}, 'Color', colorcode{3}), hold on
+plot(controls_100{2,2}, controls_100{2, 11}, '--k')
 ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
-ylabel('Normalized Fluorescence')
+title('100% Intensity, 2 s Frame Rate')
+% saveas(gcf, 'fit100_2s.png')
+% saveas(gcf, 'fit100_2s.fig')
 
-legend('', '100% intensity', '', '20% intensity')
-saveas(gcf, 'fullTrace.png');
-saveas(gcf, 'fullTrace.fig');
-
-%% fit the corrected untreated average
-[tau_100, yhat_100]=tauCalc(tme_100', mean(ftrace_100, 1, 'omitnan'), 1);
-[tau_20, yhat_20]=tauCalc(tme_20', mean(ftrace_20, 1, 'omitnan'), 1);
-
-%find when fluor goes to zero
-xpred = 0:420;
-modelfun = @(tau, x)exp(-x./tau);
-ypred_100 = modelfun(tau_100, xpred);
-ypred_20 = modelfun(tau_20, xpred);
-
-%% plot to see the fit
-figure, hold on
-plot(tme_100, mean(ftrace_100, 1, 'omitnan'), 'Color', colorcode{1}, 'LineWidth', 1)
-plot(xpred, ypred_100, '--m', 'LineWidth', 1)
-
-plot(tme_20, mean(ftrace_20, 1, 'omitnan'), 'Color', colorcode{7}, 'LineWidth', 1)
-plot(xpred, ypred_20, '--k', 'LineWidth', 1)
-
+subplot(2,3,3)
+plot(controls_100{3,2}, controls_100{3, 6}, 'Color', colorcode{5}), hold on
+plot(controls_100{3,2}, controls_100{3, 11}, '--k')
 ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
-ylabel('Normalized Fluorescence')
-legend('100% intensity', '100% intensity fit', '20% intensity', '20% intensity fit')
-saveas(gcf, 'tauFit.png')
-saveas(gcf, 'tauFit.fig')
+title('100% Intensity, 3 s Frame Rate')
+% saveas(gcf, 'fit100_3s.png')
+% saveas(gcf, 'fit100_3s.fig')
+
+subplot(2,3,4)
+plot(controls_20{1,2}, controls_20{1, 6}, 'Color', colorcode{2}), hold on
+plot(controls_20{1,2}, controls_20{1, 11}, '--k')
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+title('20% Intensity, 1 s Frame Rate')
+% saveas(gcf, 'fit20_1s.png')
+% saveas(gcf, 'fit20_1s.fig')
+
+subplot(2,3,5)
+plot(controls_20{2,2}, controls_20{2, 6}, 'Color', colorcode{4}), hold on
+plot(controls_20{2,2}, controls_20{2, 11}, '--k')
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+title('20% Intensity, 2 s Frame Rate')
+% saveas(gcf, 'fit20_2s.png')
+% saveas(gcf, 'fit20_2s.fig')
+
+subplot(2,3,6)
+plot(controls_20{3,2}, controls_20{3, 6}, 'Color', colorcode{6}), hold on
+plot(controls_20{3,2}, controls_20{3, 11}, '--k')
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+title('20% Intensity, 3 s Frame Rate')
+% saveas(gcf, 'fit20_3s.png')
+% saveas(gcf, 'fit20_3s.fig')
+
+saveas(gcf, 'fitControls.png')
+saveas(gcf, 'fitControls.fig')
+%% calculate the slope of tau as a function of frame rate
+tau={controls_100{1, 10}; controls_100{2, 10}; controls_100{3, 10}; controls_20{1, 10}; controls_20{2, 10}; controls_20{3, 10}};
+dt=[1.2/60, 2/60, 3/60, 1.76/60, 2.3/60, 3/60]; 
+
+linearCoef1 = polyfit([repelem(dt(1), length(tau{1})), repelem(dt(2), length(tau{2})), repelem(dt(3), length(tau{3}))],[tau{1}', tau{2}', tau{3}'],1);
+linearFit1= polyval(linearCoef1,[0 1.2/60 2/60 3/60]);
+
+linearCoef2 = polyfit([repelem(dt(4), length(tau{4})), repelem(dt(5), length(tau{5})), repelem(dt(6), length(tau{6}))],[tau{4}', tau{5}', tau{6}'],1);
+linearFit2= polyval(linearCoef2,[0 1.76/60 2.3/60 3/60]);
+
+%% plot the slope as a function of frame rate
+tau_means = cellfun(@(x)mean(x, 1, 'omitnan'), tau);
+tau_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), tau);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+scatter(repelem(dt(1), length(tau{1})), tau{1}, 'MarkerFaceColor', '#1267A1', 'MarkerEdgeColor', '#1267A1')
+scatter(repelem(dt(2), length(tau{2})), tau{2}, 'MarkerFaceColor', '#1267A1', 'MarkerEdgeColor', '#1267A1')
+scatter(repelem(dt(3), length(tau{3})), tau{3}, 'MarkerFaceColor', '#1267A1', 'MarkerEdgeColor', '#1267A1')
+
+scatter(repelem(dt(4), length(tau{4})), tau{4}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(repelem(dt(5), length(tau{5})), tau{5}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(repelem(dt(6), length(tau{6})), tau{6}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+
+scatter([dt(1), dt(2), dt(3), dt(4), dt(5), dt(6)], tau_means, 'MarkerFaceColor', 'black')
+errorbar(dt(1), tau_means(1), tau_std(1), 'Color', 'black')
+errorbar(dt(2), tau_means(2), tau_std(2), 'Color', 'black')
+errorbar(dt(3), tau_means(3), tau_std(3), 'Color', 'black')
+errorbar(dt(4), tau_means(4), tau_std(4), 'Color', 'black')
+errorbar(dt(5), tau_means(5), tau_std(5), 'Color', 'black')
+errorbar(dt(6), tau_means(6), tau_std(6), 'Color', 'black')
+
+plot([0, dt(1), dt(2), dt(3)], linearFit1, '--k', 'LineWidth', 1)
+plot([0, dt(4), dt(5), dt(6)], linearFit2, '--k', 'LineWidth', 1)
+xlim([0, 0.06])
+ylabel('\tau (min^{-1})')
+%xticks([0, dt(1),  dt(4), dt(2),  dt(5), dt(3)])
+%xticklabels({'0', '1.2 s', '1.76 s', '2 s', '2.3 s', '3 s'})
+xlabel('Time (minutes)')
+
+caption1 = sprintf('%f * frame rate + %f', linearCoef1(1), linearCoef1(2));
+caption2 = sprintf('%f * frame rate + %f', linearCoef2(1), linearCoef2(2));
+text(dt(2), tau_means(2)+1.5, ['\tau = ' caption1], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
+text(dt(1), tau_means(5)+1.5, ['\tau = ' caption2], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
+
+title('Tau vs Frame Rate')
+saveas(gcf, 'tau_vs_frameRate.png')
+saveas(gcf, 'tau_vs_frameRate.fig')
+
+%% calculate the asymptote value as a function of frame rate
+%untreated 100% intensity with frame rates at: 1 s, 2 s, 3 s, 1 min, 5 min,
+%10 min and 20 min (although exclude the 20 minute if need be since it
+%doesn't quite asymptote)
+
+asymptote=cell(7, 2); %column 1 = dt, column 2 = final raw fluor values
+
+dt2=[1.2/60, 2/60, 3/60, 1, 5, 10, 20];
+
+asymptote{1,2}=controls_100{1,3}(:, end);
+asymptote{2,2}=controls_100{2,3}(:, end);
+asymptote{3,2}=controls_100{3,3}(:, end);
+asymptote{4,2}=untreated_100{1,3}(:, end);
+asymptote{5,2}=untreated_100{3,3}(:, end);
+asymptote{6,2}=untreated_100{4,3}(:, end);
+asymptote{7,2}=untreated_100{5,3}(:, end);
+
+for i=1:length(dt2)
+    asymptote{i,1}=repelem(dt2(i), height(asymptote{i,2}))';
+end
+
+% asymptote_x=cell2mat(asymptote(:, 1))';
+% asymptote_y=cell2mat(asymptote(:, 2))';
+% linearCoef3 = polyfit(asymptote_x, asymptote_y, 1);
+% linearFit3 = polyval(linearCoef3,[0 dt2]);
+
+%% generate plots to illustrate the asymptote value as a function of frame rate
+asymptote_means = cellfun(@(x)mean(x, 1, 'omitnan'), asymptote(:, 2));
+asymptote_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), asymptote(:, 2));
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+scatter(asymptote{1, 1}, asymptote{1, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(asymptote{2, 1}, asymptote{2, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(asymptote{3, 1}, asymptote{3, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(asymptote{4, 1}, asymptote{4, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(asymptote{5, 1}, asymptote{5, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(asymptote{6, 1}, asymptote{6, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(asymptote{7, 1}, asymptote{7, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+
+scatter([dt2(1), dt2(2), dt2(3), dt2(4), dt2(5), dt2(6), dt2(7)], asymptote_means, 'MarkerFaceColor', 'black')
+errorbar(dt2(1), asymptote_means(1), asymptote_std(1), 'Color', 'black')
+errorbar(dt2(2), asymptote_means(2), asymptote_std(2), 'Color', 'black')
+errorbar(dt2(3), asymptote_means(3), asymptote_std(3), 'Color', 'black')
+errorbar(dt2(4), asymptote_means(4), asymptote_std(4), 'Color', 'black')
+errorbar(dt2(5), asymptote_means(5), asymptote_std(5), 'Color', 'black')
+errorbar(dt2(6), asymptote_means(6), asymptote_std(6), 'Color', 'black')
+errorbar(dt2(7), asymptote_means(7), asymptote_std(7), 'Color', 'black')
+
+plot([0 dt2], linearFit3, '--k', 'LineWidth', 1)
+ylabel('Asymptote Value (A.U.)')
+xlabel('Time (minutes)')
+ylim([0 1800])
+xlim([-1 dt2(end)+1])
+
+% caption3 = sprintf('%f * frame rate + %f', linearCoef3(1), linearCoef3(2));
+% text(dt2(2), asymptote_means(2)+1.5, ['\asymptote = ' caption3], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
+
+title('Asymptote Value vs Frame Rate')
+saveas(gcf, 'asymptote_vs_frameRate.png')
+saveas(gcf, 'asymptote_vs_frameRate.fig')
+%% generate plots for the controls
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+p1=plot(controls_100{1,2}, controls_100{1,3}(:, controls_100{1,9}:end), 'Color', colorcode{1}, 'LineWidth', 0.75)
+p2=plot(controls_100{2,2}, controls_100{2,3}(:, controls_100{2,9}:end), 'Color', colorcode{3}, 'LineWidth', 0.75)
+p3=plot(controls_100{3,2}, controls_100{3,3}(:, controls_100{3,9}:end), 'Color', colorcode{5}, 'LineWidth', 0.75)
+p4=plot(controls_100{1,2}, controls_100{1,4}(:, controls_100{1,9}:end), '--', 'Color', colorcode{1}, 'LineWidth', 1.5)
+p5=plot(controls_100{2,2}, controls_100{2,4}(:, controls_100{2,9}:end), '--', 'Color', colorcode{3}, 'LineWidth', 1.5)
+p6=plot(controls_100{3,2}, controls_100{3,4}(:, controls_100{3,9}:end), '--', 'Color', colorcode{5}, 'LineWidth', 1.5)
+ylim([0 Inf])
+ylabel('Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'rawControls_100.png')
+saveas(gcf, 'rawControls_100.fig')
+%set(gca,'DefaultTextFontSize', 42)
+% hleg=legend([p4, p5, p6], {'1 s', '2 s', '3 s'})
+% title(hleg,'Frame Rate')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+p1=plot(controls_20{1,2}, controls_20{1,3}(:, controls_20{1,9}:end), 'Color', colorcode{2}, 'LineWidth', 0.75)
+p2=plot(controls_20{2,2}, controls_20{2,3}(:, controls_20{2,9}:end), 'Color', colorcode{4}, 'LineWidth', 0.75)
+p3=plot(controls_20{3,2}, controls_20{3,3}(:, controls_20{3,9}:end), 'Color', colorcode{6}, 'LineWidth', 0.75)
+p4=plot(controls_20{1,2}, controls_20{1,4}(:, controls_20{1,9}:end), '--', 'Color', colorcode{2}, 'LineWidth', 1.5)
+p5=plot(controls_20{2,2}, controls_20{2,4}(:, controls_20{2,9}:end), '--', 'Color', colorcode{4}, 'LineWidth', 1.5)
+p6=plot(controls_20{3,2}, controls_20{3,4}(:, controls_20{3,9}:end), '--', 'Color', colorcode{6}, 'LineWidth', 1.5)
+ylim([0 Inf])
+ylabel('Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'rawControls_20.png')
+saveas(gcf, 'rawControls_20.fig')
+%set(gca,'DefaultTextFontSize', 42)
+% hleg=legend([p4, p5, p6], {'1 s', '2 s', '3 s'})
+% title(hleg,'Frame Rate')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+meanPlot(controls_100{1,2}, controls_100{1, 6}, colorcode{1}, colorcode2{1})
+meanPlot(controls_100{2,2}, controls_100{2, 6}, colorcode{3}, colorcode2{3})
+meanPlot(controls_100{3,2}, controls_100{3, 6}, colorcode{5}, colorcode2{5})
+meanPlot(controls_20{1,2}, controls_20{1, 6}, colorcode{2}, colorcode2{2})
+meanPlot(controls_20{2,2}, controls_20{2, 6}, colorcode{4}, colorcode2{4})
+meanPlot(controls_20{3,2}, controls_20{3, 6}, colorcode{6}, colorcode2{6})
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'normControls.png')
+saveas(gcf, 'normControls.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+meanPlot(controls_100{1,2}, controls_100{1, 8}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(controls_100{2,2}, controls_100{2, 8}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(controls_100{3,2}, controls_100{3, 8}, colorcode{5}, colorcode2{5}, transparency)
+meanPlot(controls_20{1,2}, controls_20{1, 8}, colorcode{2}, colorcode2{2}, transparency)
+meanPlot(controls_20{2,2}, controls_20{2, 8}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(controls_20{3,2}, controls_20{3, 8}, colorcode{6}, colorcode2{6}, transparency)
+ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'correctedControls.png')
+saveas(gcf, 'correctedControls.fig')
+
+%% generate plots for PBS
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{1,1}, untreated_100{1, 3}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{2,1}, untreated_100{2, 3}, colorcode{2}, colorcode2{2}, transparency)
+meanPlot(PBS_100{1,1}, PBS_100{1, 3}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(PBS_100{2,1}, PBS_100{2, 3}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(PBS_100{3,1}, PBS_100{3, 3}, colorcode{5}, colorcode2{5}, transparency)
+meanPlot(PBS_100{4,1}, PBS_100{4, 3}, colorcode{6}, colorcode2{6}, transparency)
+meanPlot(PBS_100{5,1}, PBS_100{5, 3}, colorcode{7}, colorcode2{7}, transparency)
+meanPlot(PBS_100{6,1}, PBS_100{6, 3}, colorcode{8}, colorcode2{8}, transparency)
+meanPlot(PBS_100{7,1}, PBS_100{7, 3}, colorcode{9}, colorcode2{9}, transparency)
+ylim([0 Inf])
+ylabel('Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'rawPBS.png')
+saveas(gcf, 'rawPBS.fig')
+
+%% Generate plots for untreated LB
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{1,1}, untreated_100{1, 3}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{2,1}, untreated_100{2, 3}, colorcode{2}, colorcode2{2}, transparency)
+meanPlot(untreated_100{3,1}, untreated_100{3, 3}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(untreated_100{4,1}, untreated_100{4, 3}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(untreated_100{5,1}, untreated_100{5, 3}, colorcode{5}, colorcode2{5}, transparency)
+ylim([0 Inf])
+ylabel('Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'rawUntreated.png')
+saveas(gcf, 'rawUntreated.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{1,1}, untreated_100{1, 4}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{2,1}, untreated_100{2, 4}, colorcode{2}, colorcode2{2}, transparency)
+meanPlot(untreated_100{3,1}, untreated_100{3, 4}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(untreated_100{4,1}, untreated_100{4, 4}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(untreated_100{5,1}, (untreated_100{5, 3}-mean(untreated_100{4, 3}(:,end), 1, 'omitnan')), colorcode{5}, colorcode2{5}, transparency)
+ylim([0 Inf])
+ylabel('Adjusted Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'adjUntreated.png')
+saveas(gcf, 'adjUntreated.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{1,2}, untreated_100{1, 5}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{2,2}, untreated_100{2, 5}, colorcode{2}, colorcode2{2}, transparency)
+meanPlot(untreated_100{3,2}, untreated_100{3, 5}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(untreated_100{4,2}, untreated_100{4, 5}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(untreated_100{5,2}, untreated_100{5, 5}, colorcode{5}, colorcode2{5}, transparency)
+ylim([0 Inf])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'normUntreated.png')
+saveas(gcf, 'normUntreated.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{3,2}, untreated_100{3, 7}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(untreated_100{4,2}, untreated_100{4, 7}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(untreated_100{5,2}, untreated_100{5, 7}, colorcode{5}, colorcode2{5}, transparency)
+ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'correctedUntreated.png')
+saveas(gcf, 'correctedUntreated.fig')
+
+%% when do the untreated cells hit the asymptote?
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+dervPlot(untreated_100{1,1}, untreated_100{1, 3}, colorcode{1})
+dervPlot(untreated_100{2,1}, untreated_100{2, 3}, colorcode{2})
+dervPlot(untreated_100{3,1}, untreated_100{3, 3}, colorcode{3})
+dervPlot(untreated_100{4,1}, untreated_100{4, 3}, colorcode{4})
+dervPlot(untreated_100{5,1}, untreated_100{5, 3}, colorcode{5})
+%ylim([0 Inf])
+ylabel('Relative Change in Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+dervPlot(untreated_100{1,2}, untreated_100{1, 5}, colorcode{1})
+dervPlot(untreated_100{2,2}, untreated_100{2, 5}, colorcode{2})
+dervPlot(untreated_100{3,2}, untreated_100{3, 5}, colorcode{3})
+dervPlot(untreated_100{4,2}, untreated_100{4, 5}, colorcode{4})
+dervPlot(untreated_100{5,2}, untreated_100{5, 5}, colorcode{5})
+%ylim([0 Inf])
+ylabel('Relative Change in Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+dervPlot(untreated_100{1,2}, untreated_100{1, 7}, colorcode{1})
+dervPlot(untreated_100{2,2}, untreated_100{2, 7}, colorcode{2})
+dervPlot(untreated_100{3,2}, untreated_100{3, 7}, colorcode{3})
+dervPlot(untreated_100{4,2}, untreated_100{4, 7}, colorcode{4})
+dervPlot(untreated_100{5,2}, untreated_100{5, 7}, colorcode{5})
+%ylim([0 Inf])
+ylabel('Relative Change in Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+
+%% compare treated to untreated and 2 minute PBS
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+meanPlot(untreated_100{1,2}, untreated_100{1, 7}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{2,2}, untreated_100{2, 7}, colorcode{2}, colorcode2{2}, transparency)
+meanPlot(PBS_100{1,2}, PBS_100{1, 7}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(PBS_100{2,2}, PBS_100{2, 7}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(treated_100{1,2}, treated_100{1, 7}, colorcode{5}, colorcode2{5}, transparency)
+meanPlot(treated_100{2,2}, treated_100{2, 7}, colorcode{6}, colorcode2{6}, transparency)
+meanPlot(treated_100{3,2}, treated_100{3, 7}, colorcode{7}, colorcode2{7}, transparency)
+meanPlot(treated_100{4,2}, treated_100{4, 7}, colorcode{8}, colorcode2{8}, transparency)
+meanPlot(treated_100{5,2}, treated_100{5, 7}, colorcode{9}, colorcode2{9}, transparency)
+ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+saveas(gcf, 'treated_vs_untreated.png')
+saveas(gcf, 'treated_vs_untreated.fig')
 
 %% Functions
 %to aggregate data and normalize
-function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dataNormalize(datadir, imstart)
+function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dataNormalize(datadir, imstart, idx)
         
     %pre-allocate variables
     intensity=[];
@@ -642,40 +718,19 @@ function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dat
             tme=time; %pre-set new time vector
         end
 
-    end
-      
-    %remove cells without a value for imstart
-%     idx=find(~isnan(intensity(:, imstart)));
-%     intensity=intensity(idx,:);
-%     lCell=lCell(idx,:);    
+    end 
        
     %subtract final fluor. value from the trace
     adjintensity=intensity-intensity(:, end); 
     adjintensity(adjintensity<0)=NaN;      
-
-%     %interpolate the fluor values during detergent perfusion
-%     for n=1:height(adjintensity)
-%         idx=find(adjintensity(n,:)>adjintensity(n, imstart));
-%             if ~isempty(idx)
-%                 [nrow, ncol]=size(adjintensity);
-%                 x=setdiff(1:ncol, idx); %x=time
-%                 v=adjintensity(n, x); %v=intensity
-%                 vq=interp1(x, v, idx); %vq=interpolation at query time pts
-%                 adjintensity(n,idx)=vq;
-%             end
-%     end
         
     %adjust the time points in the fluor matrix and initialize to first
     %frame
     normintensity=adjintensity(:, imstart:end)./adjintensity(:, imstart);
     [nrow, ncol]=size(normintensity);
     
-    %interpolate the fluor values during detergent perfusion (& other noisy
-    %spike in fluor.)
-    for n=1:height(adjintensity)
-%         idx=find(adjintensity(n, imstart:end)>adjintensity(n, imstart));
-        idx=2;
-        
+    %interpolate the fluor values during detergent perfusion 
+    for n=1:height(normintensity)        
             if ~isempty(idx)
                 x=setdiff(1:ncol, idx); %x=time
                 v=normintensity(n, x); %v=intensity
@@ -689,8 +744,8 @@ function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dat
         
 end
 
-%to aggregate control data and normalize
-function [intensity, bgintensity, adjintensity, normintensity, lCell, time, tme, imstart]=controlNormalize(datadir)
+%to aggregate controls data and normalize
+function [intensity, bgintensity, adjintensity, normintensity, lCell, time, tme, imstart]=controlsNormalize(datadir)
 
     %pre-allocate variables
     intensity=[];
@@ -841,7 +896,7 @@ function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensit
 
 end
 
-%to find the time point at which the corrected trace plateaus and calculate
+%to find the time point at which the corrected trace asymptotes and calculate
 %the average
 function [avg, imend]=traceAvg(Cnew)
     cmean=mean(Cnew, 1, 'omitnan');
@@ -910,3 +965,36 @@ function [Pnew]=tracePredict(time, tau, alpha, intercept)
     end
 
 end
+
+%to plot mean and std 
+function meanPlot(tme, normintensity, colorcode1, colorcode2, transparency)
+
+nmean=mean(normintensity, 1, 'omitnan');
+nstd=std(normintensity, 0, 1, 'omitnan');
+
+if nargin==5
+    ciplot(nmean-nstd, nmean+nstd, tme, colorcode2, transparency)
+    plot(tme, nmean, 'Color', colorcode1, 'LineWidth', 1.5)
+elseif nargin==4
+    errorbar(tme, nmean, -nstd, nstd, 'Color', colorcode1, 'LineWidth', 1.5)
+end
+
+end
+
+%to plot the derivative of traces
+function dervPlot(tme, normintensity, colorcode)
+
+    %nmean=mean(normintensity, 1, 'omitnan');
+    %nstd=std(normintensity, 0, 1, 'omitnan');
+    %dmean=diff(nmean, 1);
+    
+    dtrace=diff(normintensity, 1, 2);
+    dt=diff(tme);
+    %rdtrace=(dtrace./dt)./normintensity(:, 1:end-1); %relative change
+    rdtrace=dtrace./normintensity(:, 1:end-1);
+    rdmean=mean(rdtrace./dt, 1, 'omitnan'); 
+
+    plot(tme(1:end-1), rdmean, 'Color', colorcode, 'LineWidth', 1.5)
+
+end
+
