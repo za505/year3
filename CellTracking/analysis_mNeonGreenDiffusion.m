@@ -472,10 +472,15 @@ for i=1:length(dt2)
     asymptote{i,1}=repelem(dt2(i), height(asymptote{i,2}))';
 end
 
-% asymptote_x=cell2mat(asymptote(:, 1))';
-% asymptote_y=cell2mat(asymptote(:, 2))';
-% linearCoef3 = polyfit(asymptote_x, asymptote_y, 1);
-% linearFit3 = polyval(linearCoef3,[0 dt2]);
+% asymptote_x=dt2([4, 5, 6, 7]);
+% asymptote_y=cellfun(@(x)mean(x, 1, 'omitnan'), asymptote([4, 5, 6, 7], 2))';
+% % linearCoef3 = polyfit(asymptote_x, asymptote_y, 1);
+% % linearFit3 = polyval(linearCoef3,[0 dt2]);
+% 
+% modelfun=@(b,x)(b(1)*x)./(b(2)+x); %why does order matter here?
+% beta0=[1300, 0.01];
+% beta = nlinfit(asymptote_x, asymptote_y, modelfun, beta0);
+% asymptote_yhat=modelfun(beta, [0 asymptote_x]);
 
 %% generate plots to illustrate the asymptote value as a function of frame rate
 asymptote_means = cellfun(@(x)mean(x, 1, 'omitnan'), asymptote(:, 2));
@@ -499,7 +504,7 @@ errorbar(dt2(5), asymptote_means(5), asymptote_std(5), 'Color', 'black')
 errorbar(dt2(6), asymptote_means(6), asymptote_std(6), 'Color', 'black')
 errorbar(dt2(7), asymptote_means(7), asymptote_std(7), 'Color', 'black')
 
-plot([0 dt2], linearFit3, '--k', 'LineWidth', 1)
+%plot([0 asymptote_x], asymptote_yhat, '--k', 'LineWidth', 1)
 ylabel('Asymptote Value (A.U.)')
 xlabel('Time (minutes)')
 ylim([0 1800])
@@ -608,7 +613,8 @@ meanPlot(untreated_100{1,1}, untreated_100{1, 4}, colorcode{1}, colorcode2{1}, t
 meanPlot(untreated_100{2,1}, untreated_100{2, 4}, colorcode{2}, colorcode2{2}, transparency)
 meanPlot(untreated_100{3,1}, untreated_100{3, 4}, colorcode{3}, colorcode2{3}, transparency)
 meanPlot(untreated_100{4,1}, untreated_100{4, 4}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(untreated_100{5,1}, (untreated_100{5, 3}-mean(untreated_100{4, 3}(:,end), 1, 'omitnan')), colorcode{5}, colorcode2{5}, transparency)
+meanPlot(untreated_100{5,1}, untreated_100{5, 4}, colorcode{5}, colorcode2{5}, transparency)
+%meanPlot(untreated_100{5,1}, (untreated_100{5, 3}-mean(untreated_100{4, 3}(:,end), 1, 'omitnan')), colorcode{5}, colorcode2{5}, transparency)
 ylim([0 Inf])
 ylabel('Adjusted Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -616,7 +622,7 @@ saveas(gcf, 'adjUntreated.png')
 saveas(gcf, 'adjUntreated.fig')
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 5}], colorcode{1}, colorcode2{1}, transparency)
 meanPlot(untreated_100{1,2}, untreated_100{1, 5}, colorcode{1}, colorcode2{1}, transparency)
 meanPlot(untreated_100{2,2}, untreated_100{2, 5}, colorcode{2}, colorcode2{2}, transparency)
 meanPlot(untreated_100{3,2}, untreated_100{3, 5}, colorcode{3}, colorcode2{3}, transparency)
@@ -638,6 +644,12 @@ ylabel('Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
 saveas(gcf, 'correctedUntreated.png')
 saveas(gcf, 'correctedUntreated.fig')
+
+figure, hold on
+meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+meanPlot(controls_100{1,2}, controls_100{1, 8}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(controls_100{2,2}, controls_100{2, 8}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(controls_100{3,2}, controls_100{3, 8}, colorcode{5}, colorcode2{5}, transparency)
 
 %% when do the untreated cells hit the asymptote?
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
@@ -675,20 +687,34 @@ xlabel('Time (minutes)')
 
 %% compare treated to untreated and 2 minute PBS
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-meanPlot(untreated_100{1,2}, untreated_100{1, 7}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{2,2}, untreated_100{2, 7}, colorcode{2}, colorcode2{2}, transparency)
-meanPlot(PBS_100{1,2}, PBS_100{1, 7}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(PBS_100{2,2}, PBS_100{2, 7}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(treated_100{1,2}, treated_100{1, 7}, colorcode{5}, colorcode2{5}, transparency)
-meanPlot(treated_100{2,2}, treated_100{2, 7}, colorcode{6}, colorcode2{6}, transparency)
-meanPlot(treated_100{3,2}, treated_100{3, 7}, colorcode{7}, colorcode2{7}, transparency)
-meanPlot(treated_100{4,2}, treated_100{4, 7}, colorcode{8}, colorcode2{8}, transparency)
-meanPlot(treated_100{5,2}, treated_100{5, 7}, colorcode{9}, colorcode2{9}, transparency)
+meanPlot(untreated_100{1,2}, untreated_100{1, 5}, colorcode{1}, colorcode2{1}, transparency)
+meanPlot(untreated_100{2,2}, untreated_100{2, 5}, colorcode{2}, colorcode2{2}, transparency)
+meanPlot(PBS_100{1,2}, PBS_100{1, 5}, colorcode{3}, colorcode2{3}, transparency)
+meanPlot(PBS_100{2,2}, PBS_100{2, 5}, colorcode{4}, colorcode2{4}, transparency)
+meanPlot(treated_100{1,2}, treated_100{1, 5}, colorcode{5}, colorcode2{5}, transparency)
+meanPlot(treated_100{2,2}, treated_100{2, 5}, colorcode{6}, colorcode2{6}, transparency)
+meanPlot(treated_100{3,2}, treated_100{3, 5}, colorcode{7}, colorcode2{7}, transparency)
+meanPlot(treated_100{4,2}, treated_100{4, 5}, colorcode{8}, colorcode2{8}, transparency)
+meanPlot(treated_100{5,2}, treated_100{5, 5}, colorcode{9}, colorcode2{9}, transparency)
 ylim([0 Inf])
-ylabel('Corrected Fluorescence (A.U.)')
+ylabel('NormalizedFluorescence (A.U.)')
 xlabel('Time (minutes)')
-saveas(gcf, 'treated_vs_untreated.png')
-saveas(gcf, 'treated_vs_untreated.fig')
+
+% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+% meanPlot(untreated_100{1,2}, untreated_100{1, 7}, colorcode{1}, colorcode2{1}, transparency)
+% meanPlot(untreated_100{2,2}, untreated_100{2, 7}, colorcode{2}, colorcode2{2}, transparency)
+% meanPlot(PBS_100{1,2}, PBS_100{1, 7}, colorcode{3}, colorcode2{3}, transparency)
+% meanPlot(PBS_100{2,2}, PBS_100{2, 7}, colorcode{4}, colorcode2{4}, transparency)
+% meanPlot(treated_100{1,2}, treated_100{1, 7}, colorcode{5}, colorcode2{5}, transparency)
+% meanPlot(treated_100{2,2}, treated_100{2, 7}, colorcode{6}, colorcode2{6}, transparency)
+% meanPlot(treated_100{3,2}, treated_100{3, 7}, colorcode{7}, colorcode2{7}, transparency)
+% meanPlot(treated_100{4,2}, treated_100{4, 7}, colorcode{8}, colorcode2{8}, transparency)
+% meanPlot(treated_100{5,2}, treated_100{5, 7}, colorcode{9}, colorcode2{9}, transparency)
+% ylim([0 Inf])
+% ylabel('Corrected Fluorescence (A.U.)')
+% xlabel('Time (minutes)')
+% saveas(gcf, 'treated_vs_untreated.png')
+% saveas(gcf, 'treated_vs_untreated.fig')
 
 %% Functions
 %to aggregate data and normalize
