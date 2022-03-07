@@ -17,7 +17,7 @@ clear, close all
 %60 minute PBS incubation, 1 minute frame rate, 100% intensity = '10232021_Exp2' & '10262021_Exp2'
 %120 minute PBS incubation, 1 minute frame rate, 100% intensity = '01142022_Exp1'
 
-% LBMga=dir(['01172022_Exp1' '*dm.mat']); %LB, 20 mM Mg2+
+%LBMga='01172022_Exp1' '*dm.mat']); %LB, 20 mM Mg2+
 % LBEa=dir(['01172022_Exp2' '*dm.mat']); %LB, 10 mM EDTA
 % LBtuna=dir(['01242022_Exp1' '*dm.mat']); %LB, 0.5 ug/mL tunicamycin
 % LBvana=dir(['01262022_Exp1' '*dm.mat']); %LB, 1 ug/mL vancomycin
@@ -50,10 +50,22 @@ colorcode2={[255 51 51], [255 153 51], [255 255 51], [153 255 51], [51 255 255],
 colorcode=cellfun(@(x)(x./255), colorcode, 'UniformOutput', false);
 colorcode2=cellfun(@(x)(x./255), colorcode2, 'UniformOutput', false);
 
-m=10;
-c1=[0.847 0.427 0.933];
-c2=[0.101 0.101 0.737];
-color_p=[linspace(c1(1), c2(1), m)', linspace(c1(2), c2(2), m)', linspace(c1(3), c2(3), m)'];
+% m=10;
+% c1=[0.847 0.427 0.933];
+% c2=[0.101 0.101 0.737];
+% color_p=[linspace(c1(1), c2(1), m)', linspace(c1(2), c2(2), m)', linspace(c1(3), c2(3), m)'];
+
+color_red={[246, 177, 195], [222, 38, 76], [162, 13, 30]};
+color_red=cellfun(@(x)x./255, color_red, 'UniformOutput', false);
+
+color_blue={[173, 213, 247], [78, 122, 199], [0, 48, 86]};
+color_blue=cellfun(@(x)x./255, color_blue, 'UniformOutput', false);
+
+color_purple={[254 196 254], [255 102 209],[228 91 255], [179 49 255], [109 0 175]};
+color_purple=cellfun(@(x)x./255, color_purple, 'UniformOutput', false);
+
+color_green={[0.3804 1.0000 0.9020], [0.4196 0.6824 0.8392], [0.8392 0.8549 0], [0.4549 0.7686 0.4627], [0.1569  0.7804  0.6667], [0 0.4275 0.1725], [0.5725 0.4706 1.0000]};
+%color_green=cellfun(@(x)x./255, color_green, 'UniformOutput', false);
 
 transparency = 0.3; %this is the alpha argument for the ciplot function
 
@@ -226,10 +238,10 @@ end
 
 %% compare the untreated traces
 %each row is a different frame rate (1 min, 1 min, 5 min, 10 min, and 20 min for 100% intensity and 1 min and 20 min for 20% intensity), each column is a
-%different variable (time, tme, intensity, adjintensity, normintensity, lcell, and Cnew)
+%different variable (time, tme, intensity, adjintensity, normintensity, lcell, Cnew, and strain)
 
-untreated_100 = cell(5, 7);
-untreated_20 = cell(2, 7);
+untreated_100 = cell(5, 8);
+untreated_20 = cell(2, 8);
 
 idx1=1;
 idx2=1;
@@ -247,6 +259,7 @@ for i=1:length(basenames)
         untreated_100{idx1, 5}=normintensity;
         untreated_100{idx1, 6}=lcell;
         untreated_100{idx1, 8}=imstart;
+        untreated_100{idx1, 9}=strainCalc(lcell, imstart);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -264,6 +277,7 @@ for i=1:length(basenames)
         untreated_20{idx2, 5}=normintensity;
         untreated_20{idx2, 6}=lcell;
         untreated_20{idx2, 8}=imstart;
+        untreated_20{idx2, 9}=strainCalc(lcell, imstart);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -278,9 +292,9 @@ end
 
 %% compare the PBS traces
 %each row is a different frame rate (1 min, 1 min, 5 min, 10 min, and 20 min for 100% intensity and 1 min and 20 min for 20% intensity), each column is a
-%different variable (time, tme, intensity, adjintensity, normintensity, lcell, and Cnew)
+%different variable (time, tme, intensity, adjintensity, normintensity, lcell, Cnew, and strain)
 
-PBS_100 = cell(7, 7);
+PBS_100 = cell(7, 8);
 
 idx1=1;
 
@@ -296,6 +310,7 @@ for i=1:length(basenames)
         PBS_100{idx1, 4}=adjintensity;
         PBS_100{idx1, 5}=normintensity;
         PBS_100{idx1, 6}=lcell;
+        PBS_100{idx1, 8}=strainCalc(lcell, imstart);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -310,7 +325,7 @@ end
 %% compare the LB treated traces
 %each row is a different treatment in LB (100% intensity)
 
-treated_100 = cell(6, 7);
+treated_100 = cell(6, 8);
 
 idx1=1;
 
@@ -326,6 +341,7 @@ for i=1:length(basenames)
         treated_100{idx1, 4}=adjintensity;
         treated_100{idx1, 5}=normintensity;
         treated_100{idx1, 6}=lcell;
+        treated_100{idx1, 8}=strainCalc(lcell, imstart);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -337,12 +353,165 @@ for i=1:length(basenames)
     
 end
 
+%% generate plots for the controls
+cd([dirsave '/03072022_groupMeeting']);
+
+labels={'1 s', '2 s', '3 s', '1 s background', '2 s background', '3 s background'};
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',20)
+subplot(1, 2, 1)
+p1=plot(controls_100{1,2}, controls_100{1,3}(:, controls_100{1,9}:end), 'Color', color_red{1}, 'LineWidth', 0.75), hold on
+p2=plot(controls_100{2,2}, controls_100{2,3}(:, controls_100{2,9}:end), 'Color', color_red{2}, 'LineWidth', 0.75)
+p3=plot(controls_100{3,2}, controls_100{3,3}(:, controls_100{3,9}:end), 'Color', color_red{3}, 'LineWidth', 0.75)
+p4=plot(controls_100{1,2}, controls_100{1,4}(:, controls_100{1,9}:end), '--', 'Color', color_red{1}, 'LineWidth', 1.5)
+p5=plot(controls_100{2,2}, controls_100{2,4}(:, controls_100{2,9}:end), '--', 'Color', color_red{2}, 'LineWidth', 1.5)
+p6=plot(controls_100{3,2}, controls_100{3,4}(:, controls_100{3,9}:end), '--', 'Color', color_red{3}, 'LineWidth', 1.5)
+ylim([0 Inf])
+ylabel('Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+title('100% Power')
+hleg=legend([p1(1), p2(1), p3(1), p4, p5, p6], labels)
+%hleg.NumColumns=2;
+title(hleg,'Settings')
+
+% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+subplot(1, 2, 2)
+p1=plot(controls_20{1,2}, controls_20{1,3}(:, controls_20{1,9}:end), 'Color', color_blue{1}, 'LineWidth', 0.75), hold on
+p2=plot(controls_20{2,2}, controls_20{2,3}(:, controls_20{2,9}:end), 'Color', color_blue{2}, 'LineWidth', 0.75)
+p3=plot(controls_20{3,2}, controls_20{3,3}(:, controls_20{3,9}:end), 'Color', color_blue{3}, 'LineWidth', 0.75)
+p4=plot(controls_20{1,2}, controls_20{1,4}(:, controls_20{1,9}:end), '--', 'Color', color_blue{1}, 'LineWidth', 1.5)
+p5=plot(controls_20{2,2}, controls_20{2,4}(:, controls_20{2,9}:end), '--', 'Color', color_blue{2}, 'LineWidth', 1.5)
+p6=plot(controls_20{3,2}, controls_20{3,4}(:, controls_20{3,9}:end), '--', 'Color', color_blue{3}, 'LineWidth', 1.5)
+ylim([0 Inf])
+ylabel('Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+title('20% Power')
+hleg=legend([p1(1), p2(1), p3(1), p4, p5, p6], labels)
+title(hleg,'Settings')
+%hleg.NumColumns=2;
+
+saveas(gcf, 'controlsRaw.png')
+saveas(gcf, 'controlsRaw.fig')
+
+labels={'100% 1 s', '100% 2 s', '100% 3 s', '20% 1 s', '20% 2 s', '20% 3 s'};
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+p1=meanPlot(controls_100{1,2}, controls_100{1, 6}, color_red{1}, color_red{1})
+p2=meanPlot(controls_100{2,2}, controls_100{2, 6}, color_red{2}, color_red{2})
+p3=meanPlot(controls_100{3,2}, controls_100{3, 6}, color_red{3}, color_red{3})
+p4=meanPlot(controls_20{1,2}, controls_20{1, 6}, color_blue{1}, color_blue{1})
+p5=meanPlot(controls_20{2,2}, controls_20{2, 6}, color_blue{2}, color_blue{2})
+p6=meanPlot(controls_20{3,2}, controls_20{3, 6}, color_blue{3}, color_blue{3})
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+hleg=legend([p1, p2, p3, p4, p5, p6], labels)
+%hleg.NumColumns=2;
+title(hleg,'Settings')
+saveas(gcf, 'controlsNorm.png')
+saveas(gcf, 'controlsNorm.fig')
+
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+p1=meanPlot(controls_100{1,2}, controls_100{1, 8}, color_red{1}, color_red{1}, transparency)
+p2=meanPlot(controls_100{2,2}, controls_100{2, 8}, color_red{2}, color_red{2}, transparency)
+p3=meanPlot(controls_100{3,2}, controls_100{3, 8}, color_red{3}, color_red{3}, transparency)
+p4=meanPlot(controls_20{1,2}, controls_20{1, 8}, color_blue{1}, color_blue{1}, transparency)
+p5=meanPlot(controls_20{2,2}, controls_20{2, 8}, color_blue{2}, color_blue{2}, transparency)
+p6=meanPlot(controls_20{3,2}, controls_20{3, 8}, color_blue{3}, color_blue{3}, transparency)
+ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+hleg=legend([p1, p2, p3, p4, p5, p6], labels, 'Location', 'east')
+title(hleg,'Settings')
+%hleg.NumColumns=2;
+saveas(gcf, 'controlsCorrected.png')
+saveas(gcf, 'controlsCorrected.fig')
+
+%% generate plots for untreated LB
+cd([dirsave '/03072022_groupMeeting']);
+
+labels={'1 min', '1 min', '5 min', '10 min', '20 min'};
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+p1=meanPlot(untreated_100{1,1}, untreated_100{1, 3}, color_purple{1}, color_purple{1}, transparency)
+p2=meanPlot(untreated_100{2,1}, untreated_100{2, 3}, color_purple{2}, color_purple{2}, transparency)
+p3=meanPlot(untreated_100{3,1}, untreated_100{3, 3}, color_purple{3}, color_purple{3}, transparency)
+p4=meanPlot(untreated_100{4,1}, untreated_100{4, 3}, color_purple{4}, color_purple{4}, transparency)
+p5=meanPlot(untreated_100{5,1}, untreated_100{5, 3}, color_purple{5}, color_purple{5}, transparency)
+ylim([0 Inf])
+ylabel('Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1)], labels)
+title(hleg,'Frame Rate')
+saveas(gcf, 'untreatedRaw.png')
+saveas(gcf, 'untreatedRaw.fig')
+% 
+% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+% %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+% meanPlot(untreated_100{1,1}, untreated_100{1, 4}, colorcode{1}, colorcode2{1}, transparency)
+% meanPlot(untreated_100{2,1}, untreated_100{2, 4}, colorcode{2}, colorcode2{2}, transparency)
+% meanPlot(untreated_100{3,1}, untreated_100{3, 4}, colorcode{3}, colorcode2{3}, transparency)
+% meanPlot(untreated_100{4,1}, untreated_100{4, 4}, colorcode{4}, colorcode2{4}, transparency)
+% meanPlot(untreated_100{5,1}, untreated_100{5, 4}, colorcode{5}, colorcode2{5}, transparency)
+% %meanPlot(untreated_100{5,1}, (untreated_100{5, 3}-mean(untreated_100{4, 3}(:,end), 1, 'omitnan')), colorcode{5}, colorcode2{5}, transparency)
+% ylim([0 Inf])
+% ylabel('Adjusted Fluorescence (A.U.)')
+% xlabel('Time (minutes)')
+% hleg=legend(labels)
+% title(hleg,'Frame Rate')
+% saveas(gcf, 'untreatedAdj.png')
+% saveas(gcf, 'untreatedAdj.fig')
+% 
+% % 
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24)
+subplot(1,2,1)
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 5}], colorcode{1}, colorcode2{1}, transparency)
+p1=meanPlot(untreated_100{1,2}, untreated_100{1, 5}, color_purple{1}, color_purple{1}, transparency), hold on
+p2=meanPlot(untreated_100{2,2}, untreated_100{2, 5}, color_purple{2}, color_purple{2}, transparency), hold on
+p3=meanPlot(untreated_100{3,2}, untreated_100{3, 5}, color_purple{3}, color_purple{3}, transparency), hold on
+p4=meanPlot(untreated_100{4,2}, untreated_100{4, 5}, color_purple{4}, color_purple{4}, transparency), hold on
+p5=meanPlot(untreated_100{5,2}, untreated_100{5, 5}, color_purple{5}, color_purple{5}, transparency), hold on
+ylim([0 Inf])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1)], labels)
+title(hleg,'Frame Rate')
+% saveas(gcf, 'normUntreated.png')
+% saveas(gcf, 'normUntreated.fig')
+% 
+% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+% %meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+subplot(1,2,2)
+p1=meanPlot(untreated_100{1,2}, untreated_100{1, 7}, color_purple{1}, color_purple{1}, transparency), hold on
+p2=meanPlot(untreated_100{2,2}, untreated_100{2, 7}, color_purple{2}, color_purple{2}, transparency), hold on
+p3=meanPlot(untreated_100{3,2}, untreated_100{3, 7}, color_purple{3}, color_purple{3}, transparency), hold on
+p4=meanPlot(untreated_100{4,2}, untreated_100{4, 7}, color_purple{4}, color_purple{4}, transparency), hold on
+p5=meanPlot(untreated_100{5,2}, untreated_100{5, 7}, color_purple{5}, color_purple{5}, transparency)
+ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1)], labels)
+title(hleg,'Frame Rate')
+% % saveas(gcf, 'correctedUntreated.png')
+% % saveas(gcf, 'correctedUntreated.fig')
+% 
+saveas(gcf, 'untreatedNorm&Corrected.png')
+saveas(gcf, 'untreatedNorm&Corrected.fig')
+
+% figure, hold on
+% meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+% meanPlot(controls_100{1,2}, controls_100{1, 8}, colorcode{1}, colorcode2{1}, transparency)
+% meanPlot(controls_100{2,2}, controls_100{2, 8}, colorcode{3}, colorcode2{3}, transparency)
+% meanPlot(controls_100{3,2}, controls_100{3, 8}, colorcode{5}, colorcode2{5}, transparency)
+
 %% plot the fit of the exponential on the control traces
 cd([dirsave '/03072022_groupMeeting']);
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',16)
 subplot(2,3,1)
-plot(controls_100{1,2}, controls_100{1, 6}, 'Color', colorcode{1}), hold on
+plot(controls_100{1,2}, controls_100{1, 6}, 'Color', color_red{1}), hold on
 plot(controls_100{1,2}, controls_100{1, 11}, '--k')
 ylim([0 1.1])
 ylabel('Normalized Fluorescence (A.U.)')
@@ -352,7 +521,7 @@ title('100% Intensity, 1 s Frame Rate')
 % saveas(gcf, 'fit100_1s.fig')
 
 subplot(2,3,2)
-plot(controls_100{2,2}, controls_100{2, 6}, 'Color', colorcode{3}), hold on
+plot(controls_100{2,2}, controls_100{2, 6}, 'Color', color_red{2}), hold on
 plot(controls_100{2,2}, controls_100{2, 11}, '--k')
 ylim([0 1.1])
 ylabel('Normalized Fluorescence (A.U.)')
@@ -362,7 +531,7 @@ title('100% Intensity, 2 s Frame Rate')
 % saveas(gcf, 'fit100_2s.fig')
 
 subplot(2,3,3)
-plot(controls_100{3,2}, controls_100{3, 6}, 'Color', colorcode{5}), hold on
+plot(controls_100{3,2}, controls_100{3, 6}, 'Color', color_red{3}), hold on
 plot(controls_100{3,2}, controls_100{3, 11}, '--k')
 ylim([0 1.1])
 ylabel('Normalized Fluorescence (A.U.)')
@@ -372,7 +541,7 @@ title('100% Intensity, 3 s Frame Rate')
 % saveas(gcf, 'fit100_3s.fig')
 
 subplot(2,3,4)
-plot(controls_20{1,2}, controls_20{1, 6}, 'Color', colorcode{2}), hold on
+plot(controls_20{1,2}, controls_20{1, 6}, 'Color', color_blue{1}), hold on
 plot(controls_20{1,2}, controls_20{1, 11}, '--k')
 ylim([0 1.1])
 ylabel('Normalized Fluorescence (A.U.)')
@@ -382,7 +551,7 @@ title('20% Intensity, 1 s Frame Rate')
 % saveas(gcf, 'fit20_1s.fig')
 
 subplot(2,3,5)
-plot(controls_20{2,2}, controls_20{2, 6}, 'Color', colorcode{4}), hold on
+plot(controls_20{2,2}, controls_20{2, 6}, 'Color', color_blue{2}), hold on
 plot(controls_20{2,2}, controls_20{2, 11}, '--k')
 ylim([0 1.1])
 ylabel('Normalized Fluorescence (A.U.)')
@@ -392,7 +561,7 @@ title('20% Intensity, 2 s Frame Rate')
 % saveas(gcf, 'fit20_2s.fig')
 
 subplot(2,3,6)
-plot(controls_20{3,2}, controls_20{3, 6}, 'Color', colorcode{6}), hold on
+plot(controls_20{3,2}, controls_20{3, 6}, 'Color', color_blue{3}), hold on
 plot(controls_20{3,2}, controls_20{3, 11}, '--k')
 ylim([0 1.1])
 ylabel('Normalized Fluorescence (A.U.)')
@@ -403,6 +572,7 @@ title('20% Intensity, 3 s Frame Rate')
 
 saveas(gcf, 'fitControls.png')
 saveas(gcf, 'fitControls.fig')
+
 %% calculate the slope of tau as a function of frame rate
 tau={controls_100{1, 10}; controls_100{2, 10}; controls_100{3, 10}; controls_20{1, 10}; controls_20{2, 10}; controls_20{3, 10}};
 dt=[1.2/60, 2/60, 3/60, 1.76/60, 2.3/60, 3/60]; 
@@ -414,19 +584,23 @@ linearCoef2 = polyfit([repelem(dt(4), length(tau{4})), repelem(dt(5), length(tau
 linearFit2= polyval(linearCoef2,[0 1.76/60 2.3/60 3/60]);
 
 %% plot the slope as a function of frame rate
+cd([dirsave '/03072022_groupMeeting']);
+
 tau_means = cellfun(@(x)mean(x, 1, 'omitnan'), tau);
 tau_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), tau);
 
+labels={'\tau 100% power', '\tau 20% power', 'mean \tau', 'line of best fit'};
+
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-scatter(repelem(dt(1), length(tau{1})), tau{1}, 'MarkerFaceColor', '#1267A1', 'MarkerEdgeColor', '#1267A1')
-scatter(repelem(dt(2), length(tau{2})), tau{2}, 'MarkerFaceColor', '#1267A1', 'MarkerEdgeColor', '#1267A1')
-scatter(repelem(dt(3), length(tau{3})), tau{3}, 'MarkerFaceColor', '#1267A1', 'MarkerEdgeColor', '#1267A1')
+p1=scatter(repelem(dt(1), length(tau{1})), tau{1}, 'MarkerFaceColor', '#E74C3C', 'MarkerEdgeColor', '#E74C3C')
+scatter(repelem(dt(2), length(tau{2})), tau{2}, 'MarkerFaceColor', '#E74C3C', 'MarkerEdgeColor', '#E74C3C')
+scatter(repelem(dt(3), length(tau{3})), tau{3}, 'MarkerFaceColor', '#E74C3C', 'MarkerEdgeColor', '#E74C3C')
 
-scatter(repelem(dt(4), length(tau{4})), tau{4}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(repelem(dt(5), length(tau{5})), tau{5}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(repelem(dt(6), length(tau{6})), tau{6}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+p2=scatter(repelem(dt(4), length(tau{4})), tau{4}, 'MarkerFaceColor', '#3498DB', 'MarkerEdgeColor', '#3498DB')
+scatter(repelem(dt(5), length(tau{5})), tau{5}, 'MarkerFaceColor', '#3498DB', 'MarkerEdgeColor', '#3498DB')
+scatter(repelem(dt(6), length(tau{6})), tau{6}, 'MarkerFaceColor', '#3498DB', 'MarkerEdgeColor', '#3498DB')
 
-scatter([dt(1), dt(2), dt(3), dt(4), dt(5), dt(6)], tau_means, 'MarkerFaceColor', 'black')
+p3=scatter([dt(1), dt(2), dt(3), dt(4), dt(5), dt(6)], tau_means, 'MarkerFaceColor', 'black')
 errorbar(dt(1), tau_means(1), tau_std(1), 'Color', 'black')
 errorbar(dt(2), tau_means(2), tau_std(2), 'Color', 'black')
 errorbar(dt(3), tau_means(3), tau_std(3), 'Color', 'black')
@@ -434,13 +608,14 @@ errorbar(dt(4), tau_means(4), tau_std(4), 'Color', 'black')
 errorbar(dt(5), tau_means(5), tau_std(5), 'Color', 'black')
 errorbar(dt(6), tau_means(6), tau_std(6), 'Color', 'black')
 
-plot([0, dt(1), dt(2), dt(3)], linearFit1, '--k', 'LineWidth', 1)
+p4=plot([0, dt(1), dt(2), dt(3)], linearFit1, '--k', 'LineWidth', 1)
 plot([0, dt(4), dt(5), dt(6)], linearFit2, '--k', 'LineWidth', 1)
 xlim([0, 0.06])
 ylabel('\tau (min^{-1})')
+hleg=legend([p1(1), p2(1), p3, p4], labels, 'Location', 'southeast')
 %xticks([0, dt(1),  dt(4), dt(2),  dt(5), dt(3)])
 %xticklabels({'0', '1.2 s', '1.76 s', '2 s', '2.3 s', '3 s'})
-xlabel('Time (minutes)')
+xlabel('Frame Rate (minutes)')
 
 caption1 = sprintf('%f * frame rate + %f', linearCoef1(1), linearCoef1(2));
 caption2 = sprintf('%f * frame rate + %f', linearCoef2(1), linearCoef2(2));
@@ -451,207 +626,156 @@ title('Tau vs Frame Rate')
 saveas(gcf, 'tau_vs_frameRate.png')
 saveas(gcf, 'tau_vs_frameRate.fig')
 
-%% calculate the asymptote value as a function of frame rate
+%% calculate the autofluorescence value as a function of frame rate
 %untreated 100% intensity with frame rates at: 1 s, 2 s, 3 s, 1 min, 5 min,
 %10 min and 20 min (although exclude the 20 minute if need be since it
-%doesn't quite asymptote)
+%doesn't quite autofluorescence)
 
-asymptote=cell(7, 2); %column 1 = dt, column 2 = final raw fluor values
+autofluorescence=cell(7, 2); %column 1 = dt, column 2 = final raw fluor values
 
 dt2=[1.2/60, 2/60, 3/60, 1, 5, 10, 20];
 
-asymptote{1,2}=controls_100{1,3}(:, end);
-asymptote{2,2}=controls_100{2,3}(:, end);
-asymptote{3,2}=controls_100{3,3}(:, end);
-asymptote{4,2}=untreated_100{1,3}(:, end);
-asymptote{5,2}=untreated_100{3,3}(:, end);
-asymptote{6,2}=untreated_100{4,3}(:, end);
-asymptote{7,2}=untreated_100{5,3}(:, end);
+autofluorescence{1,2}=controls_100{1,3}(:, end);
+autofluorescence{2,2}=controls_100{2,3}(:, end);
+autofluorescence{3,2}=controls_100{3,3}(:, end);
+autofluorescence{4,2}=untreated_100{1,3}(:, end);
+autofluorescence{5,2}=untreated_100{3,3}(:, end);
+autofluorescence{6,2}=untreated_100{4,3}(:, end);
+autofluorescence{7,2}=untreated_100{5,3}(:, end);
 
 for i=1:length(dt2)
-    asymptote{i,1}=repelem(dt2(i), height(asymptote{i,2}))';
+    autofluorescence{i,1}=repelem(dt2(i), height(autofluorescence{i,3}))';
 end
 
-% asymptote_x=dt2([4, 5, 6, 7]);
-% asymptote_y=cellfun(@(x)mean(x, 1, 'omitnan'), asymptote([4, 5, 6, 7], 2))';
-% % linearCoef3 = polyfit(asymptote_x, asymptote_y, 1);
+% autofluorescence_x=dt2([4, 5, 6, 7]);
+% autofluorescence_y=cellfun(@(x)mean(x, 1, 'omitnan'), autofluorescence([4, 5, 6, 7], 2))';
+% % linearCoef3 = polyfit(autofluorescence_x, autofluorescence_y, 1);
 % % linearFit3 = polyval(linearCoef3,[0 dt2]);
 % 
 % modelfun=@(b,x)(b(1)*x)./(b(2)+x); %why does order matter here?
 % beta0=[1300, 0.01];
-% beta = nlinfit(asymptote_x, asymptote_y, modelfun, beta0);
-% asymptote_yhat=modelfun(beta, [0 asymptote_x]);
+% beta = nlinfit(autofluorescence_x, autofluorescence_y, modelfun, beta0);
+% autofluorescence_yhat=modelfun(beta, [0 autofluorescence_x]);
 
-%% generate plots to illustrate the asymptote value as a function of frame rate
-asymptote_means = cellfun(@(x)mean(x, 1, 'omitnan'), asymptote(:, 2));
-asymptote_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), asymptote(:, 2));
+%% generate plots to illustrate the autofluorescence value as a function of frame rate
+cd([dirsave '/03072022_groupMeeting']);
+
+labels={'autofluorescence value for single cell', 'mean autofluorescence value'};
+
+autofluorescence_means = cellfun(@(x)mean(x, 1, 'omitnan'), autofluorescence(:, 2));
+autofluorescence_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), autofluorescence(:, 2));
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-scatter(asymptote{1, 1}, asymptote{1, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(asymptote{2, 1}, asymptote{2, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(asymptote{3, 1}, asymptote{3, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(asymptote{4, 1}, asymptote{4, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(asymptote{5, 1}, asymptote{5, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(asymptote{6, 1}, asymptote{6, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
-scatter(asymptote{7, 1}, asymptote{7, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+p1=scatter(autofluorescence{1, 1}, autofluorescence{1, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(autofluorescence{2, 1}, autofluorescence{2, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(autofluorescence{3, 1}, autofluorescence{3, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(autofluorescence{4, 1}, autofluorescence{4, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(autofluorescence{5, 1}, autofluorescence{5, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(autofluorescence{6, 1}, autofluorescence{6, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
+scatter(autofluorescence{7, 1}, autofluorescence{7, 2}, 'MarkerFaceColor', '#A1D5F7', 'MarkerEdgeColor', '#A1D5F7')
 
-scatter([dt2(1), dt2(2), dt2(3), dt2(4), dt2(5), dt2(6), dt2(7)], asymptote_means, 'MarkerFaceColor', 'black')
-errorbar(dt2(1), asymptote_means(1), asymptote_std(1), 'Color', 'black')
-errorbar(dt2(2), asymptote_means(2), asymptote_std(2), 'Color', 'black')
-errorbar(dt2(3), asymptote_means(3), asymptote_std(3), 'Color', 'black')
-errorbar(dt2(4), asymptote_means(4), asymptote_std(4), 'Color', 'black')
-errorbar(dt2(5), asymptote_means(5), asymptote_std(5), 'Color', 'black')
-errorbar(dt2(6), asymptote_means(6), asymptote_std(6), 'Color', 'black')
-errorbar(dt2(7), asymptote_means(7), asymptote_std(7), 'Color', 'black')
+p2=scatter([dt2(1), dt2(2), dt2(3), dt2(4), dt2(5), dt2(6), dt2(7)], autofluorescence_means, 'MarkerFaceColor', 'black')
+errorbar(dt2(1), autofluorescence_means(1), autofluorescence_std(1), 'Color', 'black')
+errorbar(dt2(2), autofluorescence_means(2), autofluorescence_std(2), 'Color', 'black')
+errorbar(dt2(3), autofluorescence_means(3), autofluorescence_std(3), 'Color', 'black')
+errorbar(dt2(4), autofluorescence_means(4), autofluorescence_std(4), 'Color', 'black')
+errorbar(dt2(5), autofluorescence_means(5), autofluorescence_std(5), 'Color', 'black')
+errorbar(dt2(6), autofluorescence_means(6), autofluorescence_std(6), 'Color', 'black')
+errorbar(dt2(7), autofluorescence_means(7), autofluorescence_std(7), 'Color', 'black')
 
-%plot([0 asymptote_x], asymptote_yhat, '--k', 'LineWidth', 1)
-ylabel('Asymptote Value (A.U.)')
-xlabel('Time (minutes)')
+%plot([0 autofluorescence_x], autofluorescence_yhat, '--k', 'LineWidth', 1)
+ylabel('Autofluorescence Value (A.U.)')
+xlabel('Frame Rate (minutes)')
 ylim([0 1800])
 xlim([-1 dt2(end)+1])
 
+hleg=legend([p1(1), p2], labels, 'Location', 'east')
+
 % caption3 = sprintf('%f * frame rate + %f', linearCoef3(1), linearCoef3(2));
-% text(dt2(2), asymptote_means(2)+1.5, ['\asymptote = ' caption3], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
+% text(dt2(2), autofluorescence_means(2)+1.5, ['\autofluorescence = ' caption3], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
 
-title('Asymptote Value vs Frame Rate')
-saveas(gcf, 'asymptote_vs_frameRate.png')
-saveas(gcf, 'asymptote_vs_frameRate.fig')
-%% generate plots for the controls
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-p1=plot(controls_100{1,2}, controls_100{1,3}(:, controls_100{1,9}:end), 'Color', colorcode{1}, 'LineWidth', 0.75)
-p2=plot(controls_100{2,2}, controls_100{2,3}(:, controls_100{2,9}:end), 'Color', colorcode{3}, 'LineWidth', 0.75)
-p3=plot(controls_100{3,2}, controls_100{3,3}(:, controls_100{3,9}:end), 'Color', colorcode{5}, 'LineWidth', 0.75)
-p4=plot(controls_100{1,2}, controls_100{1,4}(:, controls_100{1,9}:end), '--', 'Color', colorcode{1}, 'LineWidth', 1.5)
-p5=plot(controls_100{2,2}, controls_100{2,4}(:, controls_100{2,9}:end), '--', 'Color', colorcode{3}, 'LineWidth', 1.5)
-p6=plot(controls_100{3,2}, controls_100{3,4}(:, controls_100{3,9}:end), '--', 'Color', colorcode{5}, 'LineWidth', 1.5)
-ylim([0 Inf])
-ylabel('Fluorescence (A.U.)')
-xlabel('Time (minutes)')
-saveas(gcf, 'rawControls_100.png')
-saveas(gcf, 'rawControls_100.fig')
-%set(gca,'DefaultTextFontSize', 42)
-% hleg=legend([p4, p5, p6], {'1 s', '2 s', '3 s'})
-% title(hleg,'Frame Rate')
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-p1=plot(controls_20{1,2}, controls_20{1,3}(:, controls_20{1,9}:end), 'Color', colorcode{2}, 'LineWidth', 0.75)
-p2=plot(controls_20{2,2}, controls_20{2,3}(:, controls_20{2,9}:end), 'Color', colorcode{4}, 'LineWidth', 0.75)
-p3=plot(controls_20{3,2}, controls_20{3,3}(:, controls_20{3,9}:end), 'Color', colorcode{6}, 'LineWidth', 0.75)
-p4=plot(controls_20{1,2}, controls_20{1,4}(:, controls_20{1,9}:end), '--', 'Color', colorcode{2}, 'LineWidth', 1.5)
-p5=plot(controls_20{2,2}, controls_20{2,4}(:, controls_20{2,9}:end), '--', 'Color', colorcode{4}, 'LineWidth', 1.5)
-p6=plot(controls_20{3,2}, controls_20{3,4}(:, controls_20{3,9}:end), '--', 'Color', colorcode{6}, 'LineWidth', 1.5)
-ylim([0 Inf])
-ylabel('Fluorescence (A.U.)')
-xlabel('Time (minutes)')
-saveas(gcf, 'rawControls_20.png')
-saveas(gcf, 'rawControls_20.fig')
-%set(gca,'DefaultTextFontSize', 42)
-% hleg=legend([p4, p5, p6], {'1 s', '2 s', '3 s'})
-% title(hleg,'Frame Rate')
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-meanPlot(controls_100{1,2}, controls_100{1, 6}, colorcode{1}, colorcode2{1})
-meanPlot(controls_100{2,2}, controls_100{2, 6}, colorcode{3}, colorcode2{3})
-meanPlot(controls_100{3,2}, controls_100{3, 6}, colorcode{5}, colorcode2{5})
-meanPlot(controls_20{1,2}, controls_20{1, 6}, colorcode{2}, colorcode2{2})
-meanPlot(controls_20{2,2}, controls_20{2, 6}, colorcode{4}, colorcode2{4})
-meanPlot(controls_20{3,2}, controls_20{3, 6}, colorcode{6}, colorcode2{6})
-ylim([0 1.1])
-ylabel('Normalized Fluorescence (A.U.)')
-xlabel('Time (minutes)')
-saveas(gcf, 'normControls.png')
-saveas(gcf, 'normControls.fig')
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-meanPlot(controls_100{1,2}, controls_100{1, 8}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(controls_100{2,2}, controls_100{2, 8}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(controls_100{3,2}, controls_100{3, 8}, colorcode{5}, colorcode2{5}, transparency)
-meanPlot(controls_20{1,2}, controls_20{1, 8}, colorcode{2}, colorcode2{2}, transparency)
-meanPlot(controls_20{2,2}, controls_20{2, 8}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(controls_20{3,2}, controls_20{3, 8}, colorcode{6}, colorcode2{6}, transparency)
-ylim([0 Inf])
-ylabel('Corrected Fluorescence (A.U.)')
-xlabel('Time (minutes)')
-saveas(gcf, 'correctedControls.png')
-saveas(gcf, 'correctedControls.fig')
+title('Autofluorescence Value vs Frame Rate')
+saveas(gcf, 'autofluorescence_vs_frameRate.png')
+saveas(gcf, 'autofluorescence_vs_frameRate.fig')
 
 %% generate plots for PBS
+cd([dirsave '/03072022_groupMeeting']);
+
+%labels={'untreated', 'untreated', '2 min PBS', '2 min PBS', '20 min PBS', '20 min PBS', '60 min PBS', '60 min PBS', '120 min PBS'}; 
+labels={'untreated', '2 min PBS', '20 min PBS', '60 min PBS', '120 min PBS'}; 
+imend=48;
+state=1;
+
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{1,1}, untreated_100{1, 3}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{2,1}, untreated_100{2, 3}, colorcode{2}, colorcode2{2}, transparency)
-meanPlot(PBS_100{1,1}, PBS_100{1, 3}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(PBS_100{2,1}, PBS_100{2, 3}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(PBS_100{3,1}, PBS_100{3, 3}, colorcode{5}, colorcode2{5}, transparency)
-meanPlot(PBS_100{4,1}, PBS_100{4, 3}, colorcode{6}, colorcode2{6}, transparency)
-meanPlot(PBS_100{5,1}, PBS_100{5, 3}, colorcode{7}, colorcode2{7}, transparency)
-meanPlot(PBS_100{6,1}, PBS_100{6, 3}, colorcode{8}, colorcode2{8}, transparency)
-meanPlot(PBS_100{7,1}, PBS_100{7, 3}, colorcode{9}, colorcode2{9}, transparency)
+p1=meanPlot(untreated_100{1,1}(1:imend), [untreated_100{1, 3}(:, 1:imend);untreated_100{2, 3}(:, 1:imend)], color_purple{1}, state)
+%p2=meanPlot(untreated_100{2,1}, untreated_100{2, 3}, color_purple{2})
+p3=meanPlot(PBS_100{1,1}(1:imend), [PBS_100{1, 3}(:, 1:imend); PBS_100{2, 3}(:, 1:imend)], color_green{1}, state)
+%p4=meanPlot(PBS_100{2,1}, PBS_100{2, 3}, color_green{2})
+p5=meanPlot(PBS_100{3,1}(1:imend), [PBS_100{3, 3}(:, 1:imend); PBS_100{4, 3}(:, 1:imend)], color_green{2}, state)
+%p6=meanPlot(PBS_100{4,1}, PBS_100{4, 3}, color_green{4})
+p7=meanPlot(PBS_100{5,1}(1:imend), [PBS_100{5, 3}(:, 1:imend); PBS_100{6, 3}(:, 1:imend)], color_green{3}, state)
+%p8=meanPlot(PBS_100{6,1}, PBS_100{6, 3}, color_green{6})
+p9=meanPlot(PBS_100{7,1}, PBS_100{7, 3}, color_green{4}, state)
 ylim([0 Inf])
 ylabel('Fluorescence (A.U.)')
 xlabel('Time (minutes)')
+
+%hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1), p6(1), p7(1), p8(1), p9(1)], labels)
+hleg=legend([p1(1), p3(1), p5(1),p7(1), p9(1)], labels)
+title(hleg,'PBS Incubation')
+
 saveas(gcf, 'rawPBS.png')
 saveas(gcf, 'rawPBS.fig')
 
-%% Generate plots for untreated LB
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{1,1}, untreated_100{1, 3}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{2,1}, untreated_100{2, 3}, colorcode{2}, colorcode2{2}, transparency)
-meanPlot(untreated_100{3,1}, untreated_100{3, 3}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(untreated_100{4,1}, untreated_100{4, 3}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(untreated_100{5,1}, untreated_100{5, 3}, colorcode{5}, colorcode2{5}, transparency)
-ylim([0 Inf])
-ylabel('Fluorescence (A.U.)')
-xlabel('Time (minutes)')
-saveas(gcf, 'rawUntreated.png')
-saveas(gcf, 'rawUntreated.fig')
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{1,1}, untreated_100{1, 4}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{2,1}, untreated_100{2, 4}, colorcode{2}, colorcode2{2}, transparency)
-meanPlot(untreated_100{3,1}, untreated_100{3, 4}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(untreated_100{4,1}, untreated_100{4, 4}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(untreated_100{5,1}, untreated_100{5, 4}, colorcode{5}, colorcode2{5}, transparency)
-%meanPlot(untreated_100{5,1}, (untreated_100{5, 3}-mean(untreated_100{4, 3}(:,end), 1, 'omitnan')), colorcode{5}, colorcode2{5}, transparency)
-ylim([0 Inf])
-ylabel('Adjusted Fluorescence (A.U.)')
-xlabel('Time (minutes)')
-saveas(gcf, 'adjUntreated.png')
-saveas(gcf, 'adjUntreated.fig')
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 5}], colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{1,2}, untreated_100{1, 5}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{2,2}, untreated_100{2, 5}, colorcode{2}, colorcode2{2}, transparency)
-meanPlot(untreated_100{3,2}, untreated_100{3, 5}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(untreated_100{4,2}, untreated_100{4, 5}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(untreated_100{5,2}, untreated_100{5, 5}, colorcode{5}, colorcode2{5}, transparency)
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1})
+subplot(1,2,1)
+p1=meanPlot(untreated_100{1,2}(1:imend), [untreated_100{1, 5}(:, 1:imend); untreated_100{2, 5}(:, 1:imend)], color_purple{1}, state), hold on
+%p2=meanPlot(untreated_100{2,2}, untreated_100{2, 5}, color_purple{2})
+p3=meanPlot(PBS_100{1,2}(1:imend), [PBS_100{1, 5}(:, 1:imend); PBS_100{2, 5}(:, 1:imend)], color_green{1}, state)
+%p4=meanPlot(PBS_100{2,2}, PBS_100{2, 5}, color_green{2})
+p5=meanPlot(PBS_100{3,2}(1:imend), [PBS_100{3, 5}(:, 1:imend); PBS_100{4, 5}(:, 1:imend)], color_green{2}, state)
+%p6=meanPlot(PBS_100{4,2}, PBS_100{4, 5}, color_green{4})
+p7=meanPlot(PBS_100{5,2}(1:imend), [PBS_100{5, 5}(:, 1:imend); PBS_100{6, 5}(:, 1:imend)], color_green{3}, state)
+%p8=meanPlot(PBS_100{6,2}, PBS_100{6, 5}, color_green{6})
+p9=meanPlot(PBS_100{7,2}, PBS_100{7, 5}, color_green{4}, state)
 ylim([0 Inf])
 ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
-saveas(gcf, 'normUntreated.png')
-saveas(gcf, 'normUntreated.fig')
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{3,2}, untreated_100{3, 7}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(untreated_100{4,2}, untreated_100{4, 7}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(untreated_100{5,2}, untreated_100{5, 7}, colorcode{5}, colorcode2{5}, transparency)
+%hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1), p6(1), p7(1), p8(1), p9(1)], labels)
+hleg=legend([p1(1), p3(1), p5(1),p7(1), p9(1)], labels)
+title(hleg,'PBS Incubation')
+% 
+% saveas(gcf, 'PBSnorm.png')
+% saveas(gcf, 'PBSnorm.fig')
+
+%figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+%meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
+subplot(1,2,2)
+p1=meanPlot(untreated_100{1,2}(1:imend), [untreated_100{1, 7}(:, 1:imend); untreated_100{2, 7}(:, 1:imend)], color_purple{1}, state), hold on
+%p2=meanPlot(untreated_100{2,2}(1:50), untreated_100{2, 7}(:, 1:50), color_purple{2})
+p3=meanPlot(PBS_100{1,2}(1:imend), [PBS_100{1, 7}(:, 1:imend); PBS_100{2, 7}(:, 1:imend)], color_green{1}, state)
+%p4=meanPlot(PBS_100{2,2}(1:50), PBS_100{2, 7}(:, 1:50), color_green{2})
+p5=meanPlot(PBS_100{3,2}(1:imend), [PBS_100{3, 7}(:, 1:imend); PBS_100{4, 7}(:, 1:imend)], color_green{2}, state)
+%p6=meanPlot(PBS_100{4,2}(1:50), PBS_100{4, 7}(:, 1:50), color_green{4})
+p7=meanPlot(PBS_100{5,2}(1:imend), [PBS_100{5, 7}(:, 1:imend); PBS_100{6, 7}(:, 1:imend)], color_green{3}, state)
+%p8=meanPlot(PBS_100{6,2}, PBS_100{6, 7}, color_green{6})
+p9=meanPlot(PBS_100{7,2}, PBS_100{7, 7}, color_green{4}, state)
 ylim([0 Inf])
 ylabel('Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
-saveas(gcf, 'correctedUntreated.png')
-saveas(gcf, 'correctedUntreated.fig')
 
-figure, hold on
-meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
-meanPlot(controls_100{1,2}, controls_100{1, 8}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(controls_100{2,2}, controls_100{2, 8}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(controls_100{3,2}, controls_100{3, 8}, colorcode{5}, colorcode2{5}, transparency)
+% hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1), p6(1), p7(1), p8(1), p9(1)], labels)
+% title(hleg,'PBS Incubation')
 
-%% when do the untreated cells hit the asymptote?
+% saveas(gcf, 'PBScorrected.png')
+% saveas(gcf, 'PBScorrected.fig')
+
+saveas(gcf, 'PBSnorm&corrected.png')
+saveas(gcf, 'PBSnorm&corrected.fig')
+%% when do the untreated cells hit the autofluorescence?
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
 dervPlot(untreated_100{1,1}, untreated_100{1, 3}, colorcode{1})
@@ -686,35 +810,89 @@ ylabel('Relative Change in Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
 
 %% compare treated to untreated and 2 minute PBS
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-meanPlot(untreated_100{1,2}, untreated_100{1, 5}, colorcode{1}, colorcode2{1}, transparency)
-meanPlot(untreated_100{2,2}, untreated_100{2, 5}, colorcode{2}, colorcode2{2}, transparency)
-meanPlot(PBS_100{1,2}, PBS_100{1, 5}, colorcode{3}, colorcode2{3}, transparency)
-meanPlot(PBS_100{2,2}, PBS_100{2, 5}, colorcode{4}, colorcode2{4}, transparency)
-meanPlot(treated_100{1,2}, treated_100{1, 5}, colorcode{5}, colorcode2{5}, transparency)
-meanPlot(treated_100{2,2}, treated_100{2, 5}, colorcode{6}, colorcode2{6}, transparency)
-meanPlot(treated_100{3,2}, treated_100{3, 5}, colorcode{7}, colorcode2{7}, transparency)
-meanPlot(treated_100{4,2}, treated_100{4, 5}, colorcode{8}, colorcode2{8}, transparency)
-meanPlot(treated_100{5,2}, treated_100{5, 5}, colorcode{9}, colorcode2{9}, transparency)
+cd([dirsave '/03072022_groupMeeting']);
+
+labels={'untreated', 'untreated', '2 min PBS', '2 min PBS', 'Mg^{2+}', 'EDTA', 'tunicamycin', 'vancomycin'}; 
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24)
+subplot(1,2,1)
+p1=meanPlot(untreated_100{1,2}, untreated_100{1, 5}, colorcode{1}, colorcode2{1}, transparency), hold on
+p2=meanPlot(untreated_100{2,2}, untreated_100{2, 5}, colorcode{2}, colorcode2{2}, transparency)
+p3=meanPlot(PBS_100{1,2}, PBS_100{1, 5}, colorcode{3}, colorcode2{3}, transparency)
+p4=meanPlot(PBS_100{2,2}, PBS_100{2, 5}, colorcode{4}, colorcode2{4}, transparency)
+p5=meanPlot(treated_100{1,2}, treated_100{1, 5}, colorcode{5}, colorcode2{5}, transparency)
+p6=meanPlot(treated_100{2,2}, treated_100{2, 5}, colorcode{6}, colorcode2{6}, transparency)
+p7=meanPlot(treated_100{3,2}, treated_100{3, 5}, colorcode{7}, colorcode2{7}, transparency)
+p8=meanPlot(treated_100{4,2}, treated_100{4, 5}, colorcode{8}, colorcode2{8}, transparency)
 ylim([0 Inf])
-ylabel('NormalizedFluorescence (A.U.)')
+ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
 
-% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-% meanPlot(untreated_100{1,2}, untreated_100{1, 7}, colorcode{1}, colorcode2{1}, transparency)
-% meanPlot(untreated_100{2,2}, untreated_100{2, 7}, colorcode{2}, colorcode2{2}, transparency)
-% meanPlot(PBS_100{1,2}, PBS_100{1, 7}, colorcode{3}, colorcode2{3}, transparency)
-% meanPlot(PBS_100{2,2}, PBS_100{2, 7}, colorcode{4}, colorcode2{4}, transparency)
-% meanPlot(treated_100{1,2}, treated_100{1, 7}, colorcode{5}, colorcode2{5}, transparency)
-% meanPlot(treated_100{2,2}, treated_100{2, 7}, colorcode{6}, colorcode2{6}, transparency)
-% meanPlot(treated_100{3,2}, treated_100{3, 7}, colorcode{7}, colorcode2{7}, transparency)
-% meanPlot(treated_100{4,2}, treated_100{4, 7}, colorcode{8}, colorcode2{8}, transparency)
-% meanPlot(treated_100{5,2}, treated_100{5, 7}, colorcode{9}, colorcode2{9}, transparency)
-% ylim([0 Inf])
-% ylabel('Corrected Fluorescence (A.U.)')
-% xlabel('Time (minutes)')
-% saveas(gcf, 'treated_vs_untreated.png')
-% saveas(gcf, 'treated_vs_untreated.fig')
+hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1), p6(1), p7(1)], labels)
+title(hleg,'Treatment')
+
+%figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+subplot(1,2,2)
+p1=meanPlot(untreated_100{1,2}, untreated_100{1, 7}, colorcode{1}, colorcode2{1}, transparency), hold on
+p2=meanPlot(untreated_100{2,2}, untreated_100{2, 7}, colorcode{2}, colorcode2{2}, transparency)
+p3=meanPlot(PBS_100{1,2}, PBS_100{1, 7}, colorcode{3}, colorcode2{3}, transparency)
+p4=meanPlot(PBS_100{2,2}, PBS_100{2, 7}, colorcode{4}, colorcode2{4}, transparency)
+p5=meanPlot(treated_100{1,2}, treated_100{1, 7}, colorcode{5}, colorcode2{5}, transparency)
+p6=meanPlot(treated_100{2,2}, treated_100{2, 7}, colorcode{6}, colorcode2{6}, transparency)
+p7=meanPlot(treated_100{3,2}, treated_100{3, 7}, colorcode{7}, colorcode2{7}, transparency)
+p8=meanPlot(treated_100{3,2}, treated_100{3, 7}, colorcode{7}, colorcode2{7}, transparency)
+ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+
+
+saveas(gcf, 'treated_vs_untreated.png')
+saveas(gcf, 'treated_vs_untreated.fig')
+
+%% compare exponential vs spent (10 minute frame rate)
+cd([dirsave '/03072022_groupMeeting']);
+
+labels={'rich media', 'spent media', 'spent media'}; 
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24)
+subplot(1,2,1)
+p1=meanPlot(untreated_100{4,2}, untreated_100{4, 5}, color_red{3}, color_red{3}, transparency), hold on
+p2=meanPlot(treated_100{5,2}, treated_100{5, 5}, color_blue{1}, color_blue{1}, transparency)
+p3=meanPlot(treated_100{6,2}, treated_100{6, 5}, color_blue{2}, color_blue{2}, transparency)
+ylim([0 Inf])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+
+hleg=legend([p1(1), p2(1), p3(1)], labels)
+title(hleg,'Media')
+
+subplot(1,2,2)
+p1=meanPlot(untreated_100{4,2}, untreated_100{4, 7}, color_red{3}, color_red{3}, transparency), hold on
+p2=meanPlot(treated_100{5,2}, treated_100{5, 7}, color_blue{1}, color_blue{1}, transparency)
+p3=meanPlot(treated_100{6,2}, treated_100{6, 7}, color_blue{2}, color_blue{2}, transparency)
+ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+
+saveas(gcf, 'rich_vs_spent.png')
+saveas(gcf, 'rich_vs_spent.fig')
+
+%% compare differences in strain rate
+%expect no difference between untreated (which should also have no intrasample difference) and treated; expect strain to be smaller for cells incubated in PBS
+
+figure, hold on
+scatter(repelem(1, height(untreated_100{1,9})), untreated_100{1, 9}, [], color_purple{1})
+scatter(repelem(2, height(untreated_100{2,9})), untreated_100{2, 9}, [], color_purple{2})
+scatter(repelem(3, height(PBS_100{1,8})), PBS_100{1, 8}, [], color_green{1})
+scatter(repelem(4, height(PBS_100{3,8})), PBS_100{3, 8}, [], color_green{2})
+scatter(repelem(5, height(PBS_100{5,8})), PBS_100{5, 8}, [], color_green{3})
+scatter(repelem(6, height(PBS_100{7,8})), PBS_100{7, 8}, [], color_green{4})
+scatter(repelem(7, height(treated_100{1,8})), treated_100{1, 8}, [], colorcode{1})
+scatter(repelem(8, height(treated_100{2,8})), treated_100{2, 8}, [], colorcode{2})
+scatter(repelem(9, height(treated_100{3,8})), treated_100{3, 8}, [], colorcode{3})
+scatter(repelem(10, height(treated_100{4,8})), treated_100{4, 8}, [], colorcode{4})
+scatter(repelem(11, height(treated_100{5,8})), treated_100{5, 8}, [], colorcode{5})
+scatter(repelem(12, height(treated_100{6,8})), treated_100{6, 8}, [], colorcode{6})
 
 %% Functions
 %to aggregate data and normalize
@@ -895,7 +1073,7 @@ function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensit
         %this formula comes from the slope and intercept calculated for the 1.2, 2,
         %and 3 second tau vs frame rate controls 
        dC=@(C, alpha, dt, b)(C/(alpha*dt+b))*dt;
-       %dC=@(C, alpha, intercept, dt, b)(C/(alpha*dt+b));
+       %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
         
         %the correction
         for n=1:height(normintensity)
@@ -922,7 +1100,7 @@ function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensit
 
 end
 
-%to find the time point at which the corrected trace asymptotes and calculate
+%to find the time point at which the corrected trace autofluorescences and calculate
 %the average
 function [avg, imend]=traceAvg(Cnew)
     cmean=mean(Cnew, 1, 'omitnan');
@@ -935,20 +1113,16 @@ function [avg, imend]=traceAvg(Cnew)
 end
 
 %to calculate strain
+%https://www.doitpoms.ac.uk/glossary/entry.php?term=strain
 function [strain]=strainCalc(lcell, imstart)
 
-    lcell=lcell(:, 1:imstart+3);
-%     dl=diff(lcell, 1, 2);
-% 
-%     strain=dl./lcell(:, 1:end-1);
+    %negative strain=compression
+    %positive strain=tensile
+    %divide by unloaded dimension
 
-    [nrow, ncol]=size(lcell);
-    strain=nan(nrow, ncol);
+    dl=lcell(:,imstart+1)-lcell(:, imstart);
+    strain=dl./lcell(:, imstart+1);
 
-    for i=1:ncol-1
-        dl=lcell(:,i)-lcell(:, i+1);
-        strain(:, i)=dl./lcell(:, i+1);
-    end
 
 end
 
@@ -993,16 +1167,18 @@ function [Pnew]=tracePredict(time, tau, alpha, intercept)
 end
 
 %to plot mean and std 
-function meanPlot(tme, normintensity, colorcode1, colorcode2, transparency)
+function [p]=meanPlot(tme, normintensity, colorcode1, colorcode2, transparency)
 
 nmean=mean(normintensity, 1, 'omitnan');
 nstd=std(normintensity, 0, 1, 'omitnan');
 
 if nargin==5
     ciplot(nmean-nstd, nmean+nstd, tme, colorcode2, transparency)
-    plot(tme, nmean, 'Color', colorcode1, 'LineWidth', 1.5)
+    p=plot(tme, nmean, 'Color', colorcode1, 'LineWidth', 1.5)
 elseif nargin==4
-    errorbar(tme, nmean, -nstd, nstd, 'Color', colorcode1, 'LineWidth', 1.5)
+    p=errorbar(tme, nmean, -nstd, nstd, 'Color', colorcode1, 'LineWidth', 1.5)
+elseif nargin==3
+    p=plot(tme, nmean, 'Color', colorcode1, 'LineWidth', 1.5)
 end
 
 end
