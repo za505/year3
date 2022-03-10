@@ -53,91 +53,100 @@ for i=1:length(WT_dir)
 end
 
 %assign the data into groups based on regions where plasmolysis was
-%observed
-%note: the groups are as follows, 1=no plasmolysis bays, 2=only polar,
-%3=polar and subpolar, 4=polar and midcell, 5=subpolar, 6=subpolar and
-%midcell, 7=midcell, 8=polar, subpolar, and midcell
-ponA2_postA = plasRegion(ponA2_postCount);
-WT_postA = plasRegion(WT_postCount);
-
-%tabluate the data to get a table of frequencies
-ponA2_postTab=tabulate(ponA2_postA);
-WT_postTab=tabulate(WT_postA);
-
-%both matrices should have the same number of rows
-if height(ponA2_postTab)<8 & height(WT_postTab)<8
-    mv=setdiff(1:8, 1:height(ponA2_postTab));
-    amend = [mv', zeros(length(mv), 1), zeros(length(mv), 1)];
-    ponA2_postTab=[ponA2_postTab; amend];
-    
-    mv=setdiff(1:8, 1:height(WT_postTab));
-    amend = [mv', zeros(length(mv), 1), zeros(length(mv), 1)];
-    WT_postTab=[WT_postTab; amend];
-elseif height(ponA2_postTab)<8
-    mv=setdiff(1:8, 1:height(ponA2_postTab));
-    amend = [mv', zeros(length(mv), 1), zeros(length(mv), 1)];
-    ponA2_postTab=[ponA2_postTab; amend];
-elseif height(WT_postTab)<8
-    mv=setdiff(1:8, 1:height(WT_postTab));
-    amend = [mv', zeros(length(mv), 1), zeros(length(mv), 1)];
-    WT_postTab=[WT_postTab; amend];
-end
+%observed, row 1 = polar, row 2 = subpolar, row 3 = midcell
+[ponA2_plasRegion, ponA2_plasTotal, ponA2_cellTotal] = plasRegion(ponA2_postCount);
+[WT_plasRegion, WT_plasTotal, WT_cellTotal] = plasRegion(WT_postCount);
 
 %plot the data
 cd(maindir)
 figure, hold on
-bar([ponA2_postTab(:, 2), WT_postTab(:, 2)])
+b=bar([ponA2_plasRegion/ponA2_cellTotal, WT_plasRegion/WT_cellTotal])
+% err1=std(b(1).YData);
+% err2=std(b(2).YData);
+% errorbar(b(1).XData, b(1).YData, err1, err1)
+% errorbar(b(2).XData, b(2).YData, err2, err2)
 legend({'ponA2', 'WT'})
-ylabel('Counts', 'FontSize', 15)
-xticklabels('')
-saveas(gcf, 'plasDistribution.png')
-saveas(gcf, 'plasDistribution.fig')
+ylabel('Plasmolysis Probability/Cell', 'FontSize', 15)
+xticklabels({'Polar', '', 'Subpolar', '', 'Midcell'})
+xlabel('Region', 'FontSize', 15)
 
-save(['msmeg_analysis'])
+cd(maindir)
+figure, hold on
+b=bar([ponA2_plasRegion/ponA2_plasTotal/ponA2_cellTotal, WT_plasRegion/WT_plasTotal/WT_cellTotal])
+legend({'ponA2', 'WT'})
+ylabel('Plasmolysis Probability/Cell', 'FontSize', 15)
+xticklabels({'Polar', '', 'Subpolar', '', 'Midcell'})
+xlabel('Region', 'FontSize', 15)
+% saveas(gcf, 'plasProbCell.png')
+% saveas(gcf, 'plasProbCell.fig')
+
+A=ponA2_plasTotal/ponA2_cellTotal;
+B=WT_plasTotal/WT_cellTotal;
+C=[A,B];
+
+b(1,1).YData=A;
+b(1,2).YData=B;
+ylabel('# plasmolysis bays/cell', 'FontSize', 15)
+xlabel('')
+%legend({'ponA2', 'WT'})
+xticklabels({'', 'ponA2', '', 'WT'})
+% saveas(gcf, 'plasPer.png')
+% saveas(gcf, 'plasPer.fig')
+
+A=ponA2_plasTotal;
+B=WT_plasTotal;
+C=[A,B];
+
+b(1,1).YData=A;
+b(1,2).YData=B;
+ylabel('Total Incidence of Plasmolysis', 'FontSize', 15)
+xlabel('')
+%legend({'ponA2', 'WT'})
+xticklabels({'', 'ponA2', '', 'WT'})
+% saveas(gcf, 'plasTotal.png')
+% saveas(gcf, 'plasTotal.fig')
+% 
+% save(['01272022_msmegAnalysis'])
 
 %% Functions
-function [plasm_region]=plasRegion(plasCount)
+function [plasm_region, plasm_total, cell_total]=plasRegion(plasCount)
     idx=cellfun(@isempty, plasCount);
     idx=setdiff(1:height(plasCount), idx);
     
     plasCount=plasCount(idx, 1);
-    plasm_region=nan(height(plasCount),1);
+    plasm_region=zeros(3,1);
+    cell_total=height(plasCount);
     
     for n=1:height(plasCount)
         if length(intersect(plasCount{n, 1}, 1:3))==1
             if plasCount{n,1}==1
-                plasm_region(n,1)=2;
+                plasm_region(1,1)=plasm_region(1,1)+1;
             elseif plasCount{n,1}==2
-                plasm_region(n,1)=5;
+                plasm_region(2,1)=plasm_region(2,1)+1;
             elseif plasCount{n,1}==3
-                plasm_region(n,1)=7;
+                plasm_region(3,1)=plasm_region(3,1)+1;
             end
         elseif length(intersect(plasCount{n, 1}, 1:3))>1
             if sum(intersect(plasCount{n, 1}, 1:3))==3
-                plasm_region(n,1)=3;
+                plasm_region(1,1)=plasm_region(1,1)+1;
+                plasm_region(2,1)=plasm_region(2,1)+1;
             elseif sum(intersect(plasCount{n, 1}, 1:3))==4
-                plasm_region(n,1)=4;
+                plasm_region(1,1)=plasm_region(1,1)+1;
+                plasm_region(3,1)=plasm_region(3,1)+1;
             elseif sum(intersect(plasCount{n, 1}, 1:3))==5
-                plasm_region(n,1)=6;
+                plasm_region(2,1)=plasm_region(2,1)+1;
+                plasm_region(3,1)=plasm_region(3,1)+1;
             elseif sum(intersect(plasCount{n, 1}, 1:3))==5
-                plasm_region(n,1)=8;
+                plasm_region(1,1)=plasm_region(1,1)+1;                
+                plasm_region(2,1)=plasm_region(2,1)+1;
+                plasm_region(3,1)=plasm_region(3,1)+1;
             end
         else
-            plasm_region(n,1)=1;    
+            continue   
         end
-    end
+    end   
     
-%         for p=1:height(percDist{n,1})
-%             pdist=percDist{n,1}(p,1);
-%             if pdist <12.5
-%                plasm_region{n,1}(p,1)="polar";
-%             elseif pdist >=12.5 & pdist <25
-%                 plasm_region{n,1}(p,1)="subpolar";
-%             elseif pdist >=25
-%                 plasm_region{n,1}(p,1)="mid-cell";
-%             end
-%         end
-%     end
+    plasm_total=sum(plasm_region);
     
     %y = discretize(x,[0 .25 .75
     %1],'categorical',{'small','medium','large'}); maybe use this next
