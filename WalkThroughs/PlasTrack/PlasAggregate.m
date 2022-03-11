@@ -31,6 +31,14 @@ for i=1:length(WT_exp)
     WT_dir = [WT_dir; dir([WT_exp{i} '*'])];
 end
 
+WT_plasRegion=[];
+WT_plasTotal=[];
+WT_cellTotal=[];
+
+ponA2_plasRegion=[];
+ponA2_plasTotal=[];
+ponA2_cellTotal=[];
+
 %load data
 for i=1:length(ponA2_dir)
     
@@ -40,7 +48,8 @@ for i=1:length(ponA2_dir)
     load(ponA2_dir(i).name, 'preCount', 'postCount');
     ponA2_preCount = [ponA2_preCount; preCount];
     ponA2_postCount = [ponA2_postCount; postCount];
-    
+    [ponA2_plasRegion(i, :), ponA2_plasTotal(i, :), ponA2_cellTotal(i, :)] = plasRegion(ponA2_postCount);
+
 end
 
 for i=1:length(WT_dir)
@@ -49,43 +58,59 @@ for i=1:length(WT_dir)
     load(WT_dir(i).name, 'preCount', 'postCount');
     WT_preCount = [WT_preCount; preCount];
     WT_postCount = [WT_postCount; postCount];
-    
+    [WT_plasRegion(i, :), WT_plasTotal(i, :), WT_cellTotal(i, :)] = plasRegion(WT_postCount);
 end
 
 %assign the data into groups based on regions where plasmolysis was
 %observed, row 1 = polar, row 2 = subpolar, row 3 = midcell
-[ponA2_plasRegion, ponA2_plasTotal, ponA2_cellTotal] = plasRegion(ponA2_postCount);
-[WT_plasRegion, WT_plasTotal, WT_cellTotal] = plasRegion(WT_postCount);
+% [ponA2_plasRegion, ponA2_plasTotal, ponA2_cellTotal] = plasRegion(ponA2_postCount);
+% [WT_plasRegion, WT_plasTotal, WT_cellTotal] = plasRegion(WT_postCount);
 
 %plot the data
+
+%Plasmolysis Probability/Cell
 cd(maindir)
 figure, hold on
-b=bar([ponA2_plasRegion/ponA2_cellTotal, WT_plasRegion/WT_cellTotal])
-% err1=std(b(1).YData);
-% err2=std(b(2).YData);
-% errorbar(b(1).XData, b(1).YData, err1, err1)
-% errorbar(b(2).XData, b(2).YData, err2, err2)
+b=bar([mean(ponA2_plasRegion./ponA2_cellTotal,1)', mean(WT_plasRegion./WT_cellTotal,1)'])
+err1=std(ponA2_plasRegion./ponA2_cellTotal,0, 1);
+err2=std(WT_plasRegion./WT_cellTotal,0, 1);
+errorbar(b(1).XEndPoints, b(1).YData, err1, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
+errorbar(b(2).XEndPoints, b(2).YData, err2, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
 legend({'ponA2', 'WT'})
 ylabel('Plasmolysis Probability/Cell', 'FontSize', 15)
 xticklabels({'Polar', '', 'Subpolar', '', 'Midcell'})
 xlabel('Region', 'FontSize', 15)
 
+%Average Number of Plasmolysis Bays/Cell
 cd(maindir)
 figure, hold on
-b=bar([ponA2_plasRegion/ponA2_plasTotal/ponA2_cellTotal, WT_plasRegion/WT_plasTotal/WT_cellTotal])
+b1=bar(1, mean(ponA2_plasTotal./ponA2_cellTotal,1))
+b2=bar(2, mean(WT_plasTotal./WT_cellTotal,1))
+
+err1=std(ponA2_plasTotal./ponA2_cellTotal,0, 1);
+err2=std(WT_plasTotal./WT_cellTotal,0, 1);
+errorbar(b1.XEndPoints, b1.YData, err1, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
+errorbar(b2.XEndPoints, b2.YData, err2, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
+
 legend({'ponA2', 'WT'})
-ylabel('Plasmolysis Probability/Cell', 'FontSize', 15)
-xticklabels({'Polar', '', 'Subpolar', '', 'Midcell'})
-xlabel('Region', 'FontSize', 15)
+ylabel('Number of Plasmolysis Bays/Cell', 'FontSize', 15)
+xticklabels({''})
+xlabel('Strain', 'FontSize', 15)
 % saveas(gcf, 'plasProbCell.png')
 % saveas(gcf, 'plasProbCell.fig')
 
-A=ponA2_plasTotal/ponA2_cellTotal;
-B=WT_plasTotal/WT_cellTotal;
+A=ponA2_plasTotal./ponA2_cellTotal;
+B=WT_plasTotal./WT_cellTotal;
 C=[A,B];
 
-b(1,1).YData=A;
-b(1,2).YData=B;
+b(1).YData=A;
+b(2).YData=B;
+
+err1=std(ponA2_plasRegion./ponA2_cellTotal,0, 1);
+err2=std(WT_plasRegion./WT_cellTotal,0, 1);
+errorbar(b(1).XEndPoints, b(1).YData, err1, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
+errorbar(b(2).XEndPoints, b(2).YData, err2, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
+
 ylabel('# plasmolysis bays/cell', 'FontSize', 15)
 xlabel('')
 %legend({'ponA2', 'WT'})
@@ -146,6 +171,7 @@ function [plasm_region, plasm_total, cell_total]=plasRegion(plasCount)
         end
     end   
     
+    %plasm_region=plasm_region';
     plasm_total=sum(plasm_region);
     
     %y = discretize(x,[0 .25 .75
