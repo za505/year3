@@ -17,21 +17,32 @@ clear, close all
 %bg_intensity = 1 x time matrix of mean background intensities
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='02122022_Exp3';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02122022_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory that the image stack is saved in.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02122022_analysis/' basename '/' basename '_colony1/' basename '_mNeonGreen/' basename '_figures'];%Directory to save the output .mat file to.
-savedir2=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02102022_reanalysis/MatFiles'];%Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02122022_analysis/' basename '/' basename '_colony1/' basename '_mNeonGreen/' basename '_aligned']}; 
-recrunch=0;
+basename='03012022_Exp1';%Name of the image stack, used to save file.
+multiExp=0;
+
+if multiExp==1
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
+    channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
+else
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
+    channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
+end
+
+savedir2=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/03262022_analysis'];%Directory to save the output .mat file to.
+recrunch=2;
 replot=1;
 troubleshoot=2;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony1_dm.mat'])
+    load([basename '_colony3_dm.mat'])
     replot=0;
     troubleshoot=2;
-else
+    
+elseif recrunch==0
     
     for i=1:length(channels)
         cd(channels{i}); 
@@ -40,7 +51,7 @@ else
     
     %go to directory where .mat files are stored
     cd(dirname)
-    load([basename '_BT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
+    load([basename '_colony3_BT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
 
     %pre-allocate variables
     icell_intensity=nan(ncells, T);
@@ -75,14 +86,6 @@ else
         end  
        
     end    
-end
-
-delind=[];
-if ~isempty(delind)
-    idx=setdiff(1:ncells, delind);
-    icell_intensity=icell_intensity(idx,:);
-    lcell=lcell(idx,:);
-end
 
 %% Troubleshooting
 if troubleshoot==1
@@ -130,6 +133,23 @@ elseif troubleshoot==2
      end
 end
 
+elseif recrunch==2
+    cd(savedir)
+    load([basename '_colony3_dm.mat'])
+    %replot=0;
+    
+    delind=[3,8, 10];
+    if ~isempty(delind)
+        idx=setdiff(1:ncells, delind);
+        icell_intensity=icell_intensity(idx,:);
+        lcell=lcell(idx,:);
+        B=B(idx,:);
+        dl=dl(idx,:);
+        ncells=length(idx);
+        pixels=pixels(idx,:);
+    end
+
+end
 % prompt = 'Which cells have septa? ';
 % idx = input(prompt)
 % septa(idx, 1) = 1; 
@@ -153,8 +173,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_fullIntensity_dm.fig'])
-    saveas(gcf, [basename,'_fullIntensity_dm.png'])
+    saveas(gcf, [basename,'_colony3_fullIntensity_dm.fig'])
+    saveas(gcf, [basename,'_colony3_fullIntensity_dm.png'])
 
     %plot background fluorescence traces
     figure(2), hold on
@@ -164,8 +184,8 @@ if replot==1
     %subtitle('blue = halved','Color','blue')
     xlabel('Time (min)')
     ylabel('Background Intensity (A.U.)')
-    saveas(gcf, [basename,'_bgIntensity_dm.fig'])
-    saveas(gcf, [basename,'_bgIntensity_dm.png'])
+    saveas(gcf, [basename,'_colony3_bgIntensity_dm.fig'])
+    saveas(gcf, [basename,'_colony3_bgIntensity_dm.png'])
     
 %     figure(2), hold on
 %     for i=1:height(adj_intensity)
@@ -207,13 +227,13 @@ if replot==1
 end
 
 cd(savedir)
-save([basename '_colony1_dm.mat'])
+save([basename '_colony3_dm.mat'])
 
 cd(savedir2)
-save([basename '_colony1_dm.mat'])
+save([basename '_colony3_dm.mat'])
 
 % cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/02072022_analysis/MatFiles/')
-% save([basename '_colony1_dm.mat'])
+% save([basename '_i075fr003_dm.mat'])
 
 %% Functions
  function [p1, p2]=getBackground(imagename)

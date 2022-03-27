@@ -64,31 +64,32 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='10232021_Exp1';%Name of the image stack, used to save file.
-multiExp=1;
+basename='03012022_Exp1';%Name of the image stack, used to save file.
+multiExp=0;
 multiScale=0;
 
 if multiExp==1
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 else
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/10232021_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 end
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-    
+%409
 if multiScale==0
     tscale=60;
 elseif multiScale==1
-    tscale1=60;
-    tscale2=60*10;
-    tpoint1=[0:tscale1:7*60]; 
-    tpoint2=[7*60+tscale2:tscale2:140*60];
+	tscale1=60;
+	tscale2=60*20;
+	tpoint1=[0:tscale1:7*60];
+    tpoint2=[tpoint1(end)+tscale2:tscale2:150*60];
+    tpoints=[tpoint1, tpoint2];
 end
 
 thresh=0;%For default, enter zero.
-IntThresh=4000;%Threshold used to enhance contrast. Default:35000
+IntThresh=100;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=3;%Parameter used in edge detection, default=2
 minL=2;%Minimum cell length
@@ -432,10 +433,20 @@ pixels(delind,:)=[];
 mlines(delind,:)=[];
 [ncells,~]=size(lcell);
 
-lcell(lcell==0)=NaN;
-wcell(wcell==0)=NaN;
-acell(acell==0)=NaN;
-pcell(pcell==0)=NaN;
+% delind=[4, 15];
+% lcell(delind,:)=[];
+% wcell(delind,:)=[];
+% acell(delind,:)=[];
+% pcell(delind,:)=[];
+% B(delind,:)=[];
+% pixels(delind,:)=[];
+% mlines(delind,:)=[];
+% [ncells,~]=size(lcell);
+% 
+% lcell(lcell==0)=NaN;
+% wcell(wcell==0)=NaN;
+% acell(acell==0)=NaN;
+% pcell(pcell==0)=NaN;
 
 %Dimsionalize the variables
 lcell=lcell*lscale;
@@ -524,10 +535,10 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_colony1_BTlab'],'labels','labels2','-v7.3')
+save([basename '_colony3_BTlab'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_colony1_BT'])
+save([basename '_colony3_BT'])
 end
 
 %% Troubleshooting
@@ -570,8 +581,8 @@ end
 xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_colony1_lTraces.png'])
-saveas(gcf,[basename,'_colony1_lTraces.fig'])
+saveas(gcf,[basename,'_colony3_lTraces.png'])
+saveas(gcf,[basename,'_colony3_lTraces.fig'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
@@ -598,8 +609,8 @@ plot(tmid./60,vav,'-r')
 xlabel('Time (min)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_colony1_eTraces.png'])
-saveas(gcf, [basename,'_colony1_eTraces.fig'])
+saveas(gcf, [basename,'_colony3_eTraces.png'])
+saveas(gcf, [basename,'_colony3_eTraces.fig'])
 %  
 % figure(6), title('Elongation Rate vs. Time')
 % hold on
