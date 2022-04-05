@@ -17,21 +17,20 @@ clear, close all
 %60 minute PBS incubation, 1 minute frame rate, 100% intensity = '10232021_Exp2' & '10262021_Exp2'
 %120 minute PBS incubation, 1 minute frame rate, 100% intensity = '01142022_Exp1'
 
-%LBMga='01172022_Exp1' '*dm.mat']); %LB, 20 mM Mg2+
-% LBEa=dir(['01172022_Exp2' '*dm.mat']); %LB, 10 mM EDTA
-% LBtuna=dir(['01242022_Exp1' '*dm.mat']); %LB, 0.5 ug/mL tunicamycin
-% LBvana=dir(['01262022_Exp1' '*dm.mat']); %LB, 1 ug/mL vancomycin
-% LBspnta=dir(['02122022_Exp3' '*dm.mat']); %LB, spent media (10 min frame rate)
-% LBspntb=dir(['02192022_Exp1' '*dm.mat']); %LB, spent media (10 min frame rate)
-% 
-%    
-% LB1s=dir(['11202021_Exp1' '*dm.mat']); %LB, frame rate = 1.2 s
-% LB2s=dir(['12082021_Exp1' '*dm.mat']); %LB, frame rate = 2 s
-% LB3s=dir(['12082021_Exp2' '*dm.mat']); %LB, frame rate = 3 s
-% 
-% LB1t=dir(['02192022_Exp2' '*dm.mat']); %LB, frame rate = 1.76 s
-% LB2t=dir(['02192022_Exp3' '*dm.mat']); %LB, frame rate = 2.3 s
-% LB3t=dir(['02192022_Exp4' '*dm.mat']); %LB, frame rate = 3 s
+%LB + 20 mM Mg2+, 1 minute frame rate, 100% intensity = '01172022_Exp1' 
+%LB + 10 mM EDTA, 1 minute frame rate, 100% intensity = '01172022_Exp2' 
+%LB + 0.5 ug/mL tunicamycin, 1 minute frame rate, 100% intensity = '01242022_Exp1' 
+%LB + 1 ug/mL vancomycin, 1 minute frame rate, 100% intensity = '01262022_Exp1'
+%spent LB, 10 minute frame rate, 100% intensity = '02122022_Exp3' & '02192022_Exp1'
+%spent LB, 1 minute frame rate, 100% intensity = '03012022_Exp1'
+
+%untreated, 1.2 s frame rate, 100% intensity = '11202021_Exp1' 
+%untreated, 2 s frame rate, 100% intensity = '12082021_Exp1'
+%untreated, 3 s frame rate, 100% intensity = '12082021_Exp2'
+
+%untreated, 1.76 s frame rate, 20% intensity = '02192022_Exp2' 
+%untreated, 2.3 s frame rate, 20% intensity = '02192022_Exp3'
+%untreated, 3 s frame rate, 20% intensity = '02192022_Exp4'
 
 %for photobleach correction (100% intensity)
 % alpha=32.2114;
@@ -42,13 +41,18 @@ clear, close all
 % intercept=-1.0566;
 
 %% User Input 
-
 %color codes must be in RGB [0-1] format to be used in ciplot
+color_gray = {[204 204 204], [150, 150, 150], [82, 82, 82]};
+color_gray = cellfun(@(x)x./255, color_gray, 'UniformOutput', false);
+
 colorcode={[204 0 0], [204 102 0], [204 204 0], [102 204 0], [0 204 204], [0 0 204], [102 0 204], [204 0 204], [204 0 102], [255 102 102], [255 178 102], [102 255 102], [102 255 255], [102 178 255], [178 102 255], [255 102 255],[255 102 178]};
 colorcode2={[255 51 51], [255 153 51], [255 255 51], [153 255 51], [51 255 255], [51 51 255], [153 51 255], [255 51 255], [255 51 153], [255 204 204], [255 229 204], [204 255 204], [204 255 255], [204 229 255], [229 204 255], [255 204 255],[255 204 229]};
 
 colorcode=cellfun(@(x)(x./255), colorcode, 'UniformOutput', false);
 colorcode2=cellfun(@(x)(x./255), colorcode2, 'UniformOutput', false);
+
+okabeIto = {[230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 114, 178], [213, 94, 0], [204, 121, 167], [0, 0, 0]};
+okabeIto = cellfun(@(x)(x./255), okabeIto, 'UniformOutput', false);
 
 % m=10;
 % c1=[0.847 0.427 0.933];
@@ -71,110 +75,7 @@ transparency = 0.3; %this is the alpha argument for the ciplot function
 
 %location and names of of the *.mat files 
 dirsave='/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis';
-basenames={'10232021_Exp1', '10262021_Exp1', '02212022_Exp2', '02122022_Exp1','02122022_Exp2', '02092022_Exp1', '02212022_Exp1', '11192021_Exp2', '12082021_Exp3', '11192021_Exp1', '11302021_Exp1', '10232021_Exp2', '10262021_Exp2', '01142022_Exp1', '01172022_Exp1', '01172022_Exp2', '01242022_Exp1', '01262022_Exp1', '02122022_Exp3', '02192022_Exp1','11202021_Exp1', '12082021_Exp1', '12082021_Exp2', '02192022_Exp2', '02192022_Exp3', '02192022_Exp4'};
-
-%% normalize data
-imstarts=[6, 5, 6, 6, 6, 6, 6, 10, 10, 4, 4, 3, 5, 4, 6, 6, 3, 5, 6, 6, NaN, NaN, NaN, NaN, NaN, NaN]; %based on time vector
-%idxes={[2:5], [2:6], [2:3], [2:3], [2:3], [2:3], [2:3], [2:6], [2:6], [2:6], [2:4], [2:4], [2:4], [], [2:7], [2:4], [2:4], [2:3], [2:3], [], [], [], [], [], [], []}; %based on tme vector
-idxes={[2:4], [2:6], [2:4], [2:3], [2:3], [2:3], [2:3], [2:4], [2:5], [2:4], [2:4], [2:4], [2:4], [], [2:7], [2:4], [2:4], [], [2:3], [2:3], [], [], [], [], [], []}; %based on tme vector
-
-for b=1:length(basenames)
-
-    basename=basenames{b};
-    intp=idxes{b};
-    
-    cd([dirsave '/rawFiles'])
-    
-    datadir=dir([basename '*']);
-    imstart=imstarts(b);
-    
-    if ismember(b, [21:26]) %controls
-        
-        intensity=[];
-        bgintensity=[];
-        adjintensity=[];
-        normintensity=[];
-        lcell=[];
-        
-        for j=1:height(datadir)
-            cd([dirsave '/rawFiles']);
-            load(datadir(j).name);
-            
-            
-            [intensity1, bgintensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=controlsNormalize(datadir);
-            intensity=[intensity;intensity1];
-            bgintensity=[bgintensity; bgintensity1];
-            adjintensity=[adjintensity; adjintensity1];
-            normintensity=[normintensity; normintensity1];
-            lcell=[lcell; lCell];
-            
-        end
-        
-        cd([dirsave '/normalizedFiles'])
-        save([basename '_norm.mat'], 'intensity', 'bgintensity', 'adjintensity', 'normintensity', 'lcell', 'imstart', 'time', 'tme');
-    
-    else
-        
-        intensity=[];
-        adjintensity=[];
-        normintensity=[];
-        lcell=[];
-        
-        for j=1:height(datadir)
-            cd([dirsave '/rawFiles'])
-            load(datadir(j).name);
-            
-            
-            [intensity1, adjintensity1, normintensity1, lCell, time, tme, imstart]=dataNormalize(datadir, imstart, intp);
-            intensity=[intensity;intensity1];
-            adjintensity=[adjintensity; adjintensity1];
-            normintensity=[normintensity; normintensity1];
-            lcell=[lcell; lCell];
-            
-        end
-        
-        cd([dirsave '/normalizedFiles'])
-        save([basename '_norm.mat'], 'intensity', 'adjintensity', 'normintensity', 'lcell', 'imstart', 'time', 'tme', 'intp');
-    end
-    
-end
-
-
-%% correct data
-for i=1:length(basenames)
-    
-    basename=basenames{i};
-    cd([dirsave '/normalizedFiles'])
-    datadir=dir([basename '*']);
-    
-    if ismember(i, [3, 7, 24:26]) % 20% intensity
-        
-        %for photobleach correction (20% intensity)
-%         alpha=152.6455;
-%         intercept=-1.0976;
-
-        alpha=151.7544;
-        intercept=-1.0566;
-        load(datadir.name)
-        [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha, intercept);
-
-        cd([dirsave '/correctedFiles'])
-        save([basename '_corrected.mat'], 'time', 'tme', 'alpha', 'intercept', 'Cnew', 'dCB', 'dCT', 'dCP', 'Cbl_exp', 'unb_frac');
-    
-    else
-        
-        %for photobleach correction (100% intensity)
-        alpha=32.2114;
-        intercept=0.1614;
-        
-        load(datadir.name);
-        [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha, intercept);
-
-        cd([dirsave '/correctedFiles'])
-        save([basename '_corrected.mat'], 'time', 'tme', 'alpha', 'intercept', 'Cnew', 'dCB', 'dCT', 'dCP', 'Cbl_exp', 'unb_frac');
-    end
-    
-end
+basenames={'10232021_Exp1', '10262021_Exp1', '02212022_Exp2', '02122022_Exp1','02122022_Exp2', '02092022_Exp1', '02212022_Exp1', '11192021_Exp2', '12082021_Exp3', '11192021_Exp1', '11302021_Exp1', '10232021_Exp2', '10262021_Exp2', '01142022_Exp1', '01172022_Exp1', '01172022_Exp2', '01242022_Exp1', '01262022_Exp1', '02122022_Exp3', '02192022_Exp1', '03012022_Exp1', '11202021_Exp1', '12082021_Exp1', '12082021_Exp2', '02192022_Exp2', '02192022_Exp3', '02192022_Exp4'};
 
 %% compare the controls traces
 %each row is a different frame rate (1, 2, and 3 second), each column is a
@@ -190,7 +91,10 @@ idx2=1;
 for i=1:length(basenames)
     basename=basenames{i};
     
-    if ismember(i, [21:23])
+    cidx1 = [length(basenames)-5:length(basenames)-3];
+    cidx2 = [length(basenames)-2:length(basenames)];
+    
+    if ismember(i, cidx1)
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         controls_100{idx1, 1}=time;
@@ -210,7 +114,7 @@ for i=1:length(basenames)
         
         idx1=idx1+1;
         
-    elseif ismember(i, [24:26])
+    elseif ismember(i, cidx2)
         
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
@@ -259,7 +163,8 @@ for i=1:length(basenames)
         untreated_100{idx1, 5}=normintensity;
         untreated_100{idx1, 6}=lcell;
         untreated_100{idx1, 8}=imstart;
-        untreated_100{idx1, 9}=strainCalc(lcell, imstart);
+        untreated_100{idx1, 9}=bgintensity;
+        untreated_100{idx1, 10}=gRateCalc(time, lcell, imstart);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -277,7 +182,7 @@ for i=1:length(basenames)
         untreated_20{idx2, 5}=normintensity;
         untreated_20{idx2, 6}=lcell;
         untreated_20{idx2, 8}=imstart;
-        untreated_20{idx2, 9}=strainCalc(lcell, imstart);
+        untreated_20{idx2, 9}=bgintensity;
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -310,7 +215,7 @@ for i=1:length(basenames)
         PBS_100{idx1, 4}=adjintensity;
         PBS_100{idx1, 5}=normintensity;
         PBS_100{idx1, 6}=lcell;
-        PBS_100{idx1, 8}=strainCalc(lcell, imstart);
+        PBS_100{idx1, 8}=gRateCalc(time, lcell, imstart);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -332,7 +237,7 @@ idx1=1;
 for i=1:length(basenames)
     basename=basenames{i};
     
-     if ismember(i, [15:20])
+     if ismember(i, [15:21])
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         treated_100{idx1, 1}=time;
@@ -341,7 +246,7 @@ for i=1:length(basenames)
         treated_100{idx1, 4}=adjintensity;
         treated_100{idx1, 5}=normintensity;
         treated_100{idx1, 6}=lcell;
-        treated_100{idx1, 8}=strainCalc(lcell, imstart);
+        treated_100{idx1, 8}=gRateCalc(time, lcell, imstart);
         
         cd([dirsave '/correctedFiles'])
         load([basename '_corrected.mat'])
@@ -354,15 +259,15 @@ for i=1:length(basenames)
 end
 
 %% generate plots for the controls
-cd([dirsave '/03072022_groupMeeting']);
+cd([dirsave '/03262022_analysis']);
 
 labels={'1 s', '2 s', '3 s', '1 s background', '2 s background', '3 s background'};
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',20)
-subplot(1, 2, 1)
-p1=plot(controls_100{1,2}, controls_100{1,3}(:, controls_100{1,9}:end), 'Color', color_red{1}, 'LineWidth', 0.75), hold on
-p2=plot(controls_100{2,2}, controls_100{2,3}(:, controls_100{2,9}:end), 'Color', color_red{2}, 'LineWidth', 0.75)
-p3=plot(controls_100{3,2}, controls_100{3,3}(:, controls_100{3,9}:end), 'Color', color_red{3}, 'LineWidth', 0.75)
+subplot(1, 2, 1), hold on
+p1=meanPlot(controls_100{1,2}, controls_100{1,3}(:, controls_100{1,9}:end), color_red{1}, color_red{1}) %plot starting from the initial post-lysis value
+p2=meanPlot(controls_100{2,2}, controls_100{2,3}(:, controls_100{2,9}:end), color_red{2}, color_red{2})
+p3=meanPlot(controls_100{3,2}, controls_100{3,3}(:, controls_100{3,9}:end), color_red{3}, color_red{3})
 p4=plot(controls_100{1,2}, controls_100{1,4}(:, controls_100{1,9}:end), '--', 'Color', color_red{1}, 'LineWidth', 1.5)
 p5=plot(controls_100{2,2}, controls_100{2,4}(:, controls_100{2,9}:end), '--', 'Color', color_red{2}, 'LineWidth', 1.5)
 p6=plot(controls_100{3,2}, controls_100{3,4}(:, controls_100{3,9}:end), '--', 'Color', color_red{3}, 'LineWidth', 1.5)
@@ -375,10 +280,10 @@ hleg=legend([p1(1), p2(1), p3(1), p4, p5, p6], labels)
 title(hleg,'Settings')
 
 % figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-subplot(1, 2, 2)
-p1=plot(controls_20{1,2}, controls_20{1,3}(:, controls_20{1,9}:end), 'Color', color_blue{1}, 'LineWidth', 0.75), hold on
-p2=plot(controls_20{2,2}, controls_20{2,3}(:, controls_20{2,9}:end), 'Color', color_blue{2}, 'LineWidth', 0.75)
-p3=plot(controls_20{3,2}, controls_20{3,3}(:, controls_20{3,9}:end), 'Color', color_blue{3}, 'LineWidth', 0.75)
+subplot(1, 2, 2), hold on
+p1=meanPlot(controls_20{1,2}, controls_20{1,3}(:, controls_20{1,9}:end), color_blue{1}, color_blue{1})
+p2=meanPlot(controls_20{2,2}, controls_20{2,3}(:, controls_20{2,9}:end), color_blue{2}, color_blue{2})
+p3=meanPlot(controls_20{3,2}, controls_20{3,3}(:, controls_20{3,9}:end), color_blue{3}, color_blue{3})
 p4=plot(controls_20{1,2}, controls_20{1,4}(:, controls_20{1,9}:end), '--', 'Color', color_blue{1}, 'LineWidth', 1.5)
 p5=plot(controls_20{2,2}, controls_20{2,4}(:, controls_20{2,9}:end), '--', 'Color', color_blue{2}, 'LineWidth', 1.5)
 p6=plot(controls_20{3,2}, controls_20{3,4}(:, controls_20{3,9}:end), '--', 'Color', color_blue{3}, 'LineWidth', 1.5)
@@ -412,34 +317,71 @@ saveas(gcf, 'controlsNorm.png')
 saveas(gcf, 'controlsNorm.fig')
 
 
+pt=8;
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
-p1=meanPlot(controls_100{1,2}, controls_100{1, 8}, color_red{1}, color_red{1}, transparency)
-p2=meanPlot(controls_100{2,2}, controls_100{2, 8}, color_red{2}, color_red{2}, transparency)
-p3=meanPlot(controls_100{3,2}, controls_100{3, 8}, color_red{3}, color_red{3}, transparency)
-p4=meanPlot(controls_20{1,2}, controls_20{1, 8}, color_blue{1}, color_blue{1}, transparency)
-p5=meanPlot(controls_20{2,2}, controls_20{2, 8}, color_blue{2}, color_blue{2}, transparency)
-p6=meanPlot(controls_20{3,2}, controls_20{3, 8}, color_blue{3}, color_blue{3}, transparency)
+idx=find(controls_100{1,2}<pt);
+p1=meanPlot(controls_100{1,2}(:, idx), controls_100{1, 8}(:, idx), color_red{1}, color_red{1}, transparency)
+idx=find(controls_100{2,2}<pt);
+p2=meanPlot(controls_100{2,2}(:, idx), controls_100{2, 8}(:, idx), color_red{2}, color_red{2}, transparency)
+idx=find(controls_100{3,2}<pt);
+p3=meanPlot(controls_100{3,2}(:, idx), controls_100{3, 8}(:, idx), color_red{3}, color_red{3}, transparency)
+idx=find(controls_20{1,2}<pt);
+p4=meanPlot(controls_20{1,2}(:, idx), controls_20{1, 8}(:, idx), color_blue{1}, color_blue{1}, transparency)
+idx=find(controls_20{2,2}<pt);
+p5=meanPlot(controls_20{2,2}(:, idx), controls_20{2, 8}(:, idx), color_blue{2}, color_blue{2}, transparency)
+idx=find(controls_20{3,2}<pt);
+p6=meanPlot(controls_20{3,2}(:, idx), controls_20{3, 8}(:, idx), color_blue{3}, color_blue{3}, transparency)
+%ylim([0 Inf])
+ylabel('Corrected Fluorescence (A.U.)')
+xlabel('Time (minutes)')
+hleg=legend([p1, p2, p3, p4, p5, p6], labels, 'Location', 'east')
+title(hleg,'Settings')
+%hleg.NumColumns=2;
+saveas(gcf, 'controlsCorrected_zoom.png')
+saveas(gcf, 'controlsCorrected_zoom.fig')
+
+pt=8;
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+idx=find(controls_100{1,2}<pt);
+p1=meanPlot(controls_100{1,2}(:, idx), controls_100{1, 8}(:, idx), color_red{1}, color_red{1}, transparency)
+idx=find(controls_100{2,2}<pt);
+p2=meanPlot(controls_100{2,2}(:, idx), controls_100{2, 8}(:, idx), color_red{2}, color_red{2}, transparency)
+idx=find(controls_100{3,2}<pt);
+p3=meanPlot(controls_100{3,2}(:, idx), controls_100{3, 8}(:, idx), color_red{3}, color_red{3}, transparency)
+idx=find(controls_20{1,2}<pt);
+p4=meanPlot(controls_20{1,2}(:, idx), controls_20{1, 8}(:, idx), color_blue{1}, color_blue{1}, transparency)
+idx=find(controls_20{2,2}<pt);
+p5=meanPlot(controls_20{2,2}(:, idx), controls_20{2, 8}(:, idx), color_blue{2}, color_blue{2}, transparency)
+idx=find(controls_20{3,2}<pt);
+p6=meanPlot(controls_20{3,2}(:, idx), controls_20{3, 8}(:, idx), color_blue{3}, color_blue{3}, transparency)
 ylim([0 Inf])
 ylabel('Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
 hleg=legend([p1, p2, p3, p4, p5, p6], labels, 'Location', 'east')
 title(hleg,'Settings')
 %hleg.NumColumns=2;
-saveas(gcf, 'controlsCorrected.png')
-saveas(gcf, 'controlsCorrected.fig')
+saveas(gcf, 'controlsCorrected_pan.png')
+saveas(gcf, 'controlsCorrected_pan.fig')
 
 %% generate plots for untreated LB
-cd([dirsave '/03072022_groupMeeting']);
+cd([dirsave '/03262022_analysis']);
 
 labels={'1 min', '1 min', '5 min', '10 min', '20 min'};
+
+% for i=1:height(untreated_100)
+%     figure, hold on
+%     plot(untreated_100{i,1}, untreated_100{i, 3}, '-k')
+%     plot(untreated_100{i,1}, untreated_100{i, 9}, '--k')
+%     pause, close all
+% end
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
 p1=meanPlot(untreated_100{1,1}, untreated_100{1, 3}, color_purple{1}, color_purple{1}, transparency)
-p2=meanPlot(untreated_100{2,1}, untreated_100{2, 3}, color_purple{2}, color_purple{2}, transparency)
-p3=meanPlot(untreated_100{3,1}, untreated_100{3, 3}, color_purple{3}, color_purple{3}, transparency)
-p4=meanPlot(untreated_100{4,1}, untreated_100{4, 3}, color_purple{4}, color_purple{4}, transparency)
-p5=meanPlot(untreated_100{5,1}, untreated_100{5, 3}, color_purple{5}, color_purple{5}, transparency)
+p2=meanPlot(untreated_100{2,1}, untreated_100{2, 3}, color_purple{3}, color_purple{3}, transparency)
+p3=meanPlot(untreated_100{3,1}, untreated_100{3, 3}, color_gray{1}, color_gray{1}, transparency)
+p4=meanPlot(untreated_100{4,1}, untreated_100{4, 3}, color_gray{2}, color_gray{2}, transparency)
+p5=meanPlot(untreated_100{5,1}, untreated_100{5, 3}, color_gray{3}, color_gray{3}, transparency)
 ylim([0 Inf])
 ylabel('Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -469,10 +411,10 @@ figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',
 subplot(1,2,1)
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 5}], colorcode{1}, colorcode2{1}, transparency)
 p1=meanPlot(untreated_100{1,2}, untreated_100{1, 5}, color_purple{1}, color_purple{1}, transparency), hold on
-p2=meanPlot(untreated_100{2,2}, untreated_100{2, 5}, color_purple{2}, color_purple{2}, transparency), hold on
-p3=meanPlot(untreated_100{3,2}, untreated_100{3, 5}, color_purple{3}, color_purple{3}, transparency), hold on
-p4=meanPlot(untreated_100{4,2}, untreated_100{4, 5}, color_purple{4}, color_purple{4}, transparency), hold on
-p5=meanPlot(untreated_100{5,2}, untreated_100{5, 5}, color_purple{5}, color_purple{5}, transparency), hold on
+p2=meanPlot(untreated_100{2,2}, untreated_100{2, 5}, color_purple{3}, color_purple{3}, transparency), hold on
+p3=meanPlot(untreated_100{3,2}, untreated_100{3, 5}, color_gray{1}, color_gray{1}, transparency), hold on
+p4=meanPlot(untreated_100{4,2}, untreated_100{4, 5}, color_gray{2}, color_gray{2}, transparency), hold on
+p5=meanPlot(untreated_100{5,2}, untreated_100{5, 5}, color_gray{3}, color_gray{3}, transparency), hold on
 ylim([0 Inf])
 ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -485,10 +427,10 @@ title(hleg,'Frame Rate')
 % %meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
 subplot(1,2,2)
 p1=meanPlot(untreated_100{1,2}, untreated_100{1, 7}, color_purple{1}, color_purple{1}, transparency), hold on
-p2=meanPlot(untreated_100{2,2}, untreated_100{2, 7}, color_purple{2}, color_purple{2}, transparency), hold on
-p3=meanPlot(untreated_100{3,2}, untreated_100{3, 7}, color_purple{3}, color_purple{3}, transparency), hold on
-p4=meanPlot(untreated_100{4,2}, untreated_100{4, 7}, color_purple{4}, color_purple{4}, transparency), hold on
-p5=meanPlot(untreated_100{5,2}, untreated_100{5, 7}, color_purple{5}, color_purple{5}, transparency)
+p2=meanPlot(untreated_100{2,2}, untreated_100{2, 7}, color_purple{3}, color_purple{3}, transparency), hold on
+p3=meanPlot(untreated_100{3,2}, untreated_100{3, 7}, color_gray{1}, color_gray{1}, transparency), hold on
+p4=meanPlot(untreated_100{4,2}, untreated_100{4, 7}, color_gray{2}, color_gray{2}, transparency), hold on
+p5=meanPlot(untreated_100{5,2}, untreated_100{5, 7}, color_gray{3}, color_gray{3}, transparency)
 ylim([0 Inf])
 ylabel('Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -507,7 +449,7 @@ saveas(gcf, 'untreatedNorm&Corrected.fig')
 % meanPlot(controls_100{3,2}, controls_100{3, 8}, colorcode{5}, colorcode2{5}, transparency)
 
 %% plot the fit of the exponential on the control traces
-cd([dirsave '/03072022_groupMeeting']);
+cd([dirsave '/03262022_analysis']);
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',16)
 subplot(2,3,1)
@@ -584,7 +526,7 @@ linearCoef2 = polyfit([repelem(dt(4), length(tau{4})), repelem(dt(5), length(tau
 linearFit2= polyval(linearCoef2,[0 1.76/60 2.3/60 3/60]);
 
 %% plot the slope as a function of frame rate
-cd([dirsave '/03072022_groupMeeting']);
+cd([dirsave '/03262022_analysis']);
 
 tau_means = cellfun(@(x)mean(x, 1, 'omitnan'), tau);
 tau_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), tau);
@@ -635,16 +577,16 @@ autofluorescence=cell(7, 2); %column 1 = dt, column 2 = final raw fluor values
 
 dt2=[1.2/60, 2/60, 3/60, 1, 5, 10, 20];
 
-autofluorescence{1,2}=controls_100{1,3}(:, end);
-autofluorescence{2,2}=controls_100{2,3}(:, end);
-autofluorescence{3,2}=controls_100{3,3}(:, end);
-autofluorescence{4,2}=untreated_100{1,3}(:, end);
-autofluorescence{5,2}=untreated_100{3,3}(:, end);
-autofluorescence{6,2}=untreated_100{4,3}(:, end);
-autofluorescence{7,2}=untreated_100{5,3}(:, end);
+autofluorescence{1,2}=controls_100{1,4}(:, end);
+autofluorescence{2,2}=controls_100{2,4}(:, end);
+autofluorescence{3,2}=controls_100{3,4}(:, end);
+autofluorescence{4,2}=untreated_100{1,9}(:, end);
+autofluorescence{5,2}=untreated_100{3,9}(:, end);
+autofluorescence{6,2}=untreated_100{4,9}(:, end);
+autofluorescence{7,2}=untreated_100{5,9}(:, end);
 
 for i=1:length(dt2)
-    autofluorescence{i,1}=repelem(dt2(i), height(autofluorescence{i,3}))';
+    autofluorescence{i,1}=repelem(dt2(i), height(autofluorescence{i,2}))';
 end
 
 % autofluorescence_x=dt2([4, 5, 6, 7]);
@@ -658,7 +600,7 @@ end
 % autofluorescence_yhat=modelfun(beta, [0 autofluorescence_x]);
 
 %% generate plots to illustrate the autofluorescence value as a function of frame rate
-cd([dirsave '/03072022_groupMeeting']);
+cd([dirsave '/03262022_analysis']);
 
 labels={'autofluorescence value for single cell', 'mean autofluorescence value'};
 
@@ -695,28 +637,27 @@ hleg=legend([p1(1), p2], labels, 'Location', 'east')
 % text(dt2(2), autofluorescence_means(2)+1.5, ['\autofluorescence = ' caption3], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
 
 title('Autofluorescence Value vs Frame Rate')
-saveas(gcf, 'autofluorescence_vs_frameRate.png')
-saveas(gcf, 'autofluorescence_vs_frameRate.fig')
+% saveas(gcf, 'autofluorescence_vs_frameRate.png')
+% saveas(gcf, 'autofluorescence_vs_frameRate.fig')
 
 %% generate plots for PBS
-cd([dirsave '/03072022_groupMeeting']);
+cd([dirsave '/03262022_analysis']);
 
 %labels={'untreated', 'untreated', '2 min PBS', '2 min PBS', '20 min PBS', '20 min PBS', '60 min PBS', '60 min PBS', '120 min PBS'}; 
 labels={'untreated', '2 min PBS', '20 min PBS', '60 min PBS', '120 min PBS'}; 
 imend=48;
-state=1;
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
-p1=meanPlot(untreated_100{1,1}(1:imend), [untreated_100{1, 3}(:, 1:imend);untreated_100{2, 3}(:, 1:imend)], color_purple{1}, state)
+p1=meanPlot(untreated_100{1,1}(1:imend), [untreated_100{1, 3}(:, 1:imend);untreated_100{2, 3}(:, 1:imend)], colorcode{1}, colorcode2{1}, transparency)
 %p2=meanPlot(untreated_100{2,1}, untreated_100{2, 3}, color_purple{2})
-p3=meanPlot(PBS_100{1,1}(1:imend), [PBS_100{1, 3}(:, 1:imend); PBS_100{2, 3}(:, 1:imend)], color_green{1}, state)
+p3=meanPlot(PBS_100{1,1}(1:imend), [PBS_100{1, 3}(:, 1:imend); PBS_100{2, 3}(:, 1:imend)], colorcode{2}, colorcode2{2}, transparency)
 %p4=meanPlot(PBS_100{2,1}, PBS_100{2, 3}, color_green{2})
-p5=meanPlot(PBS_100{3,1}(1:imend), [PBS_100{3, 3}(:, 1:imend); PBS_100{4, 3}(:, 1:imend)], color_green{2}, state)
+p5=meanPlot(PBS_100{3,1}(1:imend), [PBS_100{3, 3}(:, 1:imend); PBS_100{4, 3}(:, 1:imend)], colorcode{4}, colorcode2{4}, transparency)
 %p6=meanPlot(PBS_100{4,1}, PBS_100{4, 3}, color_green{4})
-p7=meanPlot(PBS_100{5,1}(1:imend), [PBS_100{5, 3}(:, 1:imend); PBS_100{6, 3}(:, 1:imend)], color_green{3}, state)
+p7=meanPlot(PBS_100{5,1}(1:imend), [PBS_100{5, 3}(:, 1:imend); PBS_100{6, 3}(:, 1:imend)], colorcode{5}, colorcode2{5}, transparency)
 %p8=meanPlot(PBS_100{6,1}, PBS_100{6, 3}, color_green{6})
-p9=meanPlot(PBS_100{7,1}, PBS_100{7, 3}, color_green{4}, state)
+p9=meanPlot(PBS_100{7,1}, PBS_100{7, 3}, colorcode{6}, colorcode2{6}, transparency)
 ylim([0 Inf])
 ylabel('Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -731,15 +672,15 @@ saveas(gcf, 'rawPBS.fig')
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1})
 subplot(1,2,1)
-p1=meanPlot(untreated_100{1,2}(1:imend), [untreated_100{1, 5}(:, 1:imend); untreated_100{2, 5}(:, 1:imend)], color_purple{1}, state), hold on
+p1=meanPlot(untreated_100{1,2}(1:imend), [untreated_100{1, 5}(:, 1:imend); untreated_100{2, 5}(:, 1:imend)], colorcode{1}, colorcode2{1}, transparency), hold on
 %p2=meanPlot(untreated_100{2,2}, untreated_100{2, 5}, color_purple{2})
-p3=meanPlot(PBS_100{1,2}(1:imend), [PBS_100{1, 5}(:, 1:imend); PBS_100{2, 5}(:, 1:imend)], color_green{1}, state)
+p3=meanPlot(PBS_100{1,2}(1:imend), [PBS_100{1, 5}(:, 1:imend); PBS_100{2, 5}(:, 1:imend)], colorcode{2}, colorcode2{2}, transparency)
 %p4=meanPlot(PBS_100{2,2}, PBS_100{2, 5}, color_green{2})
-p5=meanPlot(PBS_100{3,2}(1:imend), [PBS_100{3, 5}(:, 1:imend); PBS_100{4, 5}(:, 1:imend)], color_green{2}, state)
+p5=meanPlot(PBS_100{3,2}(1:imend), [PBS_100{3, 5}(:, 1:imend); PBS_100{4, 5}(:, 1:imend)], colorcode{4}, colorcode2{4}, transparency)
 %p6=meanPlot(PBS_100{4,2}, PBS_100{4, 5}, color_green{4})
-p7=meanPlot(PBS_100{5,2}(1:imend), [PBS_100{5, 5}(:, 1:imend); PBS_100{6, 5}(:, 1:imend)], color_green{3}, state)
+p7=meanPlot(PBS_100{5,2}(1:imend), [PBS_100{5, 5}(:, 1:imend); PBS_100{6, 5}(:, 1:imend)], colorcode{5}, colorcode2{5}, transparency)
 %p8=meanPlot(PBS_100{6,2}, PBS_100{6, 5}, color_green{6})
-p9=meanPlot(PBS_100{7,2}, PBS_100{7, 5}, color_green{4}, state)
+p9=meanPlot(PBS_100{7,2}, PBS_100{7, 5}, colorcode{6}, colorcode2{6}, transparency)
 ylim([0 Inf])
 ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -754,15 +695,15 @@ title(hleg,'PBS Incubation')
 %figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
 subplot(1,2,2)
-p1=meanPlot(untreated_100{1,2}(1:imend), [untreated_100{1, 7}(:, 1:imend); untreated_100{2, 7}(:, 1:imend)], color_purple{1}, state), hold on
+p1=meanPlot(untreated_100{1,2}(1:imend), [untreated_100{1, 7}(:, 1:imend); untreated_100{2, 7}(:, 1:imend)], colorcode{1}, colorcode2{1}, transparency), hold on
 %p2=meanPlot(untreated_100{2,2}(1:50), untreated_100{2, 7}(:, 1:50), color_purple{2})
-p3=meanPlot(PBS_100{1,2}(1:imend), [PBS_100{1, 7}(:, 1:imend); PBS_100{2, 7}(:, 1:imend)], color_green{1}, state)
+p3=meanPlot(PBS_100{1,2}(1:imend), [PBS_100{1, 7}(:, 1:imend); PBS_100{2, 7}(:, 1:imend)], colorcode{2}, colorcode2{2}, transparency)
 %p4=meanPlot(PBS_100{2,2}(1:50), PBS_100{2, 7}(:, 1:50), color_green{2})
-p5=meanPlot(PBS_100{3,2}(1:imend), [PBS_100{3, 7}(:, 1:imend); PBS_100{4, 7}(:, 1:imend)], color_green{2}, state)
+p5=meanPlot(PBS_100{3,2}(1:imend), [PBS_100{3, 7}(:, 1:imend); PBS_100{4, 7}(:, 1:imend)], colorcode{4}, colorcode2{4}, transparency)
 %p6=meanPlot(PBS_100{4,2}(1:50), PBS_100{4, 7}(:, 1:50), color_green{4})
-p7=meanPlot(PBS_100{5,2}(1:imend), [PBS_100{5, 7}(:, 1:imend); PBS_100{6, 7}(:, 1:imend)], color_green{3}, state)
+p7=meanPlot(PBS_100{5,2}(1:imend), [PBS_100{5, 7}(:, 1:imend); PBS_100{6, 7}(:, 1:imend)], colorcode{5}, colorcode2{5}, transparency)
 %p8=meanPlot(PBS_100{6,2}, PBS_100{6, 7}, color_green{6})
-p9=meanPlot(PBS_100{7,2}, PBS_100{7, 7}, color_green{4}, state)
+p9=meanPlot(PBS_100{7,2}, PBS_100{7, 7}, colorcode{6}, colorcode2{6}, transparency)
 ylim([0 Inf])
 ylabel('Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -772,9 +713,10 @@ xlabel('Time (minutes)')
 
 % saveas(gcf, 'PBScorrected.png')
 % saveas(gcf, 'PBScorrected.fig')
-
+% 
 saveas(gcf, 'PBSnorm&corrected.png')
 saveas(gcf, 'PBSnorm&corrected.fig')
+
 %% when do the untreated cells hit the autofluorescence?
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
@@ -810,7 +752,7 @@ ylabel('Relative Change in Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
 
 %% compare treated to untreated and 2 minute PBS
-cd([dirsave '/03072022_groupMeeting']);
+cd([dirsave '/03262022_analysis']);
 
 labels={'untreated', 'untreated', '2 min PBS', '2 min PBS', 'Mg^{2+}', 'EDTA', 'tunicamycin', 'vancomycin'}; 
 
@@ -849,16 +791,16 @@ xlabel('Time (minutes)')
 saveas(gcf, 'treated_vs_untreated.png')
 saveas(gcf, 'treated_vs_untreated.fig')
 
-%% compare exponential vs spent (10 minute frame rate)
-cd([dirsave '/03072022_groupMeeting']);
+%% compare exponential vs spent (1 minute frame rate)
+cd([dirsave '/03262022_analysis']);
 
-labels={'rich media', 'spent media', 'spent media'}; 
+labels={'rich media', 'spent media', 'PBS'}; 
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24)
-subplot(1,2,1)
-p1=meanPlot(untreated_100{4,2}, untreated_100{4, 5}, color_red{3}, color_red{3}, transparency), hold on
-p2=meanPlot(treated_100{5,2}, treated_100{5, 5}, color_blue{1}, color_blue{1}, transparency)
-p3=meanPlot(treated_100{6,2}, treated_100{6, 5}, color_blue{2}, color_blue{2}, transparency)
+subplot(1,2,1), hold on
+p1=meanPlot(untreated_100{2,2}, untreated_100{2, 5}, okabeIto{6}, okabeIto{6}, transparency)
+p2=meanPlot(treated_100{7,2}, treated_100{7, 5}, okabeIto{1}, okabeIto{1}, transparency)
+p3=meanPlot(PBS_100{3,2}, PBS_100{3, 5}, okabeIto{2}, okabeIto{2}, transparency)
 ylim([0 Inf])
 ylabel('Normalized Fluorescence (A.U.)')
 xlabel('Time (minutes)')
@@ -866,171 +808,204 @@ xlabel('Time (minutes)')
 hleg=legend([p1(1), p2(1), p3(1)], labels)
 title(hleg,'Media')
 
-subplot(1,2,2)
-p1=meanPlot(untreated_100{4,2}, untreated_100{4, 7}, color_red{3}, color_red{3}, transparency), hold on
-p2=meanPlot(treated_100{5,2}, treated_100{5, 7}, color_blue{1}, color_blue{1}, transparency)
-p3=meanPlot(treated_100{6,2}, treated_100{6, 7}, color_blue{2}, color_blue{2}, transparency)
+subplot(1,2,2), hold on
+p1=meanPlot(untreated_100{1,2}, untreated_100{1, 7}, okabeIto{6}, okabeIto{6}, transparency)
+p2=meanPlot(treated_100{7,2}, treated_100{7, 7},okabeIto{1}, okabeIto{1}, transparency)
+p3=meanPlot(PBS_100{3,2}, PBS_100{3, 7}, okabeIto{2}, okabeIto{2}, transparency)
 ylim([0 Inf])
 ylabel('Corrected Fluorescence (A.U.)')
 xlabel('Time (minutes)')
 
+hleg=legend([p1(1), p2(1), p3(1)], labels)
+title(hleg,'Media')
+
 saveas(gcf, 'rich_vs_spent.png')
 saveas(gcf, 'rich_vs_spent.fig')
 
-%% compare differences in strain rate
-%expect no difference between untreated (which should also have no intrasample difference) and treated; expect strain to be smaller for cells incubated in PBS
+%% compare differences in growth rate
 
 figure, hold on
-scatter(repelem(1, height(untreated_100{1,9})), untreated_100{1, 9}, [], color_purple{1})
-scatter(repelem(2, height(untreated_100{2,9})), untreated_100{2, 9}, [], color_purple{2})
-scatter(repelem(3, height(PBS_100{1,8})), PBS_100{1, 8}, [], color_green{1})
-scatter(repelem(4, height(PBS_100{3,8})), PBS_100{3, 8}, [], color_green{2})
-scatter(repelem(5, height(PBS_100{5,8})), PBS_100{5, 8}, [], color_green{3})
-scatter(repelem(6, height(PBS_100{7,8})), PBS_100{7, 8}, [], color_green{4})
-scatter(repelem(7, height(treated_100{1,8})), treated_100{1, 8}, [], colorcode{1})
-scatter(repelem(8, height(treated_100{2,8})), treated_100{2, 8}, [], colorcode{2})
-scatter(repelem(9, height(treated_100{3,8})), treated_100{3, 8}, [], colorcode{3})
-scatter(repelem(10, height(treated_100{4,8})), treated_100{4, 8}, [], colorcode{4})
-scatter(repelem(11, height(treated_100{5,8})), treated_100{5, 8}, [], colorcode{5})
-scatter(repelem(12, height(treated_100{6,8})), treated_100{6, 8}, [], colorcode{6})
+plot(untreated_100{1,1}(1:width(untreated_100{1,10})), mean(untreated_100{1, 10}, 1, 'omitnan')) %, color_purple{1})
+plot(untreated_100{2,1}(1:width(untreated_100{2,10})), mean(untreated_100{2, 10}, 1, 'omitnan')) %, color_purple{2})
+plot(PBS_100{1,1}(1:width(PBS_100{1,8})), mean(PBS_100{1, 8}, 1, 'omitnan')) %, color_green{1})
+plot(PBS_100{3,1}(1:width(PBS_100{3,8})), mean(PBS_100{3, 8}, 1, 'omitnan')) %, color_green{2})
+plot(PBS_100{5,1}(1:width(PBS_100{5,8})), mean(PBS_100{5, 8}, 1, 'omitnan')) %, color_green{3})
+plot(PBS_100{7,1}(1:width(PBS_100{7,8})), mean(PBS_100{7, 8}, 1, 'omitnan')) %, color_green{4})
+% scatter(repelem(7, height(treated_100{1,8})), treated_100{1, 8}, [], colorcode{1})
+% scatter(repelem(8, height(treated_100{2,8})), treated_100{2, 8}, [], colorcode{2})
+% scatter(repelem(9, height(treated_100{3,8})), treated_100{3, 8}, [], colorcode{3})
+% scatter(repelem(10, height(treated_100{4,8})), treated_100{4, 8}, [], colorcode{4})
+% scatter(repelem(11, height(treated_100{5,8})), treated_100{5, 8}, [], colorcode{5})
+plot(treated_100{7,1}(1:width(treated_100{7,8})), mean(treated_100{7, 8}, 1, 'omitnan')) %, colorcode{6})
 
+figure, hold on
+plot(untreated_100{1,1}(1:width(untreated_100{1,10})), untreated_100{1, 10}, '-r') 
+plot(untreated_100{2,1}(1:width(untreated_100{2,10})), untreated_100{2, 10}, '-b') 
+plot(PBS_100{7,1}(1:width(PBS_100{7,8})), PBS_100{7, 8}, '-g') 
+plot(treated_100{7,1}(1:width(treated_100{7,8})), treated_100{7, 8}, '-k') 
+
+%% determine the difference between fluorescence traces as a fuction of frame rate
+% figure, hold on
+% p1=meanPlot(untreated_100{1,1}, untreated_100{1, 3}, okabeIto{6}, okabeIto{6}, transparency)
+% p2=meanPlot(controls_100{1,1}, controls_100{1, 3}, okabeIto{1}, okabeIto{1}, transparency)
+% ylabel('Fluorescence (A.U.)')
+% xlabel('Time (minutes)')
+% 
+% hleg=legend([p1(1), p2(1)], {'1 min', '1 s'})
+% title(hleg,'Frame Rate')
+% 
+% dt1 = [1, diff(untreated_100{1,1}, 1, 2)];
+% dt2 = [1, diff(controls_100{1,1}, 1, 2)];
+% 
+% figure, hold on
+% p1=meanPlot(untreated_100{1,1}./dt1, untreated_100{1, 3}, okabeIto{6}, okabeIto{6}, transparency)
+% p2=meanPlot(controls_100{1,1}./dt2, controls_100{1, 3}, okabeIto{1}, okabeIto{1}, transparency)
+% ylabel('Fluorescence (A.U.)')
+% xlabel('Frames')
+% 
+% hleg=legend([p1(1), p2(1)], {'1 min', '1 s'})
+% title(hleg,'Frame Rate')
+
+dt1 = [1, diff(untreated_100{1,2}, 1, 2)];
+dt2 = [0.02, diff(controls_100{1,2}, 1, 2)];
+dt3 = [0.0333, diff(controls_100{2,2}, 1, 2)];
+dt4 = [0.05, diff(controls_100{3,2}, 1, 2)];
+dt5 = [1, diff(untreated_100{4,2}, 1, 2)];
+
+figure, hold on
+p2=meanPlot(controls_100{1,2}./dt2, controls_100{1, 6}, okabeIto{2}, okabeIto{2}, transparency)
+p3=meanPlot(controls_100{2,2}./dt3, controls_100{2, 6}, okabeIto{3}, okabeIto{3}, transparency)
+p4=meanPlot(controls_100{3,2}./dt4, controls_100{3, 6}, okabeIto{4}, okabeIto{4}, transparency)
+p1=meanPlot(untreated_100{1,2}./dt1, untreated_100{1, 5}, okabeIto{1}, okabeIto{1}, transparency)
+p5=meanPlot(untreated_100{4,2}./dt5, untreated_100{4, 5}, okabeIto{5}, okabeIto{5}, transparency)
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Frames')
+
+hleg=legend([p2(1), p3(1), p4(1), p1(1), p5(1)], {'1 s', '2 s', '3 s', '1 min', '10 min'})
+title(hleg,'Frame Rate')
+
+figure, hold on
+p2=meanPlot(controls_100{1,2}./dt2, controls_100{1, 6}, okabeIto{2}, okabeIto{2}, transparency)
+p3=meanPlot(controls_100{2,2}./dt3, controls_100{2, 6}, okabeIto{3}, okabeIto{3}, transparency)
+p4=meanPlot(controls_100{3,2}./dt4, controls_100{3, 6}, okabeIto{4}, okabeIto{4}, transparency)
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Frames')
+ylim([0 Inf])
+
+hleg=legend([p2(1), p3(1), p4(1)], {'1 s', '2 s', '3 s'})
+title(hleg,'Frame Rate')
+
+%% fit the normalized fluor. vs frame rate traces to an exponential
+dt1 = [1, diff(untreated_100{1,2}, 1, 2)];
+dt2 = [0.02, diff(controls_100{1,2}, 1, 2)];
+dt3 = [0.0333, diff(controls_100{2,2}, 1, 2)];
+dt4 = [0.05, diff(controls_100{3,2}, 1, 2)];
+dt5 = [1, diff(untreated_100{4,2}, 1, 2)];
+
+untreated_100{1,11} = untreated_100{1,2}./dt1;
+controls_100{1,12} = controls_100{1,2}./dt2;
+controls_100{2,12} = controls_100{2,2}./dt3;
+controls_100{3,12} = controls_100{3,2}./dt4;
+untreated_100{4,11} = untreated_100{4,2}./dt5;
+
+[untreated_100{1,12}, untreated_100{1,13}]=rhoCalc(untreated_100{1,11}, untreated_100{1, 5}, 1);
+[controls_100{1,13}, controls_100{1,14}]=rhoCalc(controls_100{1,12}, controls_100{1, 6}, 1);
+[controls_100{2,13}, controls_100{2,14}]=rhoCalc(controls_100{2,12}, controls_100{2, 6}, 1);
+[controls_100{3,13}, controls_100{3,14}]=rhoCalc(controls_100{3,12}, controls_100{3, 6}, 1);
+[untreated_100{4,12}, untreated_100{4,13}]=rhoCalc(untreated_100{4, 11}, untreated_100{4, 5}, 1);
+
+%% plot the fit of the exponential function
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',16)
+subplot(1,4,1)
+plot(controls_100{1,12}, controls_100{1, 6}, 'Color', okabeIto{2}), hold on
+plot(controls_100{1,12}, controls_100{1, 14}, '--k')
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Frames')
+title('100% Intensity, 1 s Frame Rate')
+% saveas(gcf, 'fit100_1s.png')
+% saveas(gcf, 'fit100_1s.fig')
+
+subplot(1,4,2)
+plot(controls_100{2,12}, controls_100{2, 6}, 'Color', okabeIto{3}), hold on
+plot(controls_100{2,12}, controls_100{2, 14}, '--k')
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Frames')
+title('100% Intensity, 2 s Frame Rate')
+% saveas(gcf, 'fit100_2s.png')
+% saveas(gcf, 'fit100_2s.fig')
+
+subplot(1,4,3)
+plot(controls_100{3,12}, controls_100{3, 6}, 'Color', okabeIto{4}), hold on
+plot(controls_100{3,12}, controls_100{3, 14}, '--k')
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Frames')
+title('100% Intensity, 3 s Frame Rate')
+% saveas(gcf, 'fit100_3s.png')
+% saveas(gcf, 'fit100_3s.fig')
+
+%figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',16)
+subplot(1,4,4)
+plot(untreated_100{1,11}, untreated_100{1, 5}, 'Color', okabeIto{1}), hold on
+plot(untreated_100{1,11}, untreated_100{1, 13}, '--k')
+ylim([0 1.1])
+ylabel('Normalized Fluorescence (A.U.)')
+xlabel('Frames')
+title('100% Intensity, 1 min Frame Rate')
+
+% subplot(1,2,2)
+% plot(untreated_100{4,11}, untreated_100{4, 5}, 'Color', color_blue{2}), hold on
+% plot(untreated_100{4,11}, untreated_100{4, 13}, '--k')
+% ylim([0 1.1])
+% ylabel('Normalized Fluorescence (A.U.)')
+% xlabel('Frame Rate')
+% title('100% Intensity, 10 min Frame Rate')
+
+%% plot rho as a function of frame rate
+rho={controls_100{1, 13}; controls_100{2, 13}; controls_100{3, 13}; untreated_100{1,12}};
+dt=[1.2/60, 2/60, 3/60, 1]; 
+
+% linearCoef3 = polyfit([repelem(dt(1), length(rho{1})), repelem(dt(2), length(rho{2})), repelem(dt(3), length(rho{3}))],[rho{1}', rho{2}', rho{3}'],1);
+% linearFit3= polyval(linearCoef3,[0 1.2/60 2/60 3/60]);
+
+cd([dirsave '/03262022_analysis']);
+
+rho_means = cellfun(@(x)mean(x, 1, 'omitnan'), rho);
+rho_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), rho);
+
+%labels={'\tau 100% power', '\tau 20% power', 'mean \tau', 'line of best fit'};
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
+p1=scatter(repelem(dt(1), length(rho{1})), rho{1}, 'MarkerFaceColor', '#56B4E9', 'MarkerEdgeColor', '#56B4E9')
+scatter(repelem(dt(2), length(rho{2})), rho{2}, 'MarkerFaceColor', '#009E73', 'MarkerEdgeColor', '#009E73')
+scatter(repelem(dt(3), length(rho{3})), rho{3}, 'MarkerFaceColor', '#F0E442', 'MarkerEdgeColor', '#F0E442')
+scatter(repelem(dt(4), length(rho{4})), rho{4}, 'MarkerFaceColor', '#E69F00', 'MarkerEdgeColor', '#E69F00')
+
+p3=scatter(dt, rho_means, 'MarkerFaceColor', 'black')
+errorbar(dt(1), rho_means(1), rho_std(1), 'Color', 'black')
+errorbar(dt(2), rho_means(2), rho_std(2), 'Color', 'black')
+errorbar(dt(3), rho_means(3), rho_std(3), 'Color', 'black')
+errorbar(dt(4), rho_means(4), rho_std(4), 'Color', 'black')
+
+% p4=plot([0, dt(1), dt(2), dt(3)], linearFit1, '--k', 'LineWidth', 1)
+% plot([0, dt(4), dt(5), dt(6)], linearFit2, '--k', 'LineWidth', 1)
+xlim([0, 1.1])
+ylim([0 40])
+ylabel('\rho')
+%hleg=legend([p1(1), p2(1), p3, p4], labels, 'Location', 'southeast')
+%xticks([0, dt(1),  dt(4), dt(2),  dt(5), dt(3)])
+%xticklabels({'0', '1.2 s', '1.76 s', '2 s', '2.3 s', '3 s'})
+xlabel('Frame Rate (minutes)')
+
+% caption1 = sprintf('%f * frame rate + %f', linearCoef1(1), linearCoef1(2));
+% caption2 = sprintf('%f * frame rate + %f', linearCoef2(1), linearCoef2(2));
+% text(dt(2), tau_means(2)+1.5, ['\tau = ' caption1], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
+% text(dt(1), tau_means(5)+1.5, ['\tau = ' caption2], 'FontSize', 18, 'Color', 'k', 'FontWeight', 'bold');
+
+title('Rho vs Frame Rate')
 %% Functions
-%to aggregate data and normalize
-function [intensity, adjintensity, normintensity, lCell, time, tme, imstart]=dataNormalize(datadir, imstart, idx)
-        
-    %pre-allocate variables
-    intensity=[];
-    lCell=[];
-        
-    %go through the data for each position
-    for i=1:length(datadir)
-
-        %load decayMeasure .mat file
-        cd(datadir(i).folder)
-        load(datadir(i).name, 'icell_intensity', 'time', 'lcell')
-        
-        [nrow, ~]=size(icell_intensity);
-        
-        for n=1:nrow
-            if ~isnan(icell_intensity(n, imstart))
-                intensity=[intensity; icell_intensity(n, :)];
-                lCell=[lCell; lcell(n, :)];
-            end
-        end
-
-        if i==1
-            tme=time; %pre-set new time vector
-        end
-
-    end 
-       
-    %subtract final fluor. value from the trace
-    adjintensity=intensity-intensity(:, end); 
-    adjintensity(adjintensity<0)=NaN;      
-        
-    %adjust the time points in the fluor matrix and initialize to first
-    %frame
-    normintensity=adjintensity(:, imstart:end)./adjintensity(:, imstart);
-    [nrow, ncol]=size(normintensity);
-    
-    %interpolate the fluor values during detergent perfusion 
-    for n=1:height(normintensity)        
-            if ~isempty(idx)
-                x=setdiff(1:ncol, idx); %x=time
-                v=normintensity(n, x); %v=intensity
-                vq=interp1(x, v, idx); %vq=interpolation at query time pts
-                normintensity(n,idx)=vq;
-            end
-    end
-    
-    %adjust the time vector
-    tme=tme(imstart:end)-tme(imstart);     
-        
-end
-
-%to aggregate controls data and normalize
-function [intensity, bgintensity, adjintensity, normintensity, lCell, time, tme, imstart]=controlsNormalize(datadir)
-
-    %pre-allocate variables
-    intensity=[];
-    lCell=[];
-    bgintensity=[];
-        
-    %go through the data for each position
-    for i=1:length(datadir)
-
-        %load decayMeasure .mat file
-        cd(datadir(i).folder)
-        load(datadir(i).name, 'icell_intensity', 'bg_intensity', 'time', 'lcell')
-        
-        intensity=[intensity; icell_intensity];
-        lCell=[lCell; lcell];
-        bgintensity=[bgintensity; bg_intensity];
-
-        if i==1
-            tme=time; %pre-set new time vector
-        end
-
-    end
-        
-
-    %find the initial post-lysis frame by identifying the first
-    %time point where dt matches the final dt
-    dt=round(diff(time));
-    if dt(1)==dt(end)
-%         dl=diff(lCell, 1);
-%         lvg=mean(dl, 1, 'omitnan');
-%         imstart=find(lvg<0, 1, 'first')+2;
-        imstart=1;
-        
-        %remove cells without a value for imstart
-        idx=find(~isnan(intensity(:, imstart)));
-        intensity=intensity(idx,:);
-        lCell=lCell(idx,:);    
-
-        %subtract final fluor. value from the trace and set limit of
-        %detection
-        adjintensity=intensity-bgintensity; 
-        adjintensity(adjintensity<200)=NaN; 
-    
-    else
-        if dt(end)<1 %discrepancies in dt might be found in the meta data, this is the ad hoc fix
-            imstart=find(dt==dt(end), 1, 'first')+2;
-        else 
-            imstart=find(dt==dt(end), 1, 'first');
-        end
-    
-  
-    %remove cells without a value for imstart
-    idx=find(~isnan(intensity(:, imstart)));
-    intensity=intensity(idx,:);
-    lCell=lCell(idx,:);    
-        
-    %subtract final fluor. value from the trace and set limit of
-    %detection
-    adjintensity=intensity-intensity(:, end); 
-    adjintensity(adjintensity<200)=NaN; 
-    
-    end
-        
-    %find when all values are below the limit of detection
-    [~, ncol]=size(adjintensity);
-    nsum=sum(isnan(adjintensity));
-    if max(nsum)==ncol
-        imend=min(find(nsum==ncol));
-    else 
-        imend=ncol;
-    end
-    
-    %adjust the time points in the fluor matrix and initialize to first
-    %frame
-    normintensity=adjintensity(:, imstart:imend)./adjintensity(:, imstart);
-
-    %adjust the time vector
-    tme=tme(imstart:imend)-tme(imstart);     
-        
-end
-
 %do not fit to y=(1-beta)*exp(-t./tau)+beta (beta=normalized limit of detection)
 %fit to y=Ae^(-t/tau)
 function [tau, yhat]=tauCalc(tme, normintensity, tau0)
@@ -1046,59 +1021,24 @@ function [tau, yhat]=tauCalc(tme, normintensity, tau0)
     
 end
 
-%to correct for photobleaching
-function [Cnew, dCB, dCT, dCP, Cbl_exp, unb_frac]=photoCorrect(tme, normintensity, alpha, intercept)
-        
-        %pre-allocate variables
-        %assume that the initial 'measured' fluorescence values and corrected
-        %fluor. values will be equal. I prefer to pre-allocate with nan in case 
-        %some values are missing in the raw data
-        Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
-        Cnew(:, 1)=normintensity(:,1);
-             
-        dCB=nan(height(normintensity), length(tme)-1); %change in fluor. due to photobleaching
-        dCT=nan(height(normintensity), length(tme)-1); %total change in fluor.
-        dCP=nan(height(normintensity), length(tme)-1); %this is the dCP, or loss attributable to permeability
-
-        unb_frac=nan(size(normintensity)); %fraction of unbleached fluor. 
-        unb_frac(:, 1)=1;%all fluorophores are unbleached at the initial time point
-
-        Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
-        Cbl_exp(:, 1)=0;
-        
-        %calculate dt (the dt between frames may vary in a single run).
-        %Note: this is also the frame rate
-        dt=round(diff(tme), 2);
-        
-        %this formula comes from the slope and intercept calculated for the 1.2, 2,
-        %and 3 second tau vs frame rate controls 
-       dC=@(C, alpha, dt, b)(C/(alpha*dt+b))*dt;
-       %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
-        
-        %the correction
-        for n=1:height(normintensity)
-           
-            for i=1:length(tme)-1
-                
-                dCB(n,i) = dC(normintensity(n,i), alpha, dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
-   
-                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
-
-                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
-
-                dCP(n,i)=dCP(n,i)*unb_frac(n,i); %Correcting for the fact that a fraction of fluorophores are unbleached
-
-                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
-
-                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
-                
-                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(n,i+1));%Calculate the new fraction of unbleached fluorophores
-                
-            end  
-            
-        end      
-
+function [rho, yhat]=rhoCalc(tme, normintensity, rho0)
+    
+    [nrow, ncol]=size(normintensity);
+    
+    idx=find(sum(isnan(normintensity), 2) < ncol-1);
+    normintensity=normintensity(idx, :);
+    
+    [nrow, ncol]=size(normintensity);
+    rho=nan(nrow,1);
+    yhat=nan(size(normintensity));
+    modelfun = @(rho, x)exp(-x*rho);
+    for i=1:nrow
+        rho(i, 1)=nlinfit(tme, normintensity(i,:), modelfun, rho0);
+        yhat(i, :)=modelfun(rho(i), tme);
+    end
+    
 end
+
 
 %to find the time point at which the corrected trace autofluorescences and calculate
 %the average
@@ -1132,13 +1072,22 @@ function [growthRate]=gRateCalc(time, lcell, imstart)
     lcell=lcell(:, 1:imstart+3);
     time=time(1:imstart+3);
 
-    dl=diff(lcell, 1, 2);
-    dt=diff(time, 1, 2);
+%     dl=diff(lcell, 1, 2);
+%     dt=diff(time, 1, 2);
+% 
+%     sl=(lcell(:, 1:end-1)+(dl+lcell(:, 1:end-1)))/2;
+% 
+%     growthRate=(dl./dt)./sl;
 
-    sl=(lcell(:, 1:end-1)+(dl+lcell(:, 1:end-1)))/2;
+    %Calculate the growth rate
+    deltat=time(2:end)-time(1:end-1);
+    v=(lcell(:,2:end)-lcell(:,1:end-1))./((lcell(:,1:end-1)+lcell(:,2:end))/2);
+    for i=1:height(v)
+        v(i,:)=v(i,:)./deltat;
+    end
 
-    growthRate=(dl./dt)./sl;
-
+    growthRate=v;
+    
 end
 
 %to predict a normintensity trace
@@ -1168,6 +1117,15 @@ end
 
 %to plot mean and std 
 function [p]=meanPlot(tme, normintensity, colorcode1, colorcode2, transparency)
+
+[nrow, ~]=size(normintensity);
+
+idxNaN=isnan(normintensity);
+idx=find(sum(idxNaN, 1)<nrow/2);
+idx=max(idx);
+
+normintensity=normintensity(:, 1:idx);
+tme=tme(:, 1:idx);
 
 nmean=mean(normintensity, 1, 'omitnan');
 nstd=std(normintensity, 0, 1, 'omitnan');
