@@ -17,20 +17,24 @@ clear, close all
 %bg_intensity = 1 x time matrix of mean background intensities
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='03012022_Exp1';%Name of the image stack, used to save file.
-multiExp=0;
+basename='10302021_Exp1';%Name of the image stack, used to save file.
+% multiExp=1;
+% 
+% if multiExp==1
+%     dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
+%     savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
+%     channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
+% else
+%     dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
+%     savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
+%     channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
+% end
 
-if multiExp==1
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
-    channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
-else
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
-    channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
-end
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/reanalysis/' basename '/' basename '_colony3/']; %Directory that the BT.mat files is saved in
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/reanalysis/' basename '/' basename '_colony3/']; %Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/reanalysis/' basename '/' basename '_colony3/' basename '_aligned']}; %Directory that the image stack is saved in.
 
-savedir2=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/03262022_analysis'];%Directory to save the output .mat file to.
+%savedir2=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/03262022_analysis'];%Directory to save the output .mat file to.
 recrunch=2;
 replot=1;
 troubleshoot=2;
@@ -138,7 +142,7 @@ elseif recrunch==2
     load([basename '_colony3_dm.mat'])
     %replot=0;
     
-    delind=[3,8, 10];
+    delind=[5];
     if ~isempty(delind)
         idx=setdiff(1:ncells, delind);
         icell_intensity=icell_intensity(idx,:);
