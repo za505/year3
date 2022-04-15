@@ -10,11 +10,11 @@ okabeIto = {[230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 11
 okabeIto = cellfun(@(x)(x./255), okabeIto, 'UniformOutput', false);
 okabeIto = [okabeIto, okabeIto];
 
-%% for the 100% intensity controls, GFP only
+%% for the 20% intensity controls
 dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/';
-basenames = {'04052022_Exp2', '04052022_Exp1', '04042022_Exp1', '04112022_Exp1', '04052022_Exp3', '02122022_Exp1', '02122022_Exp2', '02092022_Exp1', '01282022_Exp1'};
-labels = {'Frame Rate = 10 s', 'Frame Rate = 20 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 2 min', 'Frame Rate = 5 min', 'Frame Rate = 10 min', 'Frame Rate = 20 min', 'Frame Rate = 20 min'};
+basenames = {'02192022_Exp2', '02192022_Exp3', '02192022_Exp4', '02212022_Exp2', '02212022_Exp1'};
+labels = {'Frame Rate = 1 s', 'Frame Rate = 2 s', 'Frame Rate = 3 s', 'Frame Rate = 1 min', 'Frame Rate = 20 min'};
 
 cellTrace = cell(length(basenames), 1);
 bgTrace = cell(length(basenames), 1);
@@ -44,7 +44,7 @@ end
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:length(basenames)
-    subplot(3, 3, i)
+    subplot(1, 5, i)
     plot(times{i}, cellTrace{i}, 'Color', okabeIto{i}), hold on
     plot(times{i}, bgTrace{i}, 'LineStyle', '--', 'Color', okabeIto{i})
     xlabel('Time (minutes)')
@@ -54,5 +54,5 @@ for i=1:length(basenames)
 end
 
 cd(dirsave)
-saveas(gcf, 'figure02.png')
-saveas(gcf, 'figure02.fig')
+saveas(gcf, 'figure01.png')
+saveas(gcf, 'figure01.fig')
