@@ -25,8 +25,8 @@ control2_labels = {'Frame Rate = 10 s', 'Frame Rate = 20 s', 'Frame Rate = 1 min
 control3_basenames = {'10302021_Exp2', '10302021_Exp1', '10232021_Exp1', '10262021_Exp1', '10282021_Exp1'};
 control3_labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 5 min'};
 
-[control2_cellTrace, control2_bgTrace, control2_times] = loadData(dirpath, control2_basenames);
-[control3_cellTrace, control3_bgTrace, control3_times] = loadData(dirpath, control3_basenames);
+[control2_cellTrace, control2_bgTrace, control2_adjTrace, control2_times] = loadData(dirpath, control2_basenames);
+[control3_cellTrace, control3_bgTrace, control3_adjTrace, control3_times] = loadData(dirpath, control3_basenames);
 
 %since these controls are all taken in one continuous movie, the first 8-10
 %minutes can be ignored when subtracting the background value and
@@ -34,33 +34,35 @@ control3_labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min
 %post-lysis value? How much of a difference does it make (mathematically)?
 cutoff = 9; %point in the movie at which to start the analyze
 
-control2_sliceTime = dataSlice(control2_times, cutoff);
-control2_sliceIntensity = dataSlice(control2_cellTrace, cutoff);
-control2_sliceBackground = dataSlice(control2_bgTrace, cutoff);
+control2_sliceTime = dataSlice(control2_times, cutoff, 1);
+control2_sliceIntensity = dataSlice(control2_cellTrace, cutoff, 0);
+control2_sliceBackground = dataSlice(control2_bgTrace, cutoff, 0);
+control2_sliceAdjintensity = dataSlice(control2_adjTrace, cutoff, 0);
 
-control3_sliceTime = dataSlice(control3_times, cutoff);
-control3_sliceIntensity = dataSlice(control3_cellTrace, cutoff);
-control3_sliceBackground = dataSlice(control3_bgTrace, cutoff);
+control3_sliceTime = dataSlice(control3_times, cutoff, 1);
+control3_sliceIntensity = dataSlice(control3_cellTrace, cutoff, 0);
+control3_sliceBackground = dataSlice(control3_bgTrace, cutoff, 0);
+control3_sliceAdjintensity = dataSlice(control3_adjTrace, cutoff, 0);
 
 alpha0=1;
 rho0=1;
 
-[control2_alpha, control2_alphaYhat] = alphaCalc(control2_sliceTime, control2_sliceIntensity, control2_sliceBackground, alpha0)
-[control3_alpha, control3_alphaYhat] = alphaCalc(control3_sliceTime, control3_sliceIntensity, control3_sliceBackground, alpha0)
+[control2_alpha, control2_alphaYhat] = alphaCalc(control2_sliceTime, control2_sliceAdjintensity, alpha0);
+[control3_alpha, control3_alphaYhat] = alphaCalc(control3_sliceTime, control3_sliceAdjintensity, alpha0);
 
-[control2_rho, control2_rhoYhat, control2_frames] = rhoCalc(control2_sliceTime, control2_sliceIntensity, control2_sliceBackground, rho0)
-[control3_rho, control3_rhoYhat, control3_frames] = rhoCalc(control3_sliceTime, control3_sliceIntensity, control3_sliceBackground, rho0)
+[control2_rho, control2_rhoYhat, control2_frames] = rhoCalc(control2_sliceTime, control2_sliceAdjintensity, rho0);
+[control3_rho, control3_rhoYhat, control3_frames] = rhoCalc(control3_sliceTime, control3_sliceAdjintensity, rho0);
 
 %% what do the sliced traces look like?
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:length(control2_basenames)
     subplot(3, 3, i)
-    plot(times{i}, cellTrace{i}, 'Color', okabeIto{i}), hold on
-    plot(times{i}, bgTrace{i}, 'LineStyle', '--', 'Color', okabeIto{i})
+    plot(control2_times{i}, control2_cellTrace{i}, 'Color', okabeIto{i}), hold on
+    plot(control2_times{i}, control2_bgTrace{i}, 'LineStyle', '--', 'Color', okabeIto{i})
     xlabel('Time (minutes)')
     ylabel('Fluorescence (A.U.)')
     ylim([0 Inf])
-    title(labels{i})
+    title(control2_labels{i})
 end
 
 cd(dirsave)
@@ -68,10 +70,11 @@ saveas(gcf, 'figure02.png')
 saveas(gcf, 'figure02.fig')
 
 %% Functions
-function [cellTrace, bgTrace, times] = loadData(dirpath, basenames)
+function [cellTrace, bgTrace, adjTrace, times] = loadData(dirpath, basenames)
 
     cellTrace = cell(length(basenames), 1);
     bgTrace = cell(length(basenames), 1);
+    adjTrace = cell(length(basenames), 1);
     times = cell(length(basenames), 1);
 
     for i=1:length(basenames)
@@ -81,63 +84,58 @@ function [cellTrace, bgTrace, times] = loadData(dirpath, basenames)
         datadir=dir([basename '*']);
         load(datadir(1).name, '-regexp', 'intensity$', 'time');
 
-        if exist('icell_intensity', 'var')
-            cellTrace{i} = icell_intensity;
-            bgTrace{i} = bg_intensity;
-            times{i} = time;
-            clear icell_intensity bg_intensity time
-        else
-            cellTrace{i} = intensity;
-            bgTrace{i} = bgintensity;
-            times{i} = time;
-            clear intensity bgintensity time
-        end
+        cellTrace{i} = intensity;
+        bgTrace{i} = bgintensity;
+        adjTrace{i} = adjintensity;
+        times{i} = time;
+        clear intensity adjintensity bgintensity time
 
     end
 
 end
 
-function [slicedData] = dataSlice(data, cutoff)
-
-    cutoff = 9; %point in the movie at which to start the analyze
-    dataSlice = @(x, i)x(:, i:end)-x(:, i);
+function [slicedData] = dataSlice(data, cutoff, mode)
     
     slicedData = cell(size(data));
     
-    for i=1:height(data)
-        slicedData{i} = dataSlice(data{i}, cutoff);
+    if mode==1
+        dataSlice = @(x, i)x(:, i:end)-x(:, i);
+        slicedData = cell(size(data));
+    
+        for i=1:height(data)
+            slicedData{i} = dataSlice(data{i}, cutoff);
+        end
+    else
+        for i=1:height(data)
+            slicedData{i} = data{i}(:, cutoff:end);
+        end
     end
     
 end
 
-function [normTrace] = dataNormalize(cellTrace, bgTrace)
+function [normTrace] = dataNormalize(adjTrace)
     
     %pre-allocate variables
-    adjTrace = cell(size(cellTrace));
-    normTrace = cell(size(cellTrace));
+    normTrace = cell(size(adjTrace));
     
     %define function
-    bgMinus = @(f, f1)f-f1;
     normInitial = @(f)f./f(:, 1);
     
-    for i=1:height(cellTrace)
-        %subtract the background
-        adjTrace{i} = bgMinus(cellTrace{i}, bgTrace{i});
-    
+    for i=1:height(adjTrace)  
         %normalize to the initial value
         normTrace{i} = normInitial(adjTrace{i});    
     end
     
 end
 
-function [alpha, alpha_yhat] = alphaCalc(times, cellTrace, bgTrace, alpha0)
+function [alpha, alpha_yhat] = alphaCalc(times, adjTrace, alpha0)
     
     %pre-allocate variables
-    alpha = cell(height(cellTrace), 1);
-    alpha_yhat = cell(height(cellTrace), 1);
+    alpha = cell(height(adjTrace), 1);
+    alpha_yhat = cell(height(adjTrace), 1);
     
     %normalize traces
-    normTrace = dataNormalize(cellTrace, bgTrace);
+    normTrace = dataNormalize(adjTrace);
     
     for h=1:height(normTrace)
         
@@ -173,15 +171,15 @@ function [alpha, alpha_yhat] = alphaCalc(times, cellTrace, bgTrace, alpha0)
     
 end
 
-function [rho, rho_yhat, frames] = rhoCalc(times, cellTrace, bgTrace, rho0)
+function [rho, rho_yhat, frames] = rhoCalc(times, adjTrace, rho0)
 
     %pre-allocate variables
-    rho = cell(height(cellTrace), 1);
-    rho_yhat = cell(height(cellTrace), 1);
-    frames = cell(height(cellTrace), 1);
+    rho = cell(height(adjTrace), 1);
+    rho_yhat = cell(height(adjTrace), 1);
+    frames = cell(height(adjTrace), 1);
     
     %normalize traces
-    normTrace = dataNormalize(cellTrace, bgTrace);
+    normTrace = dataNormalize(adjTrace);
     
     for h=1:height(normTrace)
         
