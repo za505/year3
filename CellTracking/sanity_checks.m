@@ -10,11 +10,11 @@ okabeIto = {[230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 11
 okabeIto = cellfun(@(x)(x./255), okabeIto, 'UniformOutput', false);
 okabeIto = [okabeIto, okabeIto];
 
-%% for the 20% intensity controls
+%% for the 100% intensity controls, GFP + CY5
 dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/';
-basenames = {'02192022_Exp2', '02192022_Exp3', '02192022_Exp4', '02212022_Exp2', '02212022_Exp1'};
-labels = {'Frame Rate = 1 s', 'Frame Rate = 2 s', 'Frame Rate = 3 s', 'Frame Rate = 1 min', 'Frame Rate = 20 min'};
+basenames = {'10302021_Exp2', '10302021_Exp1', '10232021_Exp1', '10262021_Exp1', '10282021_Exp1'};
+labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 5 min'};
 
 cellTrace = cell(length(basenames), 1);
 bgTrace = cell(length(basenames), 1);
@@ -54,5 +54,5 @@ for i=1:length(basenames)
 end
 
 cd(dirsave)
-saveas(gcf, 'figure01.png')
-saveas(gcf, 'figure01.fig')
+saveas(gcf, 'figure03.png')
+saveas(gcf, 'figure03.fig')
