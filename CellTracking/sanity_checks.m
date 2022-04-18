@@ -28,7 +28,103 @@ control3_labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min
 [control2_cellTrace, control2_bgTrace, control2_adjTrace, control2_times, control2_lcell, control2_frameRate] = loadData(dirpath, control2_basenames);
 [control3_cellTrace, control3_bgTrace, control3_adjTrace, control3_times, control3_lcell, control3_frameRate] = loadData(dirpath, control3_basenames);
 
-%% compare the 1-minute frame rate traces
+%% What is the final background fluor. value vs time
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_bgTrace)
+    x = control2_times{i}(end);
+    y = control2_bgTrace{i}(:, end);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'o', 'MarkerFaceColor', okabeIto{i}, 'Color', okabeIto{i})
+end
+for i=1:height(control3_bgTrace)
+    x = control3_times{i}(end);
+    y = control3_bgTrace{i}(:, end);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, '^', 'MarkerFaceColor', okabeIto{i}, 'Color', okabeIto{i})
+end
+legend([control2_labels, control3_labels])
+%% focus on the 1-minute frame rate traces
+control_normTrace = cell(4, 3);
+
+phase1 = 5; %end of initial perfusion
+omit = 6:10; %detergent perfusion
+phase3 = 11; %final perfusion
+
+control_cellTrace = [control2_cellTrace(3:4); control3_cellTrace(3:4)];
+control_bgTrace = [control2_bgTrace(3:4); control3_bgTrace(3:4)];
+control_adjTrace = [control2_adjTrace(3:4); control3_adjTrace(3:4)];
+control_times = [control2_times(3:4); control3_times(3:4)];
+control_frameRate = [control2_frameRate(3:4); control3_frameRate(3:4)];
+control_labels = [control2_labels(3:4), control3_labels(3:4)];
+
+for i=1:height(control_adjTrace)
+    [~, ncol] = size(control_times{i});
+    idx = setdiff(phase1:ncol, omit);   
+    x = control_times{i}(idx);
+    control_normTrace{i, 1} = x - x(1);  
+    y = control_adjTrace{i}(:, idx) - control_adjTrace{i}(:, end);
+    control_normTrace{i, 2} = y./y(:, 1);   
+    control_normTrace{i, 3} = control_frameRate{i}(idx);
+end
+
+%% plot the normalized traces
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control_normTrace)
+    x = control_normTrace{i, 1};
+    y = control_normTrace{i, 2};
+    ybar = mean(control_normTrace{i, 2}, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+end
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence (A.U.)')
+legend(control_labels)
+
+%% calculate rho and alpha
+alpha0 = 1;
+rho0 = 0;
+
+[alpha, alpha_yhat] = alphaCalc(control_normTrace(:, 1), control_normTrace(:, 2), alpha0);
+[rho, rho_yhat, frames] = rhoCalc(control_normTrace(:, 1), control_normTrace(:, 3), control_normTrace(:, 2), rho0);
+
+%% plot rho and alpha
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(alpha)
+    subplot(2, 2, i)
+    x = control_normTrace{i, 1};
+    y1 = control_normTrace{i, 2};
+    y2 = alpha_yhat{i};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar2 = mean(y2, 1, 'omitnan');
+    err1 = std(y1, 0, 1, 'omitnan');
+    err2 = std(y2, 0, 1, 'omitnan');
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, 'LineStyle', '--', 'Color', 'black')
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence (A.U.)')
+    title(control_labels{i})
+end
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(rho)
+    subplot(2, 2, i)
+    x = frames{i};
+    y1 = control_normTrace{i, 2};
+    y2 = rho_yhat{i};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar2 = mean(y2, 1, 'omitnan');
+    err1 = std(y1, 0, 1, 'omitnan');
+    err2 = std(y2, 0, 1, 'omitnan');
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, 'LineStyle', '--', 'Color', 'black')
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence (A.U.)')
+    title(control_labels{i})
+end
+
+%%
 %compare the background fluorescence
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=3:4
@@ -392,19 +488,16 @@ function [normTrace] = dataNormalize(adjTrace)
     
 end
 
-function [alpha, alpha_yhat] = alphaCalc(times, adjTrace, alpha0)
+function [alpha, alpha_yhat] = alphaCalc(times, normTrace, alpha0)
     
     %pre-allocate variables
-    alpha = cell(height(adjTrace), 1);
-    alpha_yhat = cell(height(adjTrace), 1);
+    alpha = cell(height(normTrace), 1);
+    alpha_yhat = cell(height(normTrace), 1);
     
-    %normalize traces
-    normTrace = dataNormalize(adjTrace);
-    
-    for h=1:height(normTrace)
+    for i=1:height(normTrace)
         
-        normintensity = normTrace{h};
-        tme = times{h};
+        normintensity = normTrace{i};
+        tme = times{i};
         
         %convert negative values to NaN
         normintensity(normintensity<0) = NaN;
@@ -423,37 +516,34 @@ function [alpha, alpha_yhat] = alphaCalc(times, adjTrace, alpha0)
         modelfun = @(alpha, t)exp(-t./alpha);
     
         %fit data to the function and evaluate
-        for i=1:nrow
-            alphaTemp(i, 1)=nlinfit(tme, normintensity(i,:), modelfun, alpha0);
-            yhatTemp(i, :)=modelfun(alphaTemp(i), tme);
+        for j=1:nrow
+            alphaTemp(j, 1)=nlinfit(tme, normintensity(j,:), modelfun, alpha0);
+            yhatTemp(j, :)=modelfun(alphaTemp(j), tme);
         end
         
-        alpha{h} = alphaTemp;
-        alpha_yhat{h} = yhatTemp;
+        alpha{i} = alphaTemp;
+        alpha_yhat{i} = yhatTemp;
         
     end    
     
 end
 
-function [rho, rho_yhat, frames] = rhoCalc(times, adjTrace, rho0)
-
+function [rho, rho_yhat, frames] = rhoCalc(times, frameRates, normTrace, rho0)
+    
     %pre-allocate variables
-    rho = cell(height(adjTrace), 1);
-    rho_yhat = cell(height(adjTrace), 1);
-    frames = cell(height(adjTrace), 1);
+    rho = cell(height(normTrace), 1);
+    rho_yhat = cell(height(normTrace), 1);
+    frames = cell(height(normTrace), 1);
     
-    %normalize traces
-    normTrace = dataNormalize(adjTrace);
-    
-    for h=1:height(normTrace)
+    for i=1:height(normTrace)
         
-        normintensity = normTrace{h};
-        tme = times{h};
+        normintensity = normTrace{i};
+        tme = times{i};
+        frameRate = frameRates{i};
         
         %calculate frame number
-        dt = diff(tme, 1);
-        frame = [0, tme(2:end)./dt];
-    
+        frame = [0, tme(2:end)./frameRate(2:end)];
+        
         %convert negative values to NaN
         normintensity(normintensity<0) = NaN;
     
@@ -469,16 +559,16 @@ function [rho, rho_yhat, frames] = rhoCalc(times, adjTrace, rho0)
     
         %define exponential function
         modelfun = @(rho, x)exp(-x*rho);
-    
+        
         %fit data to the function and evaluate
-        for i=1:nrow
-            rhoTemp(i, 1)=nlinfit(frame, normintensity(i,:), modelfun, rho0);
-            yhatTemp(i, :)=modelfun(rhoTemp(i), frame);
+        for j=1:nrow
+            rhoTemp(j, 1)=nlinfit(frame, normintensity(j,:), modelfun, rho0);
+            yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frame);
         end
-        
-        rho{h} = rhoTemp;
-        rho_yhat{h} = yhatTemp;
-        frames = frame;
-        
-    end    
+            
+        rho{i} = rhoTemp;
+        rho_yhat{i} = yhatTemp;
+        frames{i} = frame;        
+    end  
+    
 end
