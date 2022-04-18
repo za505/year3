@@ -25,25 +25,126 @@ control2_labels = {'Frame Rate = 10 s', 'Frame Rate = 20 s', 'Frame Rate = 1 min
 control3_basenames = {'10302021_Exp2', '10302021_Exp1', '10232021_Exp1', '10262021_Exp1', '10282021_Exp1'};
 control3_labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 5 min'};
 
-[control2_cellTrace, control2_bgTrace, control2_adjTrace, control2_times] = loadData(dirpath, control2_basenames);
-[control3_cellTrace, control3_bgTrace, control3_adjTrace, control3_times] = loadData(dirpath, control3_basenames);
+[control2_cellTrace, control2_bgTrace, control2_adjTrace, control2_times, control2_lcell, control2_frameRate] = loadData(dirpath, control2_basenames);
+[control3_cellTrace, control3_bgTrace, control3_adjTrace, control3_times, control3_lcell, control3_frameRate] = loadData(dirpath, control3_basenames);
 
+%% plot background fluorescence over time
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(control2_basenames)
+    x = control2_times{i};
+    y = mean(control2_bgTrace{i}, 1, 'omitnan');
+    err = std(control2_bgTrace{i}, 0, 1, 'omitnan');
+    errorbar(x, y, err, 'Color', okabeIto{i})
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+end
+ylim([0 Inf])
+legend(control2_labels)
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(control3_basenames)
+    x = control3_times{i};
+    y = mean(control3_bgTrace{i}, 1, 'omitnan');
+    err = std(control3_bgTrace{i}, 0, 1, 'omitnan');
+    errorbar(x, y, err, 'Color', okabeIto{i})
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+end
+ylim([0 Inf])
+legend(control3_labels)
+%% plot length over time
+% control2_lcell_mean = cellfun(@(x)mean(x, 1, 'omitnan'), control2_lcell, 'UniformOutput', false);
+% control2_lcell_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), control2_lcell, 'UniformOutput', false);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(control2_basenames)
+    subplot(3, 3, i)
+    x = control2_times{i};
+    y = mean(control2_lcell{i}, 1, 'omitnan');
+    err = std(control2_lcell{i}, 0, 1, 'omitnan');
+    errorbar(x, y, err, '-', 'Color', okabeIto{i})
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+    ylim([0 Inf])
+    title(control2_labels{i})
+end
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(control2_basenames)
+    subplot(3, 3, i)
+    x = control2_times{i};
+    dy = diff(control2_lcell{i}, 1, 2);
+    y_dot = dy./control2_lcell{i}(:, 2:end);
+    y = [0 mean(y_dot, 1, 'omitnan')];
+    err = [0 std(y_dot, 0, 1, 'omitnan')];
+    errorbar(x, y, err, '-', 'Color', okabeIto{i})
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+    %ylim([0 Inf])
+    title(control2_labels{i})
+end
+
+%%
 %since these controls are all taken in one continuous movie, the first 8-10
 %minutes can be ignored when subtracting the background value and
 %normalizing. How necessary is it to normlize to the pre-lysis vs
 %post-lysis value? How much of a difference does it make (mathematically)?
-cutoff = 9; %point in the movie at which to start the analyze
+cutoff = 4; %point in the movie at which to start the analyze
+omit = [5:7];
 
-control2_sliceTime = dataSlice(control2_times, cutoff, 1);
-control2_sliceIntensity = dataSlice(control2_cellTrace, cutoff, 0);
-control2_sliceBackground = dataSlice(control2_bgTrace, cutoff, 0);
-control2_sliceAdjintensity = dataSlice(control2_adjTrace, cutoff, 0);
+control2_sliceTime = dataSlice(control2_times, cutoff);
+control2_sliceIntensity = dataSlice(control2_cellTrace, cutoff, omit);
+control2_sliceBackground = dataSlice(control2_bgTrace, cutoff, omit);
+control2_sliceAdjintensity = dataSlice(control2_adjTrace, cutoff, omit);
 
-control3_sliceTime = dataSlice(control3_times, cutoff, 1);
-control3_sliceIntensity = dataSlice(control3_cellTrace, cutoff, 0);
-control3_sliceBackground = dataSlice(control3_bgTrace, cutoff, 0);
-control3_sliceAdjintensity = dataSlice(control3_adjTrace, cutoff, 0);
+control3_sliceTime = dataSlice(control3_times, cutoff);
+control3_sliceIntensity = dataSlice(control3_cellTrace, cutoff, omit);
+control3_sliceBackground = dataSlice(control3_bgTrace, cutoff, omit);
+control3_sliceAdjintensity = dataSlice(control3_adjTrace, cutoff, omit);
 
+%% plot the 'sliced' traces
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(control2_basenames)
+    subplot(3, 3, i)
+    x = control2_sliceTime{i};
+    y = control2_sliceAdjintensity{i};
+    plot(x, y, 'Color', okabeIto{i})
+%     [idx, ~] = size(control2_sliceAdjintensity{i});
+%     for j=1:idx
+%         scatter(x, y(j, :), 15, okabeIto{i}), hold on
+%     end
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    ylim([0 Inf])
+    title(control2_labels{i})
+end
+
+cd(dirsave)
+saveas(gcf, 'figure06.png')
+saveas(gcf, 'figure06.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(control3_basenames)
+    subplot(1, 5, i)
+    x = control3_sliceTime{i};
+    y = control3_sliceAdjintensity{i};
+    plot(x, y, 'Color', okabeIto{i})
+%     [idx, ~] = size(control3_sliceAdjintensity{i});
+%     for j=1:idx
+%         scatter(x, y(j, :), 15, okabeIto{i}), hold on
+%     end
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    ylim([0 Inf])
+    title(control3_labels{i})
+end
+
+cd(dirsave)
+saveas(gcf, 'figure07.png')
+saveas(gcf, 'figure07.fig')
+
+
+%% determine alpha and rho
 alpha0=1;
 rho0=1;
 
@@ -57,8 +158,7 @@ rho0=1;
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:length(control2_basenames)
     subplot(3, 3, i)
-    plot(control2_times{i}, control2_cellTrace{i}, 'Color', okabeIto{i}), hold on
-    plot(control2_times{i}, control2_bgTrace{i}, 'LineStyle', '--', 'Color', okabeIto{i})
+    plot(control2_times{i}, control2_adjTrace{i}, 'Color', okabeIto{i}), hold on
     xlabel('Time (minutes)')
     ylabel('Fluorescence (A.U.)')
     ylim([0 Inf])
@@ -66,48 +166,78 @@ for i=1:length(control2_basenames)
 end
 
 cd(dirsave)
-saveas(gcf, 'figure02.png')
-saveas(gcf, 'figure02.fig')
+saveas(gcf, 'figure04.png')
+saveas(gcf, 'figure04.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(control3_basenames)
+    subplot(1, 5, i)
+    plot(control3_times{i}, control3_adjTrace{i}, 'Color', okabeIto{i}), hold on
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    ylim([0 Inf])
+    title(control3_labels{i})
+end
+
+cd(dirsave)
+saveas(gcf, 'figure05.png')
+saveas(gcf, 'figure05.fig')
 
 %% Functions
-function [cellTrace, bgTrace, adjTrace, times] = loadData(dirpath, basenames)
+function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames)
 
     cellTrace = cell(length(basenames), 1);
     bgTrace = cell(length(basenames), 1);
     adjTrace = cell(length(basenames), 1);
     times = cell(length(basenames), 1);
+    lCell = cell(length(basenames), 1);
+    frameRate = cell(length(basenames), 1);
 
     for i=1:length(basenames)
 
         cd(dirpath);
         basename = basenames{i};
         datadir=dir([basename '*']);
-        load(datadir(1).name, '-regexp', 'intensity$', 'time');
+        load(datadir(1).name, '-regexp', 'intensity$', 'time', 'lcell');
 
         cellTrace{i} = intensity;
         bgTrace{i} = bgintensity;
         adjTrace{i} = adjintensity;
         times{i} = time;
+        lCell{i} = lcell;
+        frameRate{i} = [0, diff(time, 1, 2)];
         clear intensity adjintensity bgintensity time
 
     end
 
 end
 
-function [slicedData] = dataSlice(data, cutoff, mode)
+function [slicedData] = dataSlice(data, cutoff, omit)
     
     slicedData = cell(size(data));
     
-    if mode==1
-        dataSlice = @(x, i)x(:, i:end)-x(:, i);
-        slicedData = cell(size(data));
-    
+    if nargin < 3
         for i=1:height(data)
-            slicedData{i} = dataSlice(data{i}, cutoff);
-        end
+            dataTemp = data{i};
+            slicedData{i} = dataTemp(:, cutoff:end)-dataTemp(:, cutoff);
+        end       
     else
-        for i=1:height(data)
-            slicedData{i} = data{i}(:, cutoff:end);
+        if isempty(omit)==0
+            for i=1:height(data)
+                dataTemp = data{i};
+                [nrow, ncol] = size(dataTemp);
+                x = setdiff(1:ncol, omit);
+                for j=1:nrow
+                    v = dataTemp(j, x);
+                    vq = interp1(x, v, omit);
+                    dataTemp(j, omit) = vq;
+                end
+                slicedData{i} = dataTemp(:, cutoff:end);
+            end
+        else
+            for i=1:height(data)
+                slicedData{i} = data{i}(:, cutoff:end);
+            end
         end
     end
     
