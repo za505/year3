@@ -28,30 +28,164 @@ control3_labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min
 [control2_cellTrace, control2_bgTrace, control2_adjTrace, control2_times, control2_lcell, control2_frameRate] = loadData(dirpath, control2_basenames);
 [control3_cellTrace, control3_bgTrace, control3_adjTrace, control3_times, control3_lcell, control3_frameRate] = loadData(dirpath, control3_basenames);
 
-%% plot background fluorescence over time
+%% compare the 1-minute frame rate traces
+%compare the background fluorescence
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:length(control2_basenames)
+for i=3:4
     x = control2_times{i};
     y = mean(control2_bgTrace{i}, 1, 'omitnan');
     err = std(control2_bgTrace{i}, 0, 1, 'omitnan');
-    errorbar(x, y, err, 'Color', okabeIto{i})
+    errorbar(x, y, err, 'Color', okabeIto{i+1})
     xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
+    ylabel('Background Fluorescence (A.U.)')
 end
-ylim([0 Inf])
-legend(control2_labels)
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:length(control3_basenames)
+for i=3:4
     x = control3_times{i};
     y = mean(control3_bgTrace{i}, 1, 'omitnan');
     err = std(control3_bgTrace{i}, 0, 1, 'omitnan');
-    errorbar(x, y, err, 'Color', okabeIto{i})
+    errorbar(x, y, err, 'Color', okabeIto{i+3})
+    xlabel('Time (minutes)')
+    ylabel('Background Fluorescence (A.U.)')
+end
+ylim([0 Inf])
+legend([control2_labels(3:4), control3_labels(3:4)])
+
+%compare the cellular traces
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=3:4
+    x = control2_times{i};
+    y = mean(control2_cellTrace{i}, 1, 'omitnan');
+    err = std(control2_cellTrace{i}, 0, 1, 'omitnan');
+    errorbar(x, y, err, 'Color', okabeIto{i+1})
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+end
+
+for i=3:4
+    x = control3_times{i};
+    y = mean(control3_cellTrace{i}, 1, 'omitnan');
+    err = std(control3_cellTrace{i}, 0, 1, 'omitnan');
+    errorbar(x, y, err, 'Color', okabeIto{i+3})
     xlabel('Time (minutes)')
     ylabel('Fluorescence (A.U.)')
 end
 ylim([0 Inf])
-legend(control3_labels)
+legend([control2_labels(3:4), control3_labels(3:4)])
+
+%compare cellular traces minus background
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=3:4
+    x = control2_times{i};
+    y = mean(control2_adjTrace{i}, 1, 'omitnan');
+    err = std(control2_adjTrace{i}, 0, 1, 'omitnan');
+    errorbar(x, y, err, 'Color', okabeIto{i+1})
+    xlabel('Time (minutes)')
+    ylabel('Cellular Fluorescence - Background (A.U.)')
+end
+
+for i=3:4
+    x = control3_times{i};
+    y = mean(control3_adjTrace{i}, 1, 'omitnan');
+    err = std(control3_adjTrace{i}, 0, 1, 'omitnan');
+    errorbar(x, y, err, 'Color', okabeIto{i+3})
+    xlabel('Time (minutes)')
+    ylabel('Cellular Fluorescence - Background (A.U.)')
+end
+ylim([0 Inf])
+legend([control2_labels(3:4), control3_labels(3:4)])
+
+%% subtract the final fluor. value and plot phase 1 vs time and phase 3 vs time
+phase1 = 5; %end of initial perfusion
+omit = 6:10; %detergent perfusion
+phase3 = 11; %final perfusion
+
+%Phase 1: compare cellular traces minus background minus final fluor. value
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=3:4
+    x = control2_times{i}(1:phase1);
+    y = control2_adjTrace{i}(:, 1:phase1) - control2_adjTrace{i}(:, end);
+    y = y./y(:, 1);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i+1})
+end
+
+for i=3:4    
+    x = control3_times{i}(1:phase1);
+    y = control3_adjTrace{i}(:, 1:phase1) - control3_adjTrace{i}(:, end);
+    y = y./y(:, 1);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i+3})
+end
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+ylim([0 Inf])
+legend([control2_labels(3:4), control3_labels(3:4)])
+
+%Phase 3: compare cellular traces minus background minus final fluor. value
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=3:4
+    [~, ncol] = size(control2_times{i});
+    idx = setdiff(phase1:ncol, omit);   
+    x = control2_times{i}(idx);
+    y = control2_adjTrace{i}(:, idx) - control2_adjTrace{i}(:, end);
+    y = y./y(:, 1);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i+1})
+end
+
+for i=3:4    
+    [~, ncol] = size(control3_times{i});
+    idx = setdiff(phase1:ncol, omit);   
+    x = control3_times{i}(idx);
+    y = control3_adjTrace{i}(:, idx) - control3_adjTrace{i}(:, end);
+    y = y./y(:, 1);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i+3})
+end
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+ylim([0 Inf])
+legend([control2_labels(3:4), control3_labels(3:4)])
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=3:4  
+    x = control2_times{i}(phase3:end);
+    y = control2_adjTrace{i}(:, phase3:end) - control2_adjTrace{i}(:, end);
+    y = y./y(:, 1);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i+1})
+end
+
+for i=3:4    
+    x = control3_times{i}(phase3:end);
+    y = control3_adjTrace{i}(:, phase3:end) - control3_adjTrace{i}(:, end);
+    y = y./y(:, 1);
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i+3})
+end
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+ylim([0 Inf])
+legend([control2_labels(3:4), control3_labels(3:4)])
+
+% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+% for i=1:length(control3_basenames)
+%     x = control3_times{i};
+%     y = mean(control3_bgTrace{i}, 1, 'omitnan');
+%     err = std(control3_bgTrace{i}, 0, 1, 'omitnan');
+%     errorbar(x, y, err, 'Color', okabeIto{i})
+%     xlabel('Time (minutes)')
+%     ylabel('Fluorescence (A.U.)')
+% end
+% ylim([0 Inf])
+% legend(control3_labels)
 %% plot length over time
 % control2_lcell_mean = cellfun(@(x)mean(x, 1, 'omitnan'), control2_lcell, 'UniformOutput', false);
 % control2_lcell_std = cellfun(@(x)std(x, 0, 1, 'omitnan'), control2_lcell, 'UniformOutput', false);
