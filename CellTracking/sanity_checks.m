@@ -1,6 +1,6 @@
 %sanity_checks.m
 %Author: Zarina Akbary
-%Date: 04/15/2022
+%Date: 04/18/2022
 %Purpose: this is basically a sandbox for me to look through my data and
 %keep track of how I do it. 
 
@@ -10,41 +10,92 @@ okabeIto = {[230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 11
 okabeIto = cellfun(@(x)(x./255), okabeIto, 'UniformOutput', false);
 okabeIto = [okabeIto, okabeIto];
 
-%control1 = GFP alone, perfusion with LB + IPTG
-%control2= GFP alone, perfusion with LB
-%control3 = GFP + CY5, perfusion with LB + IPTG
-%control4 = GFP + CY5, perfusion with LB
-
 %% load data
 dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/';
 
-control2_basenames = {'04052022_Exp2', '04052022_Exp1', '04042022_Exp1', '04112022_Exp1', '04052022_Exp3', '02122022_Exp1', '02122022_Exp2', '02092022_Exp1', '01282022_Exp1'};
-control2_labels = {'Frame Rate = 10 s', 'Frame Rate = 20 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 2 min', 'Frame Rate = 5 min', 'Frame Rate = 10 min', 'Frame Rate = 20 min', 'Frame Rate = 20 min'};
+basenames = {'04042022_Exp1', '04112022_Exp1', '04112022_Exp3', '04132022_Exp1', '04132022_Exp2', '04142022_Exp2'};
+labels = {'untreated', 'untreated', 'glycerol (5 minutes)', 'PBS (5 minutes)', 'spent LB (5 minutes)', 'glucose (5 minutes)'};
 
-control3_basenames = {'10302021_Exp2', '10302021_Exp1', '10232021_Exp1', '10262021_Exp1', '10282021_Exp1'};
-control3_labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 5 min'};
+prelysis = {6; 6; 11; 10; 11; 11};
+omit = {[7:8]; [7:8]; [12:13]; [11:13]; [12:13]; [12:13]};
 
-[control2_cellTrace, control2_bgTrace, control2_adjTrace, control2_times, control2_lcell, control2_frameRate] = loadData(dirpath, control2_basenames);
-[control3_cellTrace, control3_bgTrace, control3_adjTrace, control3_times, control3_lcell, control3_frameRate] = loadData(dirpath, control3_basenames);
+[cellTrace, bgTrace, adjTrace, times, lcell, frameRate] = loadData(dirpath, basenames);
 
-%% What is the final background fluor. value vs time
+%normalize the traces
+[normTrace] = dataNormalize(times, adjTrace, prelysis, omit);
+
+%% plot fluor. trace over time
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:height(control2_bgTrace)
-    x = control2_times{i}(end);
-    y = control2_bgTrace{i}(:, end);
+for i=1:height(cellTrace)
+    subplot(2, 3, i)
+    x = times{i};
+    y = cellTrace{i};
     ybar = mean(y, 1, 'omitnan');
     err = std(y, 0, 1, 'omitnan');
-    errorbar(x, ybar, err, 'o', 'MarkerFaceColor', okabeIto{i}, 'Color', okabeIto{i})
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    title(labels{i})
 end
-for i=1:height(control3_bgTrace)
-    x = control3_times{i}(end);
-    y = control3_bgTrace{i}(:, end);
+
+%% plot the normalized traces
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(cellTrace)
+    subplot(2, 3, i)
+    x = times{i};
+    y = cellTrace{i};
     ybar = mean(y, 1, 'omitnan');
     err = std(y, 0, 1, 'omitnan');
-    errorbar(x, ybar, err, '^', 'MarkerFaceColor', okabeIto{i}, 'Color', okabeIto{i})
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    title(labels{i})
 end
-legend([control2_labels, control3_labels])
+%% plot the effective elongation rates over time
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(normTrace)
+    x = normTrace{i, 1};
+    y = normTrace{i, 2};
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+end
+legend(labels)
+%% plot the elongation rates for the first five minutes of perfusion
+phase1 = 4;
+phase2 = 9;
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(lcell)
+%     x = times{i}(phase1);
+    y = lcell{i}(:, phase1:phase1+1);
+    dy = diff(y, 1, 2);
+    ydot = dy ./ lcell{i}(:, phase1);
+    
+    h = histogram(ydot, 'Normalization', 'probability', 'FaceColor', okabeIto{i}, 'NumBins', height(ydot), 'BinWidth', 0.0015, 'EdgeColor', okabeIto{i})
+    
+%     ybar = [0, mean(ydot, 1, 'omitnan')];
+%     err = [0, std(ydot, 0, 1, 'omitnan')];
+%     errorbar(x, ybar, err, 'Color', okabeIto{i})
+end
+legend(labels)
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(lcell)
+    if ismember(i, [1:2])
+        y = lcell{i}(:, phase1:phase1+1);
+        dy = diff(y, 1, 2);
+        ydot = dy ./ lcell{i}(:, phase1);
+    else
+        y = lcell{i}(:, phase2:phase2+1);
+        dy = diff(y, 1, 2);
+        ydot = dy ./ lcell{i}(:, phase2);        
+    end
+    
+    h = histogram(ydot, 'Normalization', 'probability', 'FaceColor', okabeIto{i}, 'NumBins', height(ydot), 'BinWidth', 0.0015, 'EdgeColor', okabeIto{i})
+    
+%     ybar = [0, mean(ydot, 1, 'omitnan')];
+%     err = [0, std(ydot, 0, 1, 'omitnan')];
+%     errorbar(x, ybar, err, 'Color', okabeIto{i})
+end
+legend(labels)
 %% focus on the 1-minute frame rate traces
 control_normTrace = cell(4, 3);
 
@@ -473,17 +524,25 @@ function [slicedData] = dataSlice(data, cutoff, omit)
     
 end
 
-function [normTrace] = dataNormalize(adjTrace)
+function [normTrace] = dataNormalize(times, adjTrace, prelyse, omits)
     
     %pre-allocate variables
-    normTrace = cell(size(adjTrace));
-    
-    %define function
-    normInitial = @(f)f./f(:, 1);
+    [nrow, ~] = size(adjTrace);
+    normTrace = cell(nrow, 2);
     
     for i=1:height(adjTrace)  
-        %normalize to the initial value
-        normTrace{i} = normInitial(adjTrace{i});    
+        
+        prelysis = prelyse{i};
+        omit = omits{i};
+        
+        tme = times{i};
+        normTrace{i,1} = tme(prelysis:end) - tme(prelysis);
+        
+        adjintensity = adjTrace{i};
+        adjintensity(:, omit) = NaN;
+        adjintensity = adjintensity - adjintensity(:, end);
+        normTrace{i, 2} = adjintensity(:, prelysis:end) ./ adjintensity(:, prelysis);
+        
     end
     
 end
