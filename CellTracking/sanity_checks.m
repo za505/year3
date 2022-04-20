@@ -1,6 +1,6 @@
 %sanity_checks.m
 %Author: Zarina Akbary
-%Date: 04/18/2022
+%Date: 04/19/2022
 %Purpose: this is basically a sandbox for me to look through my data and
 %keep track of how I do it. 
 
@@ -14,16 +14,652 @@ okabeIto = [okabeIto, okabeIto];
 dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/';
 
-basenames = {'04042022_Exp1', '04112022_Exp1', '04112022_Exp3', '04132022_Exp1', '04132022_Exp2', '04142022_Exp2'};
-labels = {'untreated', 'untreated', 'glycerol (5 minutes)', 'PBS (5 minutes)', 'spent LB (5 minutes)', 'glucose (5 minutes)'};
+exp_basenames = {'04042022_Exp1', '04112022_Exp1', '04112022_Exp3', '04132022_Exp1', '04132022_Exp2', '04142022_Exp2'};
+exp_labels = {'untreated', 'untreated', 'glycerol (5 minutes)', 'PBS (5 minutes)', 'spent LB (5 minutes)', 'glucose (5 minutes)'};
 
-prelysis = {6; 6; 11; 10; 11; 11};
-omit = {[7:8]; [7:8]; [12:13]; [11:13]; [12:13]; [12:13]};
+control2_basenames = {'04052022_Exp2', '04052022_Exp1', '04042022_Exp1', '04112022_Exp1', '04052022_Exp3', '02122022_Exp1', '02122022_Exp2', '02092022_Exp1', '01282022_Exp1'};
+control2_labels = {'Frame Rate = 10 s', 'Frame Rate = 20 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 2 min', 'Frame Rate = 5 min', 'Frame Rate = 10 min', 'Frame Rate = 20 min', 'Frame Rate = 20 min'};
 
-[cellTrace, bgTrace, adjTrace, times, lcell, frameRate] = loadData(dirpath, basenames);
+control3_basenames = {'10302021_Exp2', '10302021_Exp1', '10232021_Exp1', '10262021_Exp1', '10282021_Exp1'};
+control3_labels = {'Frame Rate = 15 s', 'Frame Rate = 30 s', 'Frame Rate = 1 min', 'Frame Rate = 1 min', 'Frame Rate = 5 min'};
 
-%normalize the traces
-[normTrace] = dataNormalize(times, adjTrace, prelysis, omit);
+[exp_cellTrace, exp_bgTrace, exp_adjTrace, exp_times, exp_lcell, exp_frameRate] = loadData(dirpath, exp_basenames);
+[control2_cellTrace, control2_bgTrace, control2_adjTrace, control2_times, control2_lcell, control2_frameRate] = loadData(dirpath, control2_basenames);
+[control3_cellTrace, control3_bgTrace, control3_adjTrace, control3_times, control3_lcell, control3_frameRate] = loadData(dirpath, control3_basenames);
+
+%% normalize traces
+[exp_normTrace] = dataNormalize(exp_times, exp_adjTrace, exp_lysis);
+[control2_normTrace] = dataNormalize(control2_times, control2_adjTrace, control2_lysis);
+[control3_normTrace] = dataNormalize(control3_times, control3_adjTrace, control3_lysis);
+
+%% calculate alpha and rho
+alpha0 = 1;
+rho0 = 0;
+
+[exp_alpha, exp_alpha_yhat] = alphaCalc(exp_normTrace(:, 1), exp_normTrace(:, 2), alpha0);
+[control2_alpha, control2_alpha_yhat] = alphaCalc(control2_normTrace(:, 1), control2_normTrace(:, 2), alpha0);
+[control3_alpha, control3_alpha_yhat] = alphaCalc(control3_normTrace(:, 1), control3_normTrace(:, 2), alpha0);
+
+[exp_rho, exp_rho_yhat] = rhoCalc(exp_normTrace(:, 1), exp_normTrace(:, 2), rho0);
+[control2_rho, control2_rho_yhat] = rhoCalc(control2_normTrace(:, 1), control2_normTrace(:, 2), rho0);
+[control3_rho, control3_rho_yhat] = rhoCalc(control3_normTrace(:, 1), control3_normTrace(:, 2), rho0);
+
+%% fit rho and alpha to linear equations (without the 1 minute data)
+dx = [control2_frameRate{1}(end), control2_frameRate{2}(end)];
+x = [repelem(dx(1), length(control2_rho{1})), repelem(dx(2),length(control2_rho{2}))];
+
+y = [control2_rho{1}', control2_rho{2}'];
+control2_rhoCoef = polyfit(x, y, 1);
+control2_rhoFit = polyval(control2_rhoCoef,[0 dx]);
+
+y = [control2_alpha{1}', control2_alpha{2}'];
+control2_alphaCoef = polyfit(x, y, 1);
+control2_alphaFit = polyval(control2_alphaCoef,[0 dx]);
+
+dx = [control3_frameRate{1}(end), control3_frameRate{2}(end)];
+x = [repelem(dx(1), length(control3_rho{1})), repelem(dx(2),length(control3_rho{2}))];
+
+y = [control3_rho{1}', control3_rho{2}'];
+control3_rhoCoef = polyfit(x, y, 1);
+control3_rhoFit = polyval(control3_rhoCoef,[0 dx]);
+
+y = [control3_alpha{1}', control3_alpha{2}'];
+control3_alphaCoef = polyfit(x, y, 1);
+control3_alphaFit = polyval(control3_alphaCoef,[0 dx]);
+
+%% correct for photobleaching
+[exp_correctedTrace]=photoCorrect(exp_normTrace(:, 1), exp_normTrace(:, 2), control2_alphaCoef(1), control2_alphaCoef(2));
+[control2_correctedTrace]=photoCorrect(control2_normTrace(:, 1), control2_normTrace(:, 2), control2_alphaCoef(1), control2_alphaCoef(2));
+[control3_correctedTrace]=photoCorrect(control3_normTrace(:, 1), control3_normTrace(:, 2), control3_alphaCoef(1), control3_alphaCoef(2));
+
+%% plot the fit of alpha
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_normTrace)
+    subplot(2, 3, i)
+    x = exp_normTrace{i,1};
+    
+    y1 = exp_normTrace{i, 2};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar1 = movingaverage(ybar1, 3);
+    err1 = std(y1, 0, 1, 'omitnan');
+    
+    y2 = exp_alpha_yhat{i};
+    ybar2 = mean(y2, 1, 'omitnan');
+    ybar2 = movingaverage(ybar2, 3);
+    err2 = std(y2, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, '--k')
+    ylim([-Inf 1.1])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(exp_labels{i})
+end
+% saveas(gcf, 'figure06.png')
+% saveas(gcf, 'figure06.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_normTrace)
+    subplot(3, 3, i)
+    x = control2_normTrace{i,1};
+    
+    y1 = control2_normTrace{i, 2};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar1 = movingaverage(ybar1, 3);
+    err1 = std(y1, 0, 1, 'omitnan');
+    
+    y2 = control2_alpha_yhat{i};
+    ybar2 = mean(y2, 1, 'omitnan');
+    ybar2 = movingaverage(ybar2, 3);
+    err2 = std(y2, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, '--k')
+    ylim([-Inf 1.1])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(control2_labels{i})
+end
+% saveas(gcf, 'figure04.png')
+% saveas(gcf, 'figure04.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_normTrace)
+    
+    if i==5
+        subplot(2, 3, [i, i+1])
+    else
+        subplot(2, 3, i)
+    end
+    
+    x = control3_normTrace{i,1};
+    
+    y1 = control3_normTrace{i, 2};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar1 = movingaverage(ybar1, 3);
+    err1 = std(y1, 0, 1, 'omitnan');
+    
+    y2 = control3_alpha_yhat{i};
+    ybar2 = mean(y2, 1, 'omitnan');
+    ybar2 = movingaverage(ybar2, 3);
+    err2 = std(y2, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, '--k')
+    ylim([-Inf 1.1])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(control3_labels{i})
+end
+
+%% plot the fit of rho
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_normTrace)
+    subplot(2, 3, i)
+    [~, ncol] = size(exp_normTrace{i, 1});
+    x = 1:ncol;
+    
+    y1 = exp_normTrace{i, 2};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar1 = movingaverage(ybar1, 3);
+    err1 = std(y1, 0, 1, 'omitnan');
+    
+    y2 = exp_rho_yhat{i};
+    ybar2 = mean(y2, 1, 'omitnan');
+    ybar2 = movingaverage(ybar2, 3);
+    err2 = std(y2, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, '--k')
+    ylim([-Inf 1.1])
+    xlabel('Frame Number')
+    ylabel('Normalized Fluorescence')
+    title(exp_labels{i})
+end
+% saveas(gcf, 'figure06.png')
+% saveas(gcf, 'figure06.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_normTrace)
+    subplot(3, 3, i)
+    [~, ncol] = size(control2_normTrace{i, 1});
+    x = 1:ncol;
+    
+    y1 = control2_normTrace{i, 2};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar1 = movingaverage(ybar1, 3);
+    err1 = std(y1, 0, 1, 'omitnan');
+    
+    y2 = control2_rho_yhat{i};
+    ybar2 = mean(y2, 1, 'omitnan');
+    ybar2 = movingaverage(ybar2, 3);
+    err2 = std(y2, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, '--k')
+    ylim([-Inf 1.1])
+    xlabel('Frame Number')
+    ylabel('Normalized Fluorescence')
+    title(control2_labels{i})
+end
+% saveas(gcf, 'figure04.png')
+% saveas(gcf, 'figure04.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_normTrace)
+    
+    if i==5
+        subplot(2, 3, [i, i+1])
+    else
+        subplot(2, 3, i)
+    end
+    
+    [~, ncol] = size(control3_normTrace{i, 1});
+    x = 1:ncol;
+    
+    y1 = control3_normTrace{i, 2};
+    ybar1 = mean(y1, 1, 'omitnan');
+    ybar1 = movingaverage(ybar1, 3);
+    err1 = std(y1, 0, 1, 'omitnan');
+    
+    y2 = control3_rho_yhat{i};
+    ybar2 = mean(y2, 1, 'omitnan');
+    ybar2 = movingaverage(ybar2, 3);
+    err2 = std(y2, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar1, err1, 'Color', okabeIto{i}), hold on
+    errorbar(x, ybar2, err2, '--k')
+    ylim([-Inf 1.1])
+    xlabel('Frame Number')
+    ylabel('Normalized Fluorescence')
+    title(control3_labels{i})
+end
+
+%% plot alpha vs frame rate for controls 2 & 3
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_alpha)
+    
+    x = control2_frameRate{i}(end);
+    
+    y = control2_alpha{i};
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    
+    scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
+    scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+    errorbar(x, ybar, err, 'Color', 'black')
+    xlabel('Frame Rate')
+    ylabel('\alpha (min)')
+end
+legend(control2_labels)
+    
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_alpha)-1
+    
+    x = control3_frameRate{i}(end);
+    
+    y = control3_alpha{i};
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    
+    scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
+    scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+    errorbar(x, ybar, err, 'Color', 'black')
+    xlabel('Frame Rate')
+    ylabel('\alpha (min)')
+end
+legend(control3_labels)
+
+%% plot rho vs frame rate for controls 2 & 3
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:2
+    
+    x = control2_frameRate{i}(end);
+    
+    y = control2_rho{i};
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    
+    scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
+    scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+    errorbar(x, ybar, err, 'Color', 'black')
+end
+xlabel('Frame Rate')
+ylabel('\rho')
+%legend(control2_labels)
+    
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_rho)-3
+    
+    x = control3_frameRate{i}(end);
+    
+    y = control3_rho{i};
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    
+    scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
+    scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+    errorbar(x, ybar, err, 'Color', 'black')
+end
+xlabel('Frame Rate')
+ylabel('\rho')
+%legend(control3_labels)
+
+
+%% plot corrected traces
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_normTrace)
+    subplot(3, 3, i)
+    x = control2_normTrace{i, 1};
+    y = control2_correctedTrace{i, 1};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([0 Inf])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(control2_labels{i})
+end
+% saveas(gcf, 'figure04.png')
+% saveas(gcf, 'figure04.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_normTrace)
+    
+    if i==5
+        subplot(2, 3, [i, i+1])
+    else
+        subplot(2, 3, i)
+    end
+    
+    x = control3_normTrace{i, 1};
+    y = control3_correctedTrace{i, 1};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([0 Inf])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(control3_labels{i})
+end
+% saveas(gcf, 'figure05.png')
+% saveas(gcf, 'figure05.fig')
+
+%% plot smoothed mean length traces and use it to calculate the detergent frames
+cd(dirsave)
+
+exp_lysis = cell(size(exp_lcell));
+control2_lysis = cell(size(control2_lcell));
+control3_lysis = cell(size(control3_lcell));
+
+exp_elongation = cell(size(exp_lcell));
+control2_elgonation = cell(size(control2_lcell));
+control3_elongation = cell(size(control3_lcell));
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_lcell)
+    subplot(2, 3, i)
+    x = exp_times{i};
+    y = exp_lcell{i};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    dx = diff(x, 1, 2);
+    dy = diff(y, 1, 2);
+    dl = dy./dx;
+    el = dl./y(:, 1:end-1);
+    exp_elongation{i} = el;
+    
+    dy = diff(ybar, 1, 2);
+    dl = dy./dx;
+    el = dl./ybar(:, 1:end-1);
+    
+    ilyse = find(el < -0.01, 1, 'first');
+    flyse = find(el(ilyse:end) > -0.005, 1, 'first') + (ilyse-1);
+    
+    exp_lysis{i}(1, 1) = ilyse;
+    exp_lysis{i}(1, 2) = flyse;
+    idx1 = exp_lysis{i}(1,1);
+    idx2 = exp_lysis{i}(1,2);
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([0 15]) 
+    xlim([-0.5 Inf])
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+    title(exp_labels{i})
+    xline(x(idx1), '--k')
+    xline(x(idx2), '--k')
+end
+saveas(gcf, 'figure06.png')
+saveas(gcf, 'figure06.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_lcell)
+    subplot(3, 3, i)
+    x = control2_times{i};
+    y = control2_lcell{i};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    dx = diff(x, 1, 2);
+    dy = diff(y, 1, 2);
+    dl = dy./dx;
+    el = dl./y(:, 1:end-1);
+    control2_elongation{i} = el;
+    
+    dy = diff(ybar, 1, 2);
+    dl = dy./dx;
+    el = dl./ybar(:, 1:end-1);
+    
+    ilyse = find(el < -0.01, 1, 'first');
+    flyse = find(el(ilyse:end) > -0.005, 1, 'first') + (ilyse-1);
+    
+    control2_lysis{i}(1, 1) = ilyse;
+    control2_lysis{i}(1, 2) = flyse;
+    idx1 = control2_lysis{i}(1,1);
+    idx2 = control2_lysis{i}(1,2);
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([0 15])    
+    xlim([-0.5 Inf])
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+    title(control2_labels{i})
+    xline(x(idx1), '--k')
+    xline(x(idx2), '--k')
+end
+saveas(gcf, 'figure04.png')
+saveas(gcf, 'figure04.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_lcell)
+    
+    if i==5
+        subplot(2, 3, [i, i+1])
+    else
+        subplot(2, 3, i)
+    end
+    
+    x = control3_times{i};
+    y = control3_lcell{i};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    dx = diff(x, 1, 2);
+    dy = diff(y, 1, 2);
+    dl = dy./dx;
+    el = dl./y(:, 1:end-1);
+    control3_elongation{i} = el;
+    
+    dy = diff(ybar, 1, 2);
+    dl = dy./dx;
+    el = dl./ybar(:, 1:end-1);
+    
+    ilyse = find(el < -0.01, 1, 'first');
+    flyse = find(el(ilyse:end) > -0.005, 1, 'first') + (ilyse-1);
+    
+    control3_lysis{i}(1, 1) = ilyse;
+    control3_lysis{i}(1, 2) = flyse;
+    idx1 = control3_lysis{i}(1,1);
+    idx2 = control3_lysis{i}(1,2);
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([0 20])
+    xlim([-0.5 Inf])
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+    title(control3_labels{i})
+    xline(x(idx1), '--k')
+    xline(x(idx2), '--k')
+end
+saveas(gcf, 'figure05.png')
+saveas(gcf, 'figure05.fig')
+
+
+%% plot normalized traces
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_normTrace)
+    subplot(2, 3, i)
+    x = exp_normTrace{i, 1};
+    y = exp_normTrace{i, 2};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([-Inf 1.1])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(exp_labels{i})
+end
+% saveas(gcf, 'figure06.png')
+% saveas(gcf, 'figure06.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_normTrace)
+    subplot(3, 3, i)
+    x = control2_normTrace{i, 1};
+    y = control2_normTrace{i, 2};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([-Inf 1.1])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(control2_labels{i})
+end
+% saveas(gcf, 'figure04.png')
+% saveas(gcf, 'figure04.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_normTrace)
+    
+    if i==5
+        subplot(2, 3, [i, i+1])
+    else
+        subplot(2, 3, i)
+    end
+    
+    x = control3_normTrace{i, 1};
+    y = control3_normTrace{i, 2};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([-Inf 1.1])
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence')
+    title(control3_labels{i})
+end
+% saveas(gcf, 'figure05.png')
+% saveas(gcf, 'figure05.fig')
+
+%% plot normalized traces over frame number
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_normTrace)
+    subplot(2, 3, i)
+    [~, ncol] = size(exp_normTrace{i, 1});
+    x = 1:ncol;
+    y = exp_normTrace{i, 2};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([-Inf 1.1])
+    xlabel('Frame Number')
+    ylabel('Normalized Fluorescence')
+    title(exp_labels{i})
+end
+% saveas(gcf, 'figure06.png')
+% saveas(gcf, 'figure06.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control2_normTrace)
+    subplot(3, 3, i)
+    [~, ncol] = size(control2_normTrace{i, 1});
+    x = 1:ncol;
+    y = control2_normTrace{i, 2};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([-Inf 1.1])
+    xlabel('Frame Number')
+    ylabel('Normalized Fluorescence')
+    title(control2_labels{i})
+end
+% saveas(gcf, 'figure04.png')
+% saveas(gcf, 'figure04.fig')
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(control3_normTrace)
+    
+    if i==5
+        subplot(2, 3, [i, i+1])
+    else
+        subplot(2, 3, i)
+    end
+    
+    [~, ncol] = size(control3_normTrace{i, 1});
+    x = 1:ncol;
+    y = control3_normTrace{i, 2};
+    ybar = mean(y, 1, 'omitnan');
+    ybar = movingaverage(ybar, 3);
+    err = std(y, 0, 1, 'omitnan');
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([-Inf 1.1])
+    xlabel('Frame Number')
+    ylabel('Normalized Fluorescence')
+    title(control3_labels{i})
+end
+% saveas(gcf, 'figure05.png')
+% saveas(gcf, 'figure05.fig')
+%% plot smooth length traces vs time
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_lcellSmooth)
+    subplot(2, 3, i)
+    x = exp_times{i};
+    y = exp_lcellSmooth{i};    
+    plot(x, y, 'Color', okabeIto{i})
+    title(exp_labels{i})
+    ylim([0 17])
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+end
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_lcellSmooth)
+    subplot(2, 3, i)
+    x = exp_times{i};
+    y = exp_lcellSmooth{i};
+    ybar = mean(y, 1, 'omitnan');
+    err = std(y, 0, 1, 'omitnan');
+    
+    idx1 = exp_lysis{i}(1,1);
+    idx2 = exp_lysis{i}(1,2);
+    
+    errorbar(x, ybar, err, 'Color', okabeIto{i})
+    ylim([0 15])    
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+    title(exp_labels{i})
+    xline(x(idx1), '--k')
+    xline(x(idx2), '--k')
+end
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:height(exp_lcellSmooth)
+    subplot(2, 3, i)
+    x = exp_times{i};
+    dx = diff(x, 1, 2);
+    y = exp_lcellSmooth{i};
+    dy = diff(y, 1, 2);
+    dl = dy./dx;
+    el = dl ./ y(:, 1:end-1);
+    ebar = mean(el, 1, 'omitnan');
+    err = std(el, 0, 1, 'omitnan');
+    errorbar(x(1:end-1), ebar, err, 'Color', okabeIto{i})  
+    ylim([-0.06 0.08])
+    xlabel('Time (minutes)')
+    ylabel('$\dot{e} (min^{-1})$', 'Interpreter', 'latex')
+    title(exp_labels{i})
+end
+
+
 
 %% plot fluor. trace over time
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
@@ -493,6 +1129,28 @@ function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirp
 
 end
 
+function y = movingaverage(x,s)
+
+        [mx,lx]=size(x);
+        y=zeros(mx,lx);
+
+        if s>lx
+            s=round(lx/2);
+        end
+
+        for i=1:lx
+                s2=floor(s/2);
+            if i-s2<=0
+                y(:,i)=mean(x(:,1:i+s2), 2, 'omitnan');
+            elseif i+s2>lx
+                y(:,i)=mean(x(:,i-s2:end), 2, 'omitnan');
+            else
+                y(:,i)=mean(x(:,i-s2:i+s2), 2, 'omitnan');
+            end
+        end
+    
+end
+
 function [slicedData] = dataSlice(data, cutoff, omit)
     
     slicedData = cell(size(data));
@@ -524,7 +1182,7 @@ function [slicedData] = dataSlice(data, cutoff, omit)
     
 end
 
-function [normTrace] = dataNormalize(times, adjTrace, prelyse, omits)
+function [normTrace] = dataNormalize(times, adjTrace, lysis)
     
     %pre-allocate variables
     [nrow, ~] = size(adjTrace);
@@ -532,15 +1190,28 @@ function [normTrace] = dataNormalize(times, adjTrace, prelyse, omits)
     
     for i=1:height(adjTrace)  
         
-        prelysis = prelyse{i};
-        omit = omits{i};
-        
+        adjintensity = adjTrace{i};
         tme = times{i};
+        
+        %interpolate values obtained during detergent perfusion
+        [nrow, ncol] = size(adjintensity);
+        prelysis = lysis{i}(1,1)-1;
+        xq = lysis{i}(1,1):lysis{i}(1,2)-1;
+        x = setdiff(1:ncol, xq);
+        for j=1:nrow
+            vq = interp1(tme(x), adjintensity(j, x), tme(xq))
+            adjintensity(j, xq) = vq;
+        end
+        
+        %subtract final fluor value
+        adjintensity = adjintensity - adjintensity(:, end);
+        
+        %adjust the time vector
         normTrace{i,1} = tme(prelysis:end) - tme(prelysis);
         
-        adjintensity = adjTrace{i};
-        adjintensity(:, omit) = NaN;
-        adjintensity = adjintensity - adjintensity(:, end);
+        %determine the frame number
+%         frame = normTrace{i,1}(2:end)./diff(normTrace{i,1}, 1, 2);
+%         normTrace{i, 2} = [1, frame+1];
         normTrace{i, 2} = adjintensity(:, prelysis:end) ./ adjintensity(:, prelysis);
         
     end
@@ -554,9 +1225,12 @@ function [alpha, alpha_yhat] = alphaCalc(times, normTrace, alpha0)
     alpha_yhat = cell(height(normTrace), 1);
     
     for i=1:height(normTrace)
-        
+
         normintensity = normTrace{i};
         tme = times{i};
+        
+        %find out if the frame rate changes
+        dt = diff(tme, 1, 2);
         
         %convert negative values to NaN
         normintensity(normintensity<0) = NaN;
@@ -565,20 +1239,47 @@ function [alpha, alpha_yhat] = alphaCalc(times, normTrace, alpha0)
         [nrow, ncol]=size(normintensity); 
         idx=find(sum(isnan(normintensity), 2) < ncol-1); %the sum of the NaNs should be 1 less than the number of time points
         normintensity=normintensity(idx, :);
-    
+        
+        %remove traces without a start value
+        if dt(1)~=dt(end)
+            imstart = find(dt == dt(end), 1, 'first');
+        else 
+            imstart = 1;
+        end
+        
+        idx = find(~isnan(normintensity(:, imstart))); 
+        normintensity = normintensity(idx, :);
+        
         %pre-allocate output variables
         [nrow, ~]=size(normintensity);
         alphaTemp=nan(nrow,1);    
-        yhatTemp=nan(size(normintensity));
+        yhatTemp=nan(size(normintensity)); 
     
         %define exponential function
-        modelfun = @(alpha, t)exp(-t./alpha);
-    
-        %fit data to the function and evaluate
-        for j=1:nrow
-            alphaTemp(j, 1)=nlinfit(tme, normintensity(j,:), modelfun, alpha0);
-            yhatTemp(j, :)=modelfun(alphaTemp(j), tme);
+        %modelfun = @(param, t)param(1)*exp(-t./param(2));
+        
+        if dt(1)~=dt(end)
+            idx = find(dt == dt(end), 1, 'first');
+            xq = idx:ncol;
+            vq = setdiff(1:ncol, xq);
+            
+            %fit data to the function and evaluate
+            for j=1:nrow
+                A = normintensity(j,idx);
+                modelfun = @(alpha, t)A*exp(-t./alpha);
+                alphaTemp(j, 1)=nlinfit(tme(xq)-tme(idx), normintensity(j,xq), modelfun, alpha0);
+                yhatTemp(j, xq)=modelfun(alphaTemp(j), tme(xq)-tme(idx));
+                yhatTemp(j, vq)=NaN;
+            end
+        else
+            %fit data to the function and evaluate
+            modelfun = @(alpha, t)exp(-t./alpha);
+            for j=1:nrow
+                alphaTemp(j, 1)=nlinfit(tme, normintensity(j,:), modelfun, alpha0);
+                yhatTemp(j, :)=modelfun(alphaTemp(j), tme);
+            end            
         end
+   
         
         alpha{i} = alphaTemp;
         alpha_yhat{i} = yhatTemp;
@@ -587,21 +1288,19 @@ function [alpha, alpha_yhat] = alphaCalc(times, normTrace, alpha0)
     
 end
 
-function [rho, rho_yhat, frames] = rhoCalc(times, frameRates, normTrace, rho0)
+function [rho, rho_yhat] = rhoCalc(times, normTrace, rho0)
     
     %pre-allocate variables
     rho = cell(height(normTrace), 1);
     rho_yhat = cell(height(normTrace), 1);
-    frames = cell(height(normTrace), 1);
     
     for i=1:height(normTrace)
         
         normintensity = normTrace{i};
         tme = times{i};
-        frameRate = frameRates{i};
-        
-        %calculate frame number
-        frame = [0, tme(2:end)./frameRate(2:end)];
+       
+        %find out if the frame rate changes
+        dt = diff(tme, 1, 2);
         
         %convert negative values to NaN
         normintensity(normintensity<0) = NaN;
@@ -610,24 +1309,120 @@ function [rho, rho_yhat, frames] = rhoCalc(times, frameRates, normTrace, rho0)
         [nrow, ncol]=size(normintensity); 
         idx=find(sum(isnan(normintensity), 2) < ncol-1); %the sum of the NaNs should be 1 less than the number of time points
         normintensity=normintensity(idx, :);
-    
+        frames = 1:ncol;
+        
+        if dt(1)~=dt(end)
+            imstart = find(dt == dt(end), 1, 'first');
+        else 
+            imstart = 1;
+        end
+        
+        idx = find(~isnan(normintensity(:, imstart))); 
+        normintensity = normintensity(idx, :);
+        
         %pre-allocate output variables
         [nrow, ~]=size(normintensity);
         rhoTemp=nan(nrow,1);    
         yhatTemp=nan(size(normintensity));
     
         %define exponential function
-        modelfun = @(rho, x)exp(-x*rho);
+        %modelfun = @(param, x)param(1)*exp(-x*param(2));
         
-        %fit data to the function and evaluate
-        for j=1:nrow
-            rhoTemp(j, 1)=nlinfit(frame, normintensity(j,:), modelfun, rho0);
-            yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frame);
-        end
+        if dt(1)~=dt(end)
+            idx = find(dt == dt(end), 1, 'first');
+            xq = idx:ncol;
+            vq = setdiff(1:ncol, xq);
             
+            %fit data to the function and evaluate
+            for j=1:nrow
+                A = normintensity(j,idx);
+                modelfun = @(rho, x)A*exp(-x*rho);
+                rhoTemp(j, 1)=nlinfit(xq-(idx-1), normintensity(j,xq), modelfun, rho0);
+                yhatTemp(j, xq)=modelfun(rhoTemp(j), xq-(idx-1));
+                yhatTemp(j, vq) = NaN;
+            end
+        else
+            %fit data to the function and evaluate
+            modelfun = @(rho, x)exp(-x*rho);
+            for j=1:nrow
+                rhoTemp(j, 1)=nlinfit(frames, normintensity(j,:), modelfun, rho0);
+                yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frames);
+            end          
+        end
+                 
         rho{i} = rhoTemp;
-        rho_yhat{i} = yhatTemp;
-        frames{i} = frame;        
+        rho_yhat{i} = yhatTemp;  
+        
     end  
     
+end
+
+%to correct for photobleaching
+function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept)
+        
+        correctedTrace = cell(height(normTrace), 6);
+        
+        for h=1:height(normTrace)
+            
+            normintensity = normTrace{h};
+            tme = times{h};
+            
+        %pre-allocate variables
+        %assume that the initial 'measured' fluorescence values and corrected
+        %fluor. values will be equal. I prefer to pre-allocate with nan in case 
+        %some values are missing in the raw data
+        Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
+        Cnew(:, 1)=normintensity(:,1);
+             
+        dCB=nan(height(normintensity), length(tme)-1); %change in fluor. due to photobleaching
+        dCT=nan(height(normintensity), length(tme)-1); %total change in fluor.
+        dCP=nan(height(normintensity), length(tme)-1); %this is the dCP, or loss attributable to permeability
+
+        unb_frac=nan(size(normintensity)); %fraction of unbleached fluor. 
+        unb_frac(:, 1)=1;%all fluorophores are unbleached at the initial time point
+
+        Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
+        Cbl_exp(:, 1)=0;
+        
+        %calculate dt (the dt between frames may vary in a single run).
+        %Note: this is also the frame rate
+        dt=round(diff(tme), 2);
+        
+        %this formula comes from the slope and intercept calculated for the 1.2, 2,
+        %and 3 second tau vs frame rate controls 
+       dC=@(C, beta, dt, b)(C/(beta*dt+b))*dt;
+       %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
+        
+        %the correction
+        for n=1:height(normintensity)
+           
+            for i=1:length(tme)-1
+                
+                dCB(n,i) = dC(normintensity(n,i), beta, dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
+   
+                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+
+                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
+
+                dCP(n,i)=dCP(n,i)*unb_frac(n,i); %Correcting for the fact that a fraction of fluorophores are unbleached
+
+                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
+
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                
+                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(n,i+1));%Calculate the new fraction of unbleached fluorophores
+                
+            end  
+            
+        end
+        
+        correctedTrace{h, 1} = Cnew;
+        correctedTrace{h, 2} = dCB;
+        correctedTrace{h, 3} = dCT;
+        correctedTrace{h, 4} = dCP;
+        correctedTrace{h, 5} = Cbl_exp;
+        correctedTrace{h, 6} = unb_frac;
+        
+        end
+        
 end
