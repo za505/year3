@@ -15,11 +15,11 @@ dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/agg
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/CZI/';
 
 %% Part 1
-basenames = {'02192022_Exp2', '04052022_Exp2', '04052022_Exp1'};
-labels = {'Frame Rate = 2 s', 'Frame Rate = 10 s', 'Frame Rate = 20 s'};
-lysis = {[7, 9]; [7,9]; [6, 9]}; %lysis FRAMES
-beta = 20.7130;
-intercept = 3.1772;
+basenames = {'04052022_Exp2', '04052022_Exp1'};
+labels = {'Frame Rate = 10 s', 'Frame Rate = 20 s'};
+lysis = {[7,9]; [6, 9]}; %lysis FRAMES
+beta = 30.7512;
+intercept = 0.3947;
 
 %%%%%%%%%%%%%%%%%%%
 [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
@@ -27,29 +27,50 @@ intercept = 3.1772;
 
 %% calculate alpha and find beta and the intercept
 alpha0 = 1;
+rho0=0;
 
 [alpha, alpha_yhat] = alphaCalc(normTrace(:, 1), normTrace(:, 2), alpha0);
 [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha);
 
+[rho, rho_yhat] = rhoCalc(normTrace(:, 1), normTrace(:, 2), rho0);
+[rhoCoef, rhoFit] = rhoLinear(frameRate, rho);
+
 %% plot the fit of alpha
 p = 0;
 n1 = 1;
-n2 = 3;
+n2 = 2;
+
+% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+% for i=1:length(basenames)
+%     
+%     p = p + 1;
+%     subplot(n1, n2, p)
+%     x = normTrace{i, 1};
+%     y1 = normTrace{i, 2};
+%     y2 = alpha_yhat{i};
+%     
+%     plot(x, y1, 'Color', okabeIto{i}), hold on
+%     plot(x, y2, '--k')
+%     ylim([0 Inf])    
+%     xlabel('Time (minutes)')
+%     ylabel('Fluorescence (A.U.)')
+%     title([labels{i}])
+% end
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = normTrace{i, 1};
+    x = [1:length(normTrace{i, 1})];
     y1 = normTrace{i, 2};
-    y2 = alpha_yhat{i};
+    y2 = rho_yhat{i};
     
     plot(x, y1, 'Color', okabeIto{i}), hold on
     plot(x, y2, '--k')
     ylim([0 Inf])    
-    xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
+    xlabel('Frame Number')
+    ylabel('Normalized Fluorescence (A.U.)')
     title([labels{i}])
 end
 %% correct the control traces
@@ -57,7 +78,7 @@ end
 
 %% plot the control traces
 p = 0;
-n1 = 3;
+n1 = 2;
 n2 = 3;
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
@@ -356,6 +377,97 @@ function [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha)
 
 end
 
+function [rho, rho_yhat] = rhoCalc(times, normTrace, rho0)
+    
+    %pre-allocate variables
+    rho = cell(height(normTrace), 1);
+    rho_yhat = cell(height(normTrace), 1);
+    
+    for i=1:height(normTrace)
+        
+        normintensity = normTrace{i};
+        tme = times{i};
+       
+        %find out if the frame rate changes
+        dt = diff(tme, 1, 2);
+        
+        %convert negative values to NaN
+        normintensity(normintensity<0) = NaN;
+    
+        %index traces that have at least 1 data point
+        [nrow, ncol]=size(normintensity); 
+        idx=find(sum(isnan(normintensity), 2) < ncol-1); %the sum of the NaNs should be 1 less than the number of time points
+        normintensity=normintensity(idx, :);
+        frames = 1:ncol;
+        
+        if dt(1)~=dt(end)
+            imstart = find(dt == dt(end), 1, 'first');
+        else 
+            imstart = 1;
+        end
+        
+        idx = find(~isnan(normintensity(:, imstart))); 
+        normintensity = normintensity(idx, :);
+        
+        %pre-allocate output variables
+        [nrow, ~]=size(normintensity);
+        rhoTemp=nan(nrow,1);    
+        yhatTemp=nan(size(normintensity));
+    
+        %define exponential function
+        %modelfun = @(param, x)param(1)*exp(-x*param(2));
+        
+        if dt(1)~=dt(end)
+            idx = find(dt == dt(end), 1, 'first');
+            xq = idx:ncol;
+            vq = setdiff(1:ncol, xq);
+            
+            %fit data to the function and evaluate
+            for j=1:nrow
+                A = normintensity(j,idx);
+                modelfun = @(rho, x)A*exp(-x*rho);
+                rhoTemp(j, 1)=nlinfit(xq-(idx-1), normintensity(j,xq), modelfun, rho0);
+                yhatTemp(j, xq)=modelfun(rhoTemp(j), xq-(idx-1));
+                yhatTemp(j, vq) = NaN;
+            end
+        else
+            %fit data to the function and evaluate
+            modelfun = @(rho, x)exp(-x*rho);
+            for j=1:nrow
+                rhoTemp(j, 1)=nlinfit(frames, normintensity(j,:), modelfun, rho0);
+                yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frames);
+            end          
+        end
+                 
+        rho{i} = rhoTemp;
+        rho_yhat{i} = yhatTemp;  
+        
+    end  
+    
+end
+
+function [rhoCoef, rhoFit] = rhoLinear(frameRate, rho)
+    
+    dx = [];
+    rx = [];
+    xv = [];
+    yv = [];
+
+    for i=1:height(rho)
+        x = frameRate{i}(end);
+        y = rho{i}';
+        dx = [dx, x];
+
+        rx = repelem(x, length(y));
+        xv = [xv, rx];
+        yv = [yv, y];
+    end
+
+    rhoCoef = polyfit(xv, yv, 1);
+    rhoFit = polyval(rhoCoef,[0 dx]);
+
+end
+
 function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept, frameRate2)
         
         correctedTrace = cell(height(normTrace), 6);
@@ -384,9 +496,10 @@ function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept, frameR
         
         %this formula comes from the slope and intercept calculated for the 1.2, 2,
         %and 3 second tau vs frame rate controls 
-       dC=@(C, beta, dt, b)(C/(beta*dt+b))*dt;
+       %dC=@(C, beta, dt, b)(C/(beta*dt+b))*dt;
        %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
-        
+        dC=@(C, beta, t, dt, b)(C/(beta*t+b))*dt;
+       
         %calculate dt (the dt between frames may vary in a single run).
         %Note: this is also the frame rate
         dt=frameRate2{h};
@@ -396,7 +509,7 @@ function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept, frameR
            
             for i=1:length(tme)-1
                 
-                dCB(n,i) = dC(normintensity(n,i), beta, dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
+                dCB(n,i) = dC(normintensity(n,i), beta, tme(i), dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
    
                 dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
 
