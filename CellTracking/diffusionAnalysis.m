@@ -1,456 +1,448 @@
 %diffusionAnalysis.m
 %Author: Zarina Akbary
-%Date: 17 July 2021
+%Date: 01 May 2022
 %purpose: to analyze mNeonGreen.m diffusion out of the cell
 
 clear, close all
+
+%color palette
+okabeIto = {[230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 114, 178], [213, 94, 0], [204, 121, 167], [0, 0, 0]};
+okabeIto = cellfun(@(x)(x./255), okabeIto, 'UniformOutput', false);
+okabeIto = [okabeIto, okabeIto];
+
 %% User Input
-maindir=['/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis'];
-photodir={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07242021_analysis/07242021_Exp1_colony1/07242021_Exp1_mNeonGreen/07242021_Exp1_figures'];['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07242021_analysis/07242021_Exp1_colony3/07242021_Exp1_mNeonGreen/07242021_Exp1_figures'];['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07242021_analysis/07242021_Exp1_colony4/07242021_Exp1_mNeonGreen/07242021_Exp1_figures'];['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07242021_analysis/07242021_Exp1_colony6/07242021_Exp1_mNeonGreen/07242021_Exp1_figures']};
-recrunch=0;
-replot=1;
+dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
+dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/CZI/';
+
+%% Part 1
+basenames = {'02192022_Exp2', '04052022_Exp2', '04052022_Exp1'};
+labels = {'Frame Rate = 2 s', 'Frame Rate = 10 s', 'Frame Rate = 20 s'};
+lysis = {[7, 9]; [7,9]; [6, 9]}; %lysis FRAMES
+beta = 20.7130;
+intercept = 3.1772;
+
 %%%%%%%%%%%%%%%%%%%
+[cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
+[normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis);
 
-%% Part I: New Tables
-if recrunch==0
-    % Load data
-    cd(maindir)
-    dataDirectory=dir('*_dm.mat');
+%% calculate alpha and find beta and the intercept
+alpha0 = 1;
 
-    fullData=table();
-    pbsData=table();
+[alpha, alpha_yhat] = alphaCalc(normTrace(:, 1), normTrace(:, 2), alpha0);
+[alphaCoef, alphaFit] = alphaLinear(frameRate, alpha);
+
+%% plot the fit of alpha
+p = 0;
+n1 = 1;
+n2 = 3;
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(basenames)
     
-    for f=1:height(dataDirectory)
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTrace{i, 1};
+    y1 = normTrace{i, 2};
+    y2 = alpha_yhat{i};
+    
+    plot(x, y1, 'Color', okabeIto{i}), hold on
+    plot(x, y2, '--k')
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title([labels{i}])
+end
+%% correct the control traces
+[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), beta, intercept, frameRate2);
 
-        load(dataDirectory(f).name)
-        tempData = dataTable;
-        
-        %label experiment
-        experimentName=repelem(string(dataDirectory(f).name(1:end-7)), height(tempData))';
+%% plot the control traces
+p = 0;
+n1 = 3;
+n2 = 3;
 
-        if f<=3
-            condition=repelem(string('Mg2+'), height(tempData))';
-        elseif f>3 & f<6
-            condition=repelem(string('LB'), height(tempData))';
-        elseif f>=6 & f<=9
-            condition=repelem(string('EDTA'), height(tempData))';
-        elseif f>9
-            condition=repelem(string('PBS'), height(tempData))';
-        end
-        
-        if f>9
-            pbsTime=time;
-        else
-            fullTime=time;
-        end
-        
-        if f<=9
-            tG=6; %frame in which cells are still profused with LB
-            tL=7; %frame in which cells lyse
-            tL2=8; %frame with detergent
-            tC=10:13; %frame in condition
-        elseif f>9
-            tG=13; %frame in which cells are still profused with LB
-            tL=16; %frame in which cells lyse
-            tL2=16; %frame with detergent
-            tC=20:23; %frame in condition
-        end
-        
-        %calculate cell length changes
-        %from LB > LB + 5% detergent is t=6 and t=7
-        dL=((lcell(:, tL)-lcell(:, tG))./lcell(:,tG))*100; %lf-li/li
-        
-        %from LB + 5% detergent to the condition 
-        tf=mean(lcell(:, tC), 2, 'omitnan');
-        dL2=((tf-lcell(:,tL2))./lcell(:,tL2))*100; %lf-li/li
-        %dL2=((lcell(:, 8)-lcell(:, 10))./lcell(:,8))*100; %lf-li/li
-        
-        %from LB to the condition 
-        dL3=((tf-lcell(:,tG))./lcell(:,tG))*100; %lf-li/li
-        
-        if f<=9
-            
-            %create a table from these new variables
-            newVar=table(experimentName, condition, dL, dL2,dL3, 'VariableNames', {'Experiment', 'Condition', 'Lysis dL', 'Post-Lysis dL', 'Overall dL'});
-            tempData=[newVar, tempData];
-            fullData=[fullData; tempData];
-            
-        elseif f>9
-            %create a table from these new variables
-            newVar=table(experimentName, condition, dL, dL2,dL3, 'VariableNames', {'Experiment', 'Condition', 'Lysis dL', 'Post-Lysis dL', 'Overall dL'});
-            tempData=[newVar, tempData];
-            pbsData=[pbsData; tempData];
-        end
-        
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(basenames)
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = times{i};
+    y1 = cellTrace{i};
+    y2 = bgTrace{i};
+    
+    plot(x, y1, 'Color', okabeIto{i}), hold on
+    plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xline(x(lysis{i}(1, 1)), '--k') %the time, not the frame
+    xline(x(lysis{i}(1, 2)), '--k') %the time, not the frame
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Raw ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTrace{i,1};
+    y = normTrace{i,2};
+    
+    plot(x, y, 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Normalized ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTrace{i,1};
+    y = correctedTrace{i, 1};
+    [nr, nc] = size(y);
+    ysmooth = nan(size(y));
+    for j=1:nr
+        ysmooth(j, :) = movingaverage(y(j, :), 3);
     end
     
- % adjust the time variable
- time=fullTime-fullTime(1);
-    
-%% Part II: load control data
-photoData=table();
-for i=1:length(photodir)
-    
-    cd(photodir{i});
-    photofiles=dir('*_dm.mat');
-    load(photofiles.name, 'dataTable');
-    phototime=cell2mat(struct2cell(load(photofiles.name, 'time')));
-    tempData=dataTable;
-    
-    %add label
-    experimentName=repelem(string(photofiles.name(1:end-7)), height(tempData))';
-    condition=repelem(string('AzideControl'), height(tempData))';
-    
-    %create new table
-    newVar=table(experimentName, condition, 'VariableNames', {'Experiment', 'Condition'});
-    tempData=[newVar, tempData];
-    
-   photoData=[photoData; tempData];
-    
+    plot(x, ysmooth, 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence (A.U.)')
+    title(['Corrected ' labels{i}])
 end
 
-normMean=mean(photoData.intensity, 1, 'omitnan');
-normStd=std(photoData.intensity, 0, 1, 'omitnan');
-[xD, yD]=prepareCurveData(phototime, normMean);
-photofit=fit(xD, yD, 'poly1');
+%% Part 2
+basenames = {'04242022_Exp1'};
+labels = {'Untreated'};
+lysis = {[7, 10]}; %lysis FRAMES
+beta = 20.7130;
+intercept = 3.1772;
 
-else
-    % Load data
-    cd(maindir)
-    load('diffusionAnalysis.mat')
+%%%%%%%%%%%%%%%%%%%
+[cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
+[normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis);
+[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), beta, intercept, frameRate2);
+
+%% plot the untreated trace
+p = 0;
+n1 = 1;
+n2 = 3;
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(basenames)
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = times{i};
+    y1 = cellTrace{i};
+    y2 = bgTrace{i};
+    
+    plot(x, y1, 'Color', okabeIto{i}), hold on
+    plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xline(x(lysis{i}(1, 1)), '--k') %the time, not the frame
+    xline(x(lysis{i}(1, 2)), '--k') %the time, not the frame
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Raw ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTrace{i,1};
+    y = normTrace{i,2};
+    
+    plot(x, y, 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Normalized ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTrace{i,1};
+    y = correctedTrace{i, 1};
+    
+    plot(x, y, 'Color', okabeIto{i})
+    ylim([0 1.5])    
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence (A.U.)')
+    title(['Corrected ' labels{i}])
 end
-
-%% Part III: plot the photobleaching data
-figure
-plot(photofit, xD, yD)
-title('Photobleaching Fit')
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-
-cd(maindir)
-saveas(gcf,'photobleachFit.png')
-saveas(gcf,'photobleachFit.fig')
-
-close
-
-figure
-plot(phototime, photoData.intensity)
-title('Photobleaching Traces')
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-
-cd(maindir)
-saveas(gcf,'photobleachTraces.png')
-saveas(gcf,'photobleachTraces.fig')
-
-close
-%% Part IV: adjust for photobleaching
-    
-% %first, let's parse the data
-cond1 = fullData(strcmp(fullData.Condition, "LB")==1, :);
-cond2 = fullData(strcmp(fullData.Condition, "EDTA")==1, :);
-cond3 = fullData(strcmp(fullData.Condition, "Mg2+")==1, :);
-
-yData1=cond1(cond1.halfie==0,:);
-yData2=cond2(cond2.halfie==0,:);
-yData3=cond3(cond3.halfie==0,:);
-yData4=pbsData(pbsData.halfie==0, :);
-
-yadj=[];
-for n=1:height(yData1)
-    yData=yData1.intensity(n,:);
-    xData=time;
-    yexp=(photofit.p1.*xData)+max(yData);
-    dy=[0, diff(yexp)];
-    yadj=[yadj; yData+abs(dy)];
-end
-newVar=table(yadj, yadj./yadj(:,1), 'VariableNames', {'intensityAdj', 'normalAdj'});
-yData1=[yData1, newVar];
-
-yadj=[];
-for n=1:height(yData2)
-    yData=yData2.intensity(n,:);
-    xData=time;
-    yexp=(photofit.p1.*xData)+max(yData);
-    dy=[0, diff(yexp)];
-    yadj=[yadj; yData+abs(dy)];
-end
-newVar=table(yadj, yadj./yadj(:,1), 'VariableNames', {'intensityAdj', 'normalAdj'});
-yData2=[yData2, newVar];
-
-yadj=[];
-for n=1:height(yData3)
-    yData=yData3.intensity(n,:);
-    xData=time;
-    yexp=(photofit.p1.*xData)+max(yData);
-    dy=[0, diff(yexp)];
-    yadj=[yadj; yData+abs(dy)];
-    
-    if n==1
-        plot(xData, yexp), hold on
-        plot(xData, yData),
-        plot(xData, yData+abs(dy))
-        xlabel('Time (min)')
-        ylabel('Intensity (A.U.)')
-        legend({'Fit', 'Data', 'Adjusted Data'})
-        title('Intensity vs Time, Mg^{2+}')
-        cd(maindir)
-        saveas(gcf, 'mgPhotoFit.png')
-        saveas(gcf, 'mgPhotoFit.fig')
-        pause, close
-    end
-end
-newVar=table(yadj, yadj./yadj(:,1), 'VariableNames', {'intensityAdj', 'normalAdj'});
-yData3=[yData3, newVar];
-
-yadj=[];
-for n=1:height(yData4)
-    yData=yData4.intensity(n,:);
-    xData=pbsTime;
-    yexp=(photofit.p1.*xData)+max(yData);
-    dy=[0, diff(yexp)];
-    yadj=[yadj; yData+abs(dy)];
-    
-    if n==1
-        plot(xData, yexp), hold on
-        plot(xData, yData),
-        plot(xData, yData+abs(dy))
-        legend({'Fit', 'Data', 'Adjusted Data'})
-        xlabel('Time (min)')
-        ylabel('Intensity (A.U.)')
-        title('Intensity vs Time, *PBS')
-        cd(maindir)
-        saveas(gcf, 'pbsPhotoFit.png')
-        saveas(gcf, 'pbsPhotoFit.fig')
-        pause, close
-    end
-end
-newVar=table(yadj, yadj./yadj(:,1), 'VariableNames', {'intensityAdj', 'normalAdj'});
-yData4=[yData4, newVar];
-
-%% Part V: extract time constants
-% %pre-allocate variables
-coeff1=nan(height(yData1),2);
-coeff2=nan(height(yData2),2);
-coeff3=nan(height(yData3),2);
-coeff4=nan(height(yData4),2);
-
-f1=cell(height(yData1),1);
-f2=cell(height(yData2),1);
-f3=cell(height(yData3),1);
-f4=cell(height(yData4),1);
-
-thalf1=nan(height(yData1),1);
-thalf2=nan(height(yData2),1);
-thalf3=nan(height(yData3),1);
-thalf4=nan(height(yData4),1);
-
-r1=nan(height(yData1),1);
-r2=nan(height(yData2),1);
-r3=nan(height(yData3),1);
-r4=nan(height(yData4),1);
-
-for n=1:height(yData1)
-    
-    yData=yData1.normalAdj(n,:);
-    [xData, yData]=prepareCurveData(time(1:length(yData)), yData);
-    f1{n,1}=fit(xData, yData, 'exp1');
-    coeff1(n,:)=coeffvalues(f1{n});
-
-    yData=yData';
-    cutoff=yData(1,1)/2;
-    
-    if yData(1,end)<=cutoff
-        csum=cumsum(yData<=cutoff);
-        idx=min(find(csum==1));
-        r1(n)=cutoff-yData(idx);
-        thalf1(n)=time(idx);
-    else
-        [xData, yData]=prepareCurveData(time(1:length(yData)), yData);
-        f=fit(xData, yData, 'poly1');
-        thalf1(n)=(cutoff-f.p2)/f.p1;
-    end
-end
-
-for n=1:height(yData2)
-    
-    yData=yData2.normalAdj(n,:);
-    [xData, yData]=prepareCurveData(time(1:length(yData)), yData);
-    f2{n,1}=fit(xData, yData, 'exp1');
-    coeff2(n,:)=coeffvalues(f2{n});
-
-    yData=yData';
-    cutoff=yData(1,1)/2;
-    
-    if yData(1,end)<=cutoff
-        csum=cumsum(yData<=cutoff);
-        idx=min(find(csum==1));
-        r2(n)=cutoff-yData(idx);
-        thalf2(n)=time(idx);
-    else
-        [xData, yData]=prepareCurveData(time(1:length(yData)), yData);
-        f=fit(xData, yData, 'poly1');
-        thalf2(n)=(cutoff-f.p2)/f.p1;
-    end
-end
-
-for n=1:height(yData3)
-    
-    yData=yData3.normalAdj(n,:);
-    [xData, yData]=prepareCurveData(time(1:length(yData)), yData);
-    f3{n,1}=fit(xData, yData, 'exp1');
-    coeff3(n,:)=coeffvalues(f3{n});
-
-    yData=yData';
-    cutoff=yData(1,1)/2;
-    
-    if yData(1,end)<=cutoff
-        csum=cumsum(yData<=cutoff);
-        idx=min(find(csum==1));
-        r3(n)=cutoff-yData(idx);
-        thalf3(n)=time(idx);
-    else
-        [xData, yData]=prepareCurveData(time(1:length(yData)), yData);
-        f=fit(xData, yData, 'poly1');
-        thalf3(n)=(cutoff-f.p2)/f.p1;
-    end
-end
-
-for n=1:height(yData4)
-    
-    yData=yData4.normalAdj(n,:);
-    [xData, yData]=prepareCurveData(pbsTime(1:length(yData)), yData);
-    f4{n,1}=fit(xData, yData, 'exp1');
-    coeff4(n,:)=coeffvalues(f4{n});
-
-    yData=yData';
-    cutoff=yData(1,1)/2;
-    
-    if yData(1,end)<=cutoff
-        csum=cumsum(yData<=cutoff);
-        idx=min(find(csum==1));
-        r4(n)=cutoff-yData(idx);
-        thalf4(n)=time(idx);
-    else
-        [xData, yData]=prepareCurveData(pbsTime(1:length(yData)), yData);
-        f=fit(xData, yData, 'poly1');
-        thalf4(n)=(cutoff-f.p2)/f.p1;
-    end
-end
-
-%% Part VI: plot the data
-figure
-p1=plot(time, yData1.normalAdj, 'Color', [0, 0.4470, 0.7410]); hold on
-p2=plot(time, yData2.normalAdj, 'Color', [0.4940, 0.1840, 0.5560]); 
-p3=plot(time, yData3.normalAdj, 'Color', [0.4660, 0.6740, 0.1880]); 
-p4=plot(pbsTime, yData4.normalAdj, 'Color', [0.6350, 0.0780, 0.1840]); 
-title('Normalized Intensity vs Time, photobleach adjusted')
-txt = ['{\color[rgb]{0, 0.4470, 0.7410} blue = LB, \color[rgb]{0.4940, 0.1840, 0.5560} purple = EDTA, \color[rgb]{0.4660, 0.6740, 0.1880} green = Mg2+, \color[rgb]{0.6350, 0.0780, 0.1840} red = *PBS,}'];
-subtitle(txt)
-xlabel('Time (min)')
-ylabel('Normalized Intensity (A.U.)')
-close
-% saveas(gcf, 'normIntensityAdj.fig')
-% saveas(gcf, 'normIntensityAdj.png')
-
-figure
-p1=plot(time, yData1.intensityAdj, 'Color', [0, 0.4470, 0.7410]); hold on
-p2=plot(time, yData2.intensityAdj, 'Color', [0.4940, 0.1840, 0.5560]); 
-p3=plot(time, yData3.intensityAdj, 'Color', [0.4660, 0.6740, 0.1880]); 
-p4=plot(pbsTime, yData4.intensityAdj, 'Color', [0.6350, 0.0780, 0.1840]); 
-title('Intensity vs Time, photobleach adjusted')
-txt = ['{\color[rgb]{0, 0.4470, 0.7410} blue = LB, \color[rgb]{0.4940, 0.1840, 0.5560} purple = EDTA, \color[rgb]{0.4660, 0.6740, 0.1880} green = Mg2+, \color[rgb]{0.6350, 0.0780, 0.1840} red = *PBS,}'];
-subtitle(txt)
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-saveas(gcf, 'IntensityAdj.fig')
-saveas(gcf, 'IntensityAdj.png')
-close
-
-figure
-p1=plot(time, yData1.intensity, 'Color', [0, 0.4470, 0.7410]); hold on
-p2=plot(time, yData2.intensity, 'Color', [0.4940, 0.1840, 0.5560]); 
-p3=plot(time, yData3.intensity, 'Color', [0.4660, 0.6740, 0.1880]); 
-p4=plot(pbsTime, yData4.intensity, 'Color', [0.6350, 0.0780, 0.1840]); 
-title('Intensity vs Time')
-txt = ['{\color[rgb]{0, 0.4470, 0.7410} blue = LB, \color[rgb]{0.4940, 0.1840, 0.5560} purple = EDTA, \color[rgb]{0.4660, 0.6740, 0.1880} green = Mg2+, \color[rgb]{0.6350, 0.0780, 0.1840} red = *PBS,}'];
-subtitle(txt)
-xlabel('Time (min)')
-ylabel('Intensity (A.U.)')
-saveas(gcf, 'intensity.fig')
-saveas(gcf, 'intensity.png')
-close
-
-figure
-h1=histogram(-1./coeff1(:,2), 'FaceColor', [0, 0.4470, 0.7410]); hold on
-h2=histogram(-1./coeff2(:,2), 'FaceColor', [0.4940, 0.1840, 0.5560]);
-h3=histogram(-1./coeff3(:,2), 'FaceColor', [0.4660, 0.6740, 0.1880]); 
-%h4=histogram(abs(coeff4(:,2))); 
-h1.NumBins=12;
-h2.NumBins=34;
-h3.NumBins=12;
-%h4.BinWidth=12;
-title('Time Coefficient Distribution')
-xlabel('\tau (min)')
-ylabel('Counts')
-legend({'LB', 'EDTA', 'Mg^{2+}'})
-saveas(gcf, 'tauHist.fig')
-saveas(gcf, 'tauHist.png')
-close
-
-figure
-h1=histogram(thalf1(:,1), 'FaceColor', [0, 0.4470, 0.7410]); hold on
-h2=histogram(thalf2(:,1), 'FaceColor', [0.4940, 0.1840, 0.5560]);
-h3=histogram(thalf3(:,1), 'FaceColor', [0.4660, 0.6740, 0.1880]); 
-%h4=histogram(abs(coeff4(:,2))); 
-h1.NumBins=12;
-h2.NumBins=34;
-h3.NumBins=12;
-%h4.BinWidth=12;
-title('t_{1/2} Distribution')
-xlabel('t_{1/2} (min^{-})')
-legend({'LB', 'EDTA', 'Mg^{2+}'})
-saveas(gcf, 'thalfHist.fig')
-saveas(gcf, 'thalfHist.png')
-close
-
-%is there a difference in the overall dL of non-halved LB vs EDTA treated
-%cells? (so far, it seems not)
-figure
-h1=histogram(yData1.("Overall dL"), 'FaceColor', [0, 0.4470, 0.7410]); hold on
-h2=histogram(yData2.("Overall dL"), 'FaceColor', [0.4940, 0.1840, 0.5560]);
-h3=histogram(yData3.("Overall dL"), 'FaceColor', [0.4660, 0.6740, 0.1880]);
-
-h1.BinWidth = 0.5;
-h2.BinWidth = 0.5;
-h3.BinWidth = 0.5;
-title('Overall Percent Change in Cell Wall Length')
-xlabel('Percent Change (%)')
-legend({'LB', 'EDTA', 'Mg^{2+}'})
-saveas(gcf, 'overalldL.fig')
-saveas(gcf, 'overalldL.png')
-
-figure
-h1=histogram(yData1.("cell length")(:, tidx+3), 'FaceColor', [0, 0.4470, 0.7410]); hold on
-h2=histogram(yData2.("cell length")(:, tidx+3), 'FaceColor', [0.4940, 0.1840, 0.5560]);
-h3=histogram(yData3.("cell length")(:, tidx+3), 'FaceColor', [0.4660, 0.6740, 0.1880]); 
-h1.BinWidth = 0.5;
-h2.BinWidth = 0.5;
-h3.BinWidth = 0.5;
-title('Cell Length Distribution')
-xlabel('Cell Length \mum')
-legend({'LB', 'EDTA', 'Mg^{2+}'})
-saveas(gcf, 'lengthHist.fig')
-saveas(gcf, 'lengthHist.png')
-%% save the data
-cd(maindir)
-save('diffusionAnalysis.mat')
-
-%close all
 %% Functions
-% function [y]=sigmoidal(b,x)
-%     xData=x.*b(1);
-%     c=b(1)*b(2);
-%     denom=1+exp(xData-c);
-%     y=1./denom;
-% end
+function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames)
+
+    cellTrace = cell(length(basenames), 1);
+    bgTrace = cell(length(basenames), 1);
+    adjTrace = cell(length(basenames), 1);
+    times = cell(length(basenames), 1);
+    lCell = cell(length(basenames), 1);
+    frameRate = cell(length(basenames), 1);
+
+    for i=1:length(basenames)
+
+        cd(dirpath);
+        basename = basenames{i};
+        datadir=dir([basename '*']);
+        load(datadir(1).name, '-regexp', 'intensity$', 'time', 'lcell');
+
+        cellTrace{i} = intensity;
+        bgTrace{i} = bgintensity;
+        adjTrace{i} = adjintensity;
+        times{i} = time;
+        lCell{i} = lcell;
+        frameRate{i} = [0, diff(time, 1, 2)];
+        clear intensity adjintensity bgintensity time
+
+    end
+
+end
+
+function y = movingaverage(x,s)
+
+        [mx,lx]=size(x);
+        y=zeros(mx,lx);
+
+        if s>lx
+            s=round(lx/2);
+        end
+
+        for i=1:lx
+                s2=floor(s/2);
+            if i-s2<=0
+                y(:,i)=mean(x(:,1:i+s2), 2, 'omitnan');
+            elseif i+s2>lx
+                y(:,i)=mean(x(:,i-s2:end), 2, 'omitnan');
+            else
+                y(:,i)=mean(x(:,i-s2:i+s2), 2, 'omitnan');
+            end
+        end
+    
+end
+
+function [normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis)
+    
+    %pre-allocate variables
+    [nrow, ~] = size(adjTrace);
+    normTrace = cell(nrow, 2);
+    frameRate2 = cell(nrow, 1);
+    
+    for i=1:height(adjTrace)  
+        
+        adjintensity = adjTrace{i};
+        tme = times{i};
+        
+        %interpolate values obtained during detergent perfusion
+        [nrow, ncol] = size(adjintensity);
+        prelysis = lysis{i}(1,1)-1; %the frame
+        
+        lval = lysis{i}(1,1):lysis{i}(1,2); %the lysis frames
+        nval = setdiff(1:ncol, lval); %non-lysis frames
+        pval = setdiff(prelysis:ncol, lval);
+        fval = setdiff(prelysis:ncol-1, lval);
+        
+        xq = tme(lval); %the lysis times
+        x = setdiff(tme, xq); %the non-lysis times
+        
+        for j=1:nrow
+            vq = interp1(x, adjintensity(j, nval), xq);
+            adjintensity(j, lval) = vq;
+            adjintensity(j, lval) = NaN;
+        end
+        
+        %save the interpolated trace
+        %interpTrace{i} = adjintensity;
+        frameRate = diff(tme, 1, 2);
+        frameRate2{i} = frameRate(fval);
+        
+        %adjust the time vector
+        normTrace{i,1} = tme(pval) - tme(prelysis);
+        
+        %normalize the trace by the pre-lysis frame
+        normTrace{i, 2} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
+          
+%           pval = setdiff(1:ncol, lval);
+%           fval = setdiff(1:ncol-1, lval);
+%           frameRate2{i} = frameRate(fval);
+%           normTrace{i,1} = tme(pval);
+%           normTrace{i,2} = adjintensity(:, pval) ./ adjintensity(:, 1);
+    end
+    
+end
+
+function [alpha, alpha_yhat] = alphaCalc(times, normTrace, alpha0)
+    
+    %pre-allocate variables
+    alpha = cell(height(normTrace), 1);
+    alpha_yhat = cell(height(normTrace), 1);
+    
+    for i=1:height(normTrace)
+
+        normintensity = normTrace{i};
+        tme = times{i};
+        
+        %find out if the frame rate changes
+        dt = diff(tme, 1, 2);
+        
+        %convert negative values to NaN
+        normintensity(normintensity<0) = NaN;
+    
+        %index traces that have at least 1 data point
+        [nrow, ncol]=size(normintensity); 
+        idx=find(sum(isnan(normintensity), 2) < ncol-1); %the sum of the NaNs should be 1 less than the number of time points
+        normintensity=normintensity(idx, :);
+        
+        %remove traces without a start value
+        if dt(1)~=dt(end)
+            imstart = find(dt == dt(end), 1, 'first');
+        else 
+            imstart = 1;
+        end
+        
+        idx = find(~isnan(normintensity(:, imstart))); 
+        normintensity = normintensity(idx, :);
+        
+        %pre-allocate output variables
+        [nrow, ~]=size(normintensity);
+        alphaTemp=nan(nrow,1);    
+        yhatTemp=nan(size(normintensity)); 
+    
+        %define exponential function
+        %modelfun = @(param, t)param(1)*exp(-t./param(2));
+        
+        if dt(1)~=dt(end)
+            idx = find(dt == dt(end), 1, 'first');
+            xq = idx:ncol;
+            vq = setdiff(1:ncol, xq);
+            
+            %fit data to the function and evaluate
+            for j=1:nrow
+                A = normintensity(j,idx);
+                modelfun = @(alpha, t)A*exp(-t./alpha);
+                alphaTemp(j, 1)=nlinfit(tme(xq)-tme(idx), normintensity(j,xq), modelfun, alpha0);
+                yhatTemp(j, xq)=modelfun(alphaTemp(j), tme(xq)-tme(idx));
+                yhatTemp(j, vq)=NaN;
+            end
+        else
+            %fit data to the function and evaluate
+            modelfun = @(alpha, t)exp(-t./alpha);
+            for j=1:nrow
+                alphaTemp(j, 1)=nlinfit(tme, normintensity(j,:), modelfun, alpha0);
+                yhatTemp(j, :)=modelfun(alphaTemp(j), tme);
+            end            
+        end
+   
+        
+        alpha{i} = alphaTemp;
+        alpha_yhat{i} = yhatTemp;
+        
+    end    
+    
+end
+
+function [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha)
+    
+    dx = [];
+    rx = [];
+    xv = [];
+    yv = [];
+
+    for i=1:height(alpha)
+        x = frameRate{i}(end);
+        y = alpha{i}';
+        dx = [dx, x];
+
+        rx = repelem(x, length(y));
+        xv = [xv, rx];
+        yv = [yv, y];
+    end
+
+    alphaCoef = polyfit(xv, yv, 1);
+    alphaFit = polyval(alphaCoef,[0 dx]);
+
+end
+
+function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept, frameRate2)
+        
+        correctedTrace = cell(height(normTrace), 6);
+        
+        for h=1:height(normTrace)
+            
+            normintensity = normTrace{h};
+            tme = times{h};
+            
+        %pre-allocate variables
+        %assume that the initial 'measured' fluorescence values and corrected
+        %fluor. values will be equal. I prefer to pre-allocate with nan in case 
+        %some values are missing in the raw data
+        Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
+        Cnew(:, 1)=normintensity(:,1);
+             
+        dCB=nan(height(normintensity), length(tme)-1); %change in fluor. due to photobleaching
+        dCT=nan(height(normintensity), length(tme)-1); %total change in fluor.
+        dCP=nan(height(normintensity), length(tme)-1); %this is the dCP, or loss attributable to permeability
+
+        unb_frac=nan(size(normintensity)); %fraction of unbleached fluor. 
+        unb_frac(:, 1)=1;%all fluorophores are unbleached at the initial time point
+
+        Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
+        Cbl_exp(:, 1)=0;
+        
+        %this formula comes from the slope and intercept calculated for the 1.2, 2,
+        %and 3 second tau vs frame rate controls 
+       dC=@(C, beta, dt, b)(C/(beta*dt+b))*dt;
+       %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
+        
+        %calculate dt (the dt between frames may vary in a single run).
+        %Note: this is also the frame rate
+        dt=frameRate2{h};
+        
+        %the correction
+        for n=1:height(normintensity)
+           
+            for i=1:length(tme)-1
+                
+                dCB(n,i) = dC(normintensity(n,i), beta, dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
+   
+                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+
+                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
+
+                dCP(n,i)=dCP(n,i)*unb_frac(n,i); %Correcting for the fact that a fraction of fluorophores are unbleached
+
+                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
+
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                
+                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(n,i+1));%Calculate the new fraction of unbleached fluorophores
+                
+            end  
+            
+        end
+        
+        correctedTrace{h, 1} = Cnew;
+        correctedTrace{h, 2} = dCB;
+        correctedTrace{h, 3} = dCT;
+        correctedTrace{h, 4} = dCP;
+        correctedTrace{h, 5} = Cbl_exp;
+        correctedTrace{h, 6} = unb_frac;
+        
+        end
+        
+end
+
+function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0)
+    
+    tau = cell(height(correctedTrace), 1);
+    tau_yhat = cell(height(correctedTrace), 1);
+    
+    for i = 1:height(correctedTrace)
+        x = times{i};
+        y = correctedTrace{i};
+          
+        ybar = mean(y, 1, 'omitnan');
+        A = ybar(1);
+        B = ybar(end);
+        
+        %modelfun = @(tau, t) A * exp(-t./tau) + B;
+        modelfun = @(tau, t) A * exp(log(A/B)*(1-exp(t./tau)));
+        
+        tau{i} = nlinfit(x, ybar, modelfun, tau0);
+        tau_yhat{i} = modelfun(tau{i}, x);
+    end
+    
+end
