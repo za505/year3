@@ -64,27 +64,27 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='03012022_Exp1';%Name of the image stack, used to save file.
-multiExp=0;
+basename='04242022_Exp1';%Name of the image stack, used to save file.
+multiExp=1;
 multiScale=0;
 
 if multiExp==1
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 else
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/03012022_analysis/' basename '_colony3/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 end
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
-%409
+
 if multiScale==0
     tscale=60;
 elseif multiScale==1
 	tscale1=60;
-	tscale2=60*20;
+	tscale2=3.03;
 	tpoint1=[0:tscale1:7*60];
-    tpoint2=[tpoint1(end)+tscale2:tscale2:150*60];
+    tpoint2=[tpoint1(end)+tscale2:tscale2:37.11*60];
     tpoints=[tpoint1, tpoint2];
 end
 
@@ -96,7 +96,7 @@ minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width, default 0.2
 maxW=1.5;%Maximum cell width
 minA=100;%Minimum cell area. default 50
-maxA=2000; %maximum cell area. default 2000
+maxA=20000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
@@ -105,7 +105,8 @@ troubleshooting=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_BTphase'])
+    load([basename '_colony1_BT'])
+    troubleshooting=0;
 else
 
 %Determine number of frames
@@ -433,20 +434,22 @@ pixels(delind,:)=[];
 mlines(delind,:)=[];
 [ncells,~]=size(lcell);
 
-% delind=[4, 15];
+% delind=[1, 2, 3, 4, 5, 6, 8, 12, 14];
 % lcell(delind,:)=[];
 % wcell(delind,:)=[];
+% 
+% 
 % acell(delind,:)=[];
 % pcell(delind,:)=[];
 % B(delind,:)=[];
 % pixels(delind,:)=[];
 % mlines(delind,:)=[];
 % [ncells,~]=size(lcell);
-% 
-% lcell(lcell==0)=NaN;
-% wcell(wcell==0)=NaN;
-% acell(acell==0)=NaN;
-% pcell(pcell==0)=NaN;
+
+lcell(lcell==0)=NaN;
+wcell(wcell==0)=NaN;
+acell(acell==0)=NaN;
+pcell(pcell==0)=NaN;
 
 %Dimsionalize the variables
 lcell=lcell*lscale;
@@ -535,31 +538,60 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_colony3_BTlab'],'labels','labels2','-v7.3')
+save([basename '_colony1_BTlab'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_colony3_BT'])
+save([basename '_colony1_BT'])
 end
 
 %% Troubleshooting
-if troubleshooting == 1
-for k=1:ncells
-   k
+if troubleshooting==1
+    for k=1:ncells
+       k
+       figure
+       imshow(im)
+       hold on
+
+       for t=1:T
+         if isempty(B{k,t})==0
+            plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+         else
+             continue
+         end
+       end
+
+      pause
+      close all
+    end
+    
+elseif troubleshooting==2
+    
+    cd(dirname)
+    
+   for t=1:T
+   t
+   
+    %Load image
+    imagename=directory(t).name;
+    im=imread(imagename);
+    
    figure
    imshow(im)
    hold on
-   
-   for t=1:T
+
+   for k=1:ncells
      if isempty(B{k,t})==0
         plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
      else
          continue
      end
    end
-    
+
   pause
   close all
-end
+  
+   end 
+
 end
 
 %% Plot data
@@ -581,8 +613,8 @@ end
 xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_colony3_lTraces.png'])
-saveas(gcf,[basename,'_colony3_lTraces.fig'])
+saveas(gcf,[basename,'_colony1_lTraces.png'])
+saveas(gcf,[basename,'_colony1_lTraces.fig'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
@@ -609,8 +641,8 @@ plot(tmid./60,vav,'-r')
 xlabel('Time (min)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_colony3_eTraces.png'])
-saveas(gcf, [basename,'_colony3_eTraces.fig'])
+saveas(gcf, [basename,'_colony1_eTraces.png'])
+saveas(gcf, [basename,'_colony1_eTraces.fig'])
 %  
 % figure(6), title('Elongation Rate vs. Time')
 % hold on
