@@ -18,22 +18,20 @@ dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/fig
 basenames = {'12082021_Exp1', '04052022_Exp2', '04052022_Exp1'};
 labels = {'Frame Rate = 2 s','Frame Rate = 10 s', 'Frame Rate = 20 s'};
 lysis = {[7,9]; [7,9]; [6, 9]}; %lysis FRAMES
-phi = 0.0064;
-rho0 = 0.03;
-intercept = 0.0282;
+rho1 = 0.03;
 
 %%%%%%%%%%%%%%%%%%%
 [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
-[normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis);
+[normTime, normTrace, normTrace2] = dataNormalize(times, adjTrace, lysis);
 
 %% calculate alpha and find beta and the intercept
 alpha0 = 1;
-param0=[0.03, 0.2];
+rho0 = 0;
 
 % [alpha, alpha_yhat] = alphaCalc(normTrace(:, 1), normTrace(:, 2), alpha0);
 % [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha);
 
-[rho, B, rho_yhat] = rhoCalc(normTrace(:, 1), normTrace(:, 2), param0);
+[rho, rho_yhat] = rhoCalc(normTime, normTrace,  rho0);
 [rhoCoef, rhoFit] = rhoLinear(frameRate, rho);
 
 %% plot the fit of alpha
@@ -63,8 +61,8 @@ for i=1:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = [0:length(normTrace{i, 1})-1];
-    y1 = normTrace{i, 2};
+    x = [0:length(normTime{i})-1];
+    y1 = normTrace{i};
     y2 = rho_yhat{i};
     
     plot(x, y1, 'Color', okabeIto{i}), hold on
@@ -74,16 +72,18 @@ for i=1:length(basenames)
     ylabel('Normalized Fluorescence (A.U.)')
     title([labels{i}])
 end
+
 %% correct the control traces
-[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), rho0, intercept, frameRate2);
+[correctedTrace]=photoCorrect(normTime, normTrace, rho1);
+[correctedTrace2]=photoCorrect(normTime, normTrace2, rho1);
 
 %% plot the control traces
 p = 0;
-n1 = 3;
+n1 = 1;
 n2 = 3;
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:length(basenames)
+for i=1 %:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
@@ -102,8 +102,8 @@ for i=1:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = normTrace{i,1};
-    y = normTrace{i,2};
+    x = normTime{i};
+    y = normTrace{i};
     
     plot(x, y, 'Color', okabeIto{i})
     ylim([0 Inf])    
@@ -113,8 +113,8 @@ for i=1:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = normTrace{i,1};
-    y = correctedTrace{i, 1};
+    x = normTime{i};
+    y = correctedTrace{i};
     [nr, nc] = size(y);
     ysmooth = nan(size(y));
     for j=1:nr
@@ -122,7 +122,58 @@ for i=1:length(basenames)
     end
     
     plot(x, ysmooth, 'Color', okabeIto{i})
+    ylim([0 5])    
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence (A.U.)')
+    title(['Corrected ' labels{i}])
+end
+
+%% plot the controls traces 
+p = 0;
+n1 = 1;
+n2 = 3;
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1 %:length(basenames)
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = times{i};
+    y1 = cellTrace{i};
+    y2 = bgTrace{i};
+    
+    plot(x, y1, 'Color', okabeIto{i}), hold on
+    plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
     ylim([0 Inf])    
+    xline(x(lysis{i}(1, 1)), '--k') %the time, not the frame
+    xline(x(lysis{i}(1, 2)), '--k') %the time, not the frame
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Raw ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTime{i};
+    y = normTrace2{i};
+    
+    plot(x, y, 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Normalized ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTime{i};
+    y = correctedTrace2{i};
+    [nr, nc] = size(y);
+    ysmooth = nan(size(y));
+    for j=1:nr
+        ysmooth(j, :) = movingaverage(y(j, :), 3);
+    end
+    
+    plot(x, ysmooth, 'Color', okabeIto{i})
+    ylim([0 1.5])    
     xlabel('Time (minutes)')
     ylabel('Normalized Fluorescence (A.U.)')
     title(['Corrected ' labels{i}])
@@ -270,12 +321,13 @@ function y = movingaverage(x,s)
     
 end
 
-function [normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis)
+function [normTime, normTrace, normTrace2] = dataNormalize(times, adjTrace, lysis)
     
     %pre-allocate variables
     [nrow, ~] = size(adjTrace);
-    normTrace = cell(nrow, 2);
-    frameRate2 = cell(nrow, 1);
+    normTime = cell(nrow, 1);
+    normTrace = cell(nrow, 1);
+    normTrace2 = cell(nrow, 1);
     
     for i=1:height(adjTrace)  
         
@@ -299,22 +351,17 @@ function [normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis)
             adjintensity(j, lval) = vq;
         end
         
-        %save the interpolated trace
-        %interpTrace{i} = adjintensity;
-        frameRate = diff(tme, 1, 2);
-        frameRate2{i} = frameRate(fval);
-        
         %adjust the time vector
-        normTrace{i,1} = tme(pval) - tme(prelysis);
+        normTime{i,1} = tme(pval) - tme(prelysis);
         
         %normalize the trace by the pre-lysis frame
-        normTrace{i, 2} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
-          
-%           pval = setdiff(1:ncol, lval);
-%           fval = setdiff(1:ncol-1, lval);
-%           frameRate2{i} = frameRate(fval);
-%           normTrace{i,1} = tme(pval);
-%           normTrace{i,2} = adjintensity(:, pval) ./ adjintensity(:, 1);
+        normTrace{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
+        
+        %subtract the final fluor value and then normalize by the pre-lysis
+        %frame
+        adjintensity = adjintensity -  min(adjintensity, [], 2);
+        normTrace2{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
+
     end
     
 end
@@ -411,19 +458,16 @@ function [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha)
 
 end
 
-function [rho, B, rho_yhat] = rhoCalc(times, normTrace, param0)
+function [rho, rho_yhat] = rhoCalc(normTime, normTrace, rho0)
     
     %pre-allocate variables
     rho = cell(height(normTrace), 1);
-    B = cell(height(normTrace), 1);
     rho_yhat = cell(height(normTrace), 1);
     
     for i=1:height(normTrace)
         
         normintensity = normTrace{i};
-        tme = times{i};
-       
-        %find out if the frame rate changes
+        tme = normTime{i};
         dt = diff(tme, 1, 2);
         
         %convert negative values to NaN
@@ -446,37 +490,17 @@ function [rho, B, rho_yhat] = rhoCalc(times, normTrace, param0)
         
         %pre-allocate output variables
         [nrow, ~]=size(normintensity);
-        paramTemp=nan(nrow,2);    
+        rhoTemp=nan(nrow,1);    
         yhatTemp=nan(size(normintensity));
     
-        %define exponential function
-        %modelfun = @(param, x)param(1)*exp(-x*param(2));
-        
-%         if dt(1)~=dt(end)
-%             idx = find(dt == dt(end), 1, 'first');
-%             xq = idx:ncol;
-%             vq = setdiff(1:ncol, xq);
-%             
-%             %fit data to the function and evaluate
-%             for j=1:nrow
-%                 A = normintensity(j,idx);
-%                 modelfun = @(rho, x)A*exp(-x*rho);
-%                 rhoTemp(j, 1)=nlinfit(xq-(idx-1), normintensity(j,xq), modelfun, rho0);
-%                 yhatTemp(j, xq)=modelfun(rhoTemp(j), xq-(idx-1));
-%                 yhatTemp(j, vq) = NaN;
-%             end
-%         else
-            %fit data to the function and evaluate
-            %modelfun = @(rho, x)exp(-x*rho);
             for j=1:nrow
-                modelfun = @(param, x)(1-0.0326)*exp(-x.*param(1)) + 0.0326;
-                paramTemp(j, :)=nlinfit(frames, normintensity(j,:), modelfun, param0);
-                yhatTemp(j, :)=modelfun(paramTemp(j, 1), frames);
+                %modelfun = @(rho, B, x)(1-B)*exp(-x.*rho) + B;
+                modelfun = @(rho, x)(1-0.0326)*exp(-x.*rho) + 0.0326;
+                rhoTemp(j, :)=nlinfit(frames, normintensity(j,:), modelfun, rho0);
+                yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frames);
             end          
-        %end
                  
-        rho{i} = paramTemp(:, 1);
-        B{i} = paramTemp(:, 2);
+        rho{i} = rhoTemp;
         rho_yhat{i} = yhatTemp;  
         
     end  
@@ -505,15 +529,16 @@ function [rhoCoef, rhoFit] = rhoLinear(frameRate, rho)
 
 end
 
-function [correctedTrace]=photoCorrect(times, normTrace, rho, intercept, frameRate2)
+function [correctedTrace]=photoCorrect(normTime, normTrace, rho)
         
-        correctedTrace = cell(height(normTrace), 6);
+        correctedTrace = cell(height(normTrace), 4);
         
         for h=1:height(normTrace)
             
             normintensity = normTrace{h};
-            tme = times{h};
+            tme = normTime{h};
             
+        
         %pre-allocate variables
         %assume that the initial 'measured' fluorescence values and corrected
         %fluor. values will be equal. I prefer to pre-allocate with nan in case 
@@ -521,61 +546,36 @@ function [correctedTrace]=photoCorrect(times, normTrace, rho, intercept, frameRa
         Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
         Cnew(:, 1)=normintensity(:,1);
              
-        dCB=nan(height(normintensity), length(tme)-1); %change in fluor. due to photobleaching
-        dCT=nan(height(normintensity), length(tme)-1); %total change in fluor.
-        dCP=nan(height(normintensity), length(tme)-1); %this is the dCP, or loss attributable to permeability
-
-        unb_frac=nan(size(normintensity)); %fraction of unbleached fluor. 
-        unb_frac(:, 1)=1;%all fluorophores are unbleached at the initial time point
-
-        Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
-        Cbl_exp(:, 1)=0;
-        
-        %this formula comes from the slope and intercept calculated for the 1.2, 2,
-        %and 3 second tau vs frame rate controls 
-       %dC=@(C, beta, dt, b)(C/(beta*dt+b))*dt;
-       %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
-        %dC=@(C, beta, t, dt, b)(C/(beta*t+b))*dt;
-       %dC=@(C, omega, dt, b)(C*(phi*dt+b))*dt;
-       
-        %calculate dt (the dt between frames may vary in a single run).
-        %Note: this is also the frame rate
-        dt=frameRate2{h};
+        [nrow, ncol] = size(normintensity);
+        dCu=nan(nrow, ncol-1);
+        igamma=nan(nrow, ncol-1);
+        dCnew=nan(nrow, ncol-1);
         
         %the correction
         for n=1:height(normintensity)
            
             for i=1:length(tme)-1
                 
-                %dCB(n,i) = dC(normintensity(n,i), beta, tme(i), dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
-   
-                %dCB(n,i) = dC(normintensity(n,i), phi, dt(i), intercept);
-                %rho = phi + intercept;
+                dCu(n,i) = normintensity(n,i+1)-normintensity(n,i);
                 
-                dCB(n,i) = normintensity(n,i) * rho;
-                
-                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
+                %if dCu(n,i) > 0
+                    %continue
+                %else
+                    igamma(n,i) = Cnew(n,i)/normintensity(n,i);
+                    
+                    dCnew(n,i) = (igamma(n,i) * dCu(n,i)) + (rho * Cnew(n,i));
 
-                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
-
-                %dCP(n,i)=dCP(n,i)*unb_frac(n,i); %Correcting for the fact that a fraction of fluorophores are unbleached
-
-                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
-
-                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
-                
-                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(n,i+1));%Calculate the new fraction of unbleached fluorophores
+                    Cnew(n,i+1) = Cnew(n,i) + dCnew(n,i);
+                %end
                 
             end  
             
         end
         
         correctedTrace{h, 1} = Cnew;
-        correctedTrace{h, 2} = dCB;
-        correctedTrace{h, 3} = dCT;
-        correctedTrace{h, 4} = dCP;
-        correctedTrace{h, 5} = Cbl_exp;
-        correctedTrace{h, 6} = unb_frac;
+        correctedTrace{h, 2} = dCu;
+        correctedTrace{h, 3} = igamma;
+        correctedTrace{h, 4} = dCnew;
         
         end
         
