@@ -15,11 +15,12 @@ dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/agg
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/CZI/';
 
 %% Part 1
-basenames = {'04052022_Exp2', '04052022_Exp1'};
-labels = {'Frame Rate = 10 s', 'Frame Rate = 20 s'};
-lysis = {[7,9]; [6, 9]}; %lysis FRAMES
-beta = 30.7512;
-intercept = 0.3947;
+basenames = {'12082021_Exp1', '04052022_Exp2', '04052022_Exp1'};
+labels = {'Frame Rate = 2 s','Frame Rate = 10 s', 'Frame Rate = 20 s'};
+lysis = {[7,9]; [7,9]; [6, 9]}; %lysis FRAMES
+phi = 0.0064;
+rho0 = 0.03;
+intercept = 0.0282;
 
 %%%%%%%%%%%%%%%%%%%
 [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
@@ -27,18 +28,18 @@ intercept = 0.3947;
 
 %% calculate alpha and find beta and the intercept
 alpha0 = 1;
-rho0=0;
+param0=[0.03, 0.2];
 
-[alpha, alpha_yhat] = alphaCalc(normTrace(:, 1), normTrace(:, 2), alpha0);
-[alphaCoef, alphaFit] = alphaLinear(frameRate, alpha);
+% [alpha, alpha_yhat] = alphaCalc(normTrace(:, 1), normTrace(:, 2), alpha0);
+% [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha);
 
-[rho, rho_yhat] = rhoCalc(normTrace(:, 1), normTrace(:, 2), rho0);
+[rho, B, rho_yhat] = rhoCalc(normTrace(:, 1), normTrace(:, 2), param0);
 [rhoCoef, rhoFit] = rhoLinear(frameRate, rho);
 
 %% plot the fit of alpha
 p = 0;
 n1 = 1;
-n2 = 2;
+n2 = 3;
 
 % figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 % for i=1:length(basenames)
@@ -62,7 +63,7 @@ for i=1:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = [1:length(normTrace{i, 1})];
+    x = [0:length(normTrace{i, 1})-1];
     y1 = normTrace{i, 2};
     y2 = rho_yhat{i};
     
@@ -74,11 +75,11 @@ for i=1:length(basenames)
     title([labels{i}])
 end
 %% correct the control traces
-[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), beta, intercept, frameRate2);
+[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), rho0, intercept, frameRate2);
 
 %% plot the control traces
 p = 0;
-n1 = 2;
+n1 = 3;
 n2 = 3;
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
@@ -127,21 +128,55 @@ for i=1:length(basenames)
     title(['Corrected ' labels{i}])
 end
 
+%% plot rho vs frame rate
+dx = [];
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:3    
+    x = frameRate{i}(end);
+    dx = [dx x];
+    y = rho{i}';
+    ybar = mean(y, 2, 'omitnan');
+    err = std(y, 0, 2, 'omitnan');
+    
+    scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
+    scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+    errorbar(x, ybar, err, 'Color', 'black')
+end  
+plot([0, dx], rhoFit, '--k', 'LineWidth', 1.5)
+
+% dx = [];
+% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+% for i=1:3    
+%     x = frameRate{i}(end);
+%     dx = [dx x];
+%     y = B{i}';
+%     ybar = mean(y, 2, 'omitnan');
+%     err = std(y, 0, 2, 'omitnan');
+%     
+%     scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
+%     scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+%     errorbar(x, ybar, err, 'Color', 'black')
+% end  
+% plot([0, dx], rhoFit, '--k', 'LineWidth', 1.5)
 %% Part 2
-basenames = {'04242022_Exp1'};
-labels = {'Untreated'};
-lysis = {[7, 10]}; %lysis FRAMES
+% basenames = {'04242022_Exp1'};
+% labels = {'Untreated'};
+
+basenames = {'04242022_Exp1', '04252022_Exp1', '04262022_Exp1'};
+labels = {'Untreated', 'PBS', 'Tunicamycin'};
+lysis = {[7,9]; [11,15]; [12,19]}; %lysis FRAMES
 beta = 20.7130;
+rho = 0.03;
 intercept = 3.1772;
 
 %%%%%%%%%%%%%%%%%%%
 [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
 [normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis);
-[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), beta, intercept, frameRate2);
+[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), rho, intercept, frameRate2);
 
 %% plot the untreated trace
 p = 0;
-n1 = 1;
+n1 = 3;
 n2 = 3;
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
@@ -206,7 +241,7 @@ function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirp
         adjTrace{i} = adjintensity;
         times{i} = time;
         lCell{i} = lcell;
-        frameRate{i} = [0, diff(time, 1, 2)];
+        frameRate{i} = diff(time, 1, 2);
         clear intensity adjintensity bgintensity time
 
     end
@@ -262,7 +297,6 @@ function [normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis)
         for j=1:nrow
             vq = interp1(x, adjintensity(j, nval), xq);
             adjintensity(j, lval) = vq;
-            adjintensity(j, lval) = NaN;
         end
         
         %save the interpolated trace
@@ -333,7 +367,7 @@ function [alpha, alpha_yhat] = alphaCalc(times, normTrace, alpha0)
             %fit data to the function and evaluate
             for j=1:nrow
                 A = normintensity(j,idx);
-                modelfun = @(alpha, t)A*exp(-t./alpha);
+                modelfun = @(alpha, t)A*exp(-t./alpha) + (1-A);
                 alphaTemp(j, 1)=nlinfit(tme(xq)-tme(idx), normintensity(j,xq), modelfun, alpha0);
                 yhatTemp(j, xq)=modelfun(alphaTemp(j), tme(xq)-tme(idx));
                 yhatTemp(j, vq)=NaN;
@@ -377,10 +411,11 @@ function [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha)
 
 end
 
-function [rho, rho_yhat] = rhoCalc(times, normTrace, rho0)
+function [rho, B, rho_yhat] = rhoCalc(times, normTrace, param0)
     
     %pre-allocate variables
     rho = cell(height(normTrace), 1);
+    B = cell(height(normTrace), 1);
     rho_yhat = cell(height(normTrace), 1);
     
     for i=1:height(normTrace)
@@ -398,7 +433,7 @@ function [rho, rho_yhat] = rhoCalc(times, normTrace, rho0)
         [nrow, ncol]=size(normintensity); 
         idx=find(sum(isnan(normintensity), 2) < ncol-1); %the sum of the NaNs should be 1 less than the number of time points
         normintensity=normintensity(idx, :);
-        frames = 1:ncol;
+        frames = 0:ncol-1;
         
         if dt(1)~=dt(end)
             imstart = find(dt == dt(end), 1, 'first');
@@ -411,35 +446,37 @@ function [rho, rho_yhat] = rhoCalc(times, normTrace, rho0)
         
         %pre-allocate output variables
         [nrow, ~]=size(normintensity);
-        rhoTemp=nan(nrow,1);    
+        paramTemp=nan(nrow,2);    
         yhatTemp=nan(size(normintensity));
     
         %define exponential function
         %modelfun = @(param, x)param(1)*exp(-x*param(2));
         
-        if dt(1)~=dt(end)
-            idx = find(dt == dt(end), 1, 'first');
-            xq = idx:ncol;
-            vq = setdiff(1:ncol, xq);
-            
+%         if dt(1)~=dt(end)
+%             idx = find(dt == dt(end), 1, 'first');
+%             xq = idx:ncol;
+%             vq = setdiff(1:ncol, xq);
+%             
+%             %fit data to the function and evaluate
+%             for j=1:nrow
+%                 A = normintensity(j,idx);
+%                 modelfun = @(rho, x)A*exp(-x*rho);
+%                 rhoTemp(j, 1)=nlinfit(xq-(idx-1), normintensity(j,xq), modelfun, rho0);
+%                 yhatTemp(j, xq)=modelfun(rhoTemp(j), xq-(idx-1));
+%                 yhatTemp(j, vq) = NaN;
+%             end
+%         else
             %fit data to the function and evaluate
+            %modelfun = @(rho, x)exp(-x*rho);
             for j=1:nrow
-                A = normintensity(j,idx);
-                modelfun = @(rho, x)A*exp(-x*rho);
-                rhoTemp(j, 1)=nlinfit(xq-(idx-1), normintensity(j,xq), modelfun, rho0);
-                yhatTemp(j, xq)=modelfun(rhoTemp(j), xq-(idx-1));
-                yhatTemp(j, vq) = NaN;
-            end
-        else
-            %fit data to the function and evaluate
-            modelfun = @(rho, x)exp(-x*rho);
-            for j=1:nrow
-                rhoTemp(j, 1)=nlinfit(frames, normintensity(j,:), modelfun, rho0);
-                yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frames);
+                modelfun = @(param, x)(1-0.0326)*exp(-x.*param(1)) + 0.0326;
+                paramTemp(j, :)=nlinfit(frames, normintensity(j,:), modelfun, param0);
+                yhatTemp(j, :)=modelfun(paramTemp(j, 1), frames);
             end          
-        end
+        %end
                  
-        rho{i} = rhoTemp;
+        rho{i} = paramTemp(:, 1);
+        B{i} = paramTemp(:, 2);
         rho_yhat{i} = yhatTemp;  
         
     end  
@@ -468,7 +505,7 @@ function [rhoCoef, rhoFit] = rhoLinear(frameRate, rho)
 
 end
 
-function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept, frameRate2)
+function [correctedTrace]=photoCorrect(times, normTrace, rho, intercept, frameRate2)
         
         correctedTrace = cell(height(normTrace), 6);
         
@@ -498,7 +535,8 @@ function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept, frameR
         %and 3 second tau vs frame rate controls 
        %dC=@(C, beta, dt, b)(C/(beta*dt+b))*dt;
        %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
-        dC=@(C, beta, t, dt, b)(C/(beta*t+b))*dt;
+        %dC=@(C, beta, t, dt, b)(C/(beta*t+b))*dt;
+       %dC=@(C, omega, dt, b)(C*(phi*dt+b))*dt;
        
         %calculate dt (the dt between frames may vary in a single run).
         %Note: this is also the frame rate
@@ -509,13 +547,18 @@ function [correctedTrace]=photoCorrect(times, normTrace, beta, intercept, frameR
            
             for i=1:length(tme)-1
                 
-                dCB(n,i) = dC(normintensity(n,i), beta, tme(i), dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
+                %dCB(n,i) = dC(normintensity(n,i), beta, tme(i), dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
    
+                %dCB(n,i) = dC(normintensity(n,i), phi, dt(i), intercept);
+                %rho = phi + intercept;
+                
+                dCB(n,i) = normintensity(n,i) * rho;
+                
                 dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
 
                 dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
 
-                dCP(n,i)=dCP(n,i)*unb_frac(n,i); %Correcting for the fact that a fraction of fluorophores are unbleached
+                %dCP(n,i)=dCP(n,i)*unb_frac(n,i); %Correcting for the fact that a fraction of fluorophores are unbleached
 
                 Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
 
