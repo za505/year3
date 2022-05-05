@@ -66,7 +66,7 @@ tic
 %%User Input
 basename='04242022_Exp2';%Name of the image stack, used to save file.
 multiExp=1;
-multiScale=0;
+multiScale=1;
 
 if multiExp==1
     dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
