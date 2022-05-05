@@ -14,30 +14,29 @@ okabeIto = [okabeIto, okabeIto];
 dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/CZI/';
 
-%% Part 1
-basenames = {'12082021_Exp1', '04052022_Exp2', '04052022_Exp1'};
-labels = {'Frame Rate = 2 s','Frame Rate = 10 s', 'Frame Rate = 20 s'};
-lysis = {[7,9]; [7,9]; [6, 9]}; %lysis FRAMES
-rho1 = 0.03;
+basenames = {'12082021_Exp1', '12082021_Exp2', '04052022_Exp2', '04052022_Exp1'};
+labels = {'Frame Rate = 2 s','Frame Rate = 3 s', 'Frame Rate = 10 s', 'Frame Rate = 20 s'};
 
-%%%%%%%%%%%%%%%%%%%
+%% Load the data and normalize
 [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
-[normTime, normTrace, normTrace2] = dataNormalize(times, adjTrace, lysis);
+[normTime, normTrace] = dataNormalize(times, adjTrace);
 
-%% calculate alpha and find beta and the intercept
-alpha0 = 1;
-rho0 = 0;
-
-% [alpha, alpha_yhat] = alphaCalc(normTrace(:, 1), normTrace(:, 2), alpha0);
+%% calculate alpha
+% alpha0 = 1;
+% 
+% [alpha, alpha_yhat] = alphaCalc(normTime, normTrace, alpha0);
 % [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha);
 
-[rho, rho_yhat] = rhoCalc(normTime, normTrace,  rho0);
+%% calculate rho
+param0 = [0, 0.01];
+
+[rho, B, rho_yhat] = rhoCalc(normTrace,  param0);
 [rhoCoef, rhoFit] = rhoLinear(frameRate, rho);
 
 %% plot the fit of alpha
 p = 0;
 n1 = 1;
-n2 = 3;
+n2 = 4;
 
 % figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 % for i=1:length(basenames)
@@ -209,67 +208,7 @@ plot([0, dx], rhoFit, '--k', 'LineWidth', 1.5)
 %     errorbar(x, ybar, err, 'Color', 'black')
 % end  
 % plot([0, dx], rhoFit, '--k', 'LineWidth', 1.5)
-%% Part 2
-% basenames = {'04242022_Exp1'};
-% labels = {'Untreated'};
 
-basenames = {'04242022_Exp1', '04252022_Exp1', '04262022_Exp1'};
-labels = {'Untreated', 'PBS', 'Tunicamycin'};
-lysis = {[7,9]; [11,15]; [12,19]}; %lysis FRAMES
-beta = 20.7130;
-rho = 0.03;
-intercept = 3.1772;
-
-%%%%%%%%%%%%%%%%%%%
-[cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
-[normTrace, frameRate2] = dataNormalize(times, adjTrace, lysis);
-[correctedTrace]=photoCorrect(normTrace(:, 1), normTrace(:, 2), rho, intercept, frameRate2);
-
-%% plot the untreated trace
-p = 0;
-n1 = 3;
-n2 = 3;
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:length(basenames)
-    
-    p = p + 1;
-    subplot(n1, n2, p)
-    x = times{i};
-    y1 = cellTrace{i};
-    y2 = bgTrace{i};
-    
-    plot(x, y1, 'Color', okabeIto{i}), hold on
-    plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
-    ylim([0 Inf])    
-    xline(x(lysis{i}(1, 1)), '--k') %the time, not the frame
-    xline(x(lysis{i}(1, 2)), '--k') %the time, not the frame
-    xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
-    title(['Raw ' labels{i}])
-    
-    p = p + 1;
-    subplot(n1, n2, p)
-    x = normTrace{i,1};
-    y = normTrace{i,2};
-    
-    plot(x, y, 'Color', okabeIto{i})
-    ylim([0 Inf])    
-    xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
-    title(['Normalized ' labels{i}])
-    
-    p = p + 1;
-    subplot(n1, n2, p)
-    x = normTrace{i,1};
-    y = correctedTrace{i, 1};
-    
-    plot(x, y, 'Color', okabeIto{i})
-    ylim([0 1.5])    
-    xlabel('Time (minutes)')
-    ylabel('Normalized Fluorescence (A.U.)')
-    title(['Corrected ' labels{i}])
-end
 %% Functions
 function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames)
 
@@ -321,13 +260,12 @@ function y = movingaverage(x,s)
     
 end
 
-function [normTime, normTrace, normTrace2] = dataNormalize(times, adjTrace, lysis)
+function [normTime, normTrace] = dataNormalize(times, adjTrace, imstart)
     
     %pre-allocate variables
     [nrow, ~] = size(adjTrace);
     normTime = cell(nrow, 1);
     normTrace = cell(nrow, 1);
-    normTrace2 = cell(nrow, 1);
     
     for i=1:height(adjTrace)  
         
@@ -338,40 +276,32 @@ function [normTime, normTrace, normTrace2] = dataNormalize(times, adjTrace, lysi
         
         [nrow, ncol] = size(adjintensity);
         
-        if dt(1)==dt(end)
-        %interpolate values obtained during detergent perfusion
-        prelysis = lysis{i}(1,1)-1; %the frame
-        else 
-            idx = find(dt == dt(end), 1, 'first');
-            prelysis = idx;
+        if nargin < 3
+            imstart = find(dt == dt(end), 1, 'first');
+            prelysis = imstart;
+        else
+            prelysis = imstart;
+            lval = [prelysis + 1 : prelysis + 4];
+            nval = setdiff(1:ncol, lval); %non-lysis frames
+            pval = setdiff(prelysis:ncol, lval);
+            fval = setdiff(prelysis:ncol-1, lval);
+        
+            xq = tme(lval); %the lysis times
+            x = setdiff(tme, xq); %the non-lysis times
+        
+            for j=1:nrow
+                vq = interp1(x, adjintensity(j, nval), xq);
+                adjintensity(j, lval) = vq;
+            end
         end
         
-        lval = lysis{i}(1,1):lysis{i}(1,2); %the lysis frames
-        nval = setdiff(1:ncol, lval); %non-lysis frames
-        pval = setdiff(prelysis:ncol, lval);
-        fval = setdiff(prelysis:ncol-1, lval);
-        
-        xq = tme(lval); %the lysis times
-        x = setdiff(tme, xq); %the non-lysis times
-        
-        for j=1:nrow
-            vq = interp1(x, adjintensity(j, nval), xq);
-            adjintensity(j, lval) = vq;
-        end
         
         %adjust the time vector
-        %normTime{i,1} = tme(pval) - tme(prelysis);
         normTime{i,1} = tme(prelysis:end) - tme(prelysis);
         
         %normalize the trace by the pre-lysis frame
-        %normTrace{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
         normTrace{i, 1} = adjintensity(:, prelysis:end) ./ adjintensity(:, prelysis);
-        
-        %subtract the final fluor value and then normalize by the pre-lysis
-        %frame
-        adjintensity = adjintensity -  min(adjintensity, [], 2);
-        %normTrace2{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
-        normTrace2{i, 1} = adjintensity(:, prelysis:end) ./ adjintensity(:, prelysis);
+
     end
     
 end
@@ -468,17 +398,16 @@ function [alphaCoef, alphaFit] = alphaLinear(frameRate, alpha)
 
 end
 
-function [rho, rho_yhat] = rhoCalc(normTime, normTrace, rho0)
+function [rho, B, rho_yhat] = rhoCalc(normTrace, param0)
     
     %pre-allocate variables
     rho = cell(height(normTrace), 1);
+    B = cell(height(normTrace), 1);
     rho_yhat = cell(height(normTrace), 1);
     
     for i=1:height(normTrace)
         
         normintensity = normTrace{i};
-        tme = normTime{i};
-        dt = diff(tme, 1, 2);
         
         %convert negative values to NaN
         normintensity(normintensity<0) = NaN;
@@ -489,46 +418,30 @@ function [rho, rho_yhat] = rhoCalc(normTime, normTrace, rho0)
         normintensity=normintensity(idx, :);
         frames = 0:ncol-1;
         
-        if dt(1)~=dt(end)
-            imstart = find(dt == dt(end), 1, 'first');
-        else 
-            imstart = 1;
-        end
-        
-        idx = find(~isnan(normintensity(:, imstart))); 
-        normintensity = normintensity(idx, :);
-        
         %pre-allocate output variables
         [nrow, ~]=size(normintensity);
-        rhoTemp=nan(nrow,1);    
+        rhoTemp=nan(nrow,2);    
         yhatTemp=nan(size(normintensity));
     
-        %define exponential function
-        %modelfun = @(param, x)param(1)*exp(-x*param(2));
+        %find the last time point of interest
+        di = diff(normintensity, 2, 2);
+        mdi = abs(mean(di, 1, 'omitnan'));
+        [~, fidx] = min(mdi);
         
-        if dt(1)~=dt(end)
-            idx = find(dt == dt(end), 1, 'first');
-            xq = idx:ncol;
-            vq = setdiff(1:ncol, xq);
-            
-            %fit data to the function and evaluate
-            for j=1:nrow
-                A = normintensity(j,idx);
-                modelfun = @(rho, x)A*exp(-x*rho);
-                rhoTemp(j, 1)=nlinfit(xq-(idx-1), normintensity(j,xq), modelfun, rho0);
-                yhatTemp(j, xq)=modelfun(rhoTemp(j), xq-(idx-1));
-                yhatTemp(j, vq) = NaN;
-            end
-        else
-            for j=1:nrow
-                B = min(normintensity(j,:));
-                modelfun = @(rho, x)exp(-x*rho) + B;
-                rhoTemp(j, :)=nlinfit(frames, normintensity(j,:), modelfun, rho0);
-                yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frames);
-            end       
-        end       
-                 
-        rho{i} = rhoTemp;
+        %define exponential function    
+        modelfun = @(param, x)(1-param(2)) * exp(-x*param(1)) + param(2);
+        x = frames(1:fidx);
+        
+        %fit data to the function and evaluate
+        for j=1:nrow
+            y = normintensity(j,1:fidx);
+            paramTemp(j, :)=nlinfit(x, y, modelfun, param0);
+            yhatTemp(j, 1:fidx)=modelfun(paramTemp(j, :), x);
+            yhatTemp(j, fidx+1:end)=NaN;
+        end
+                          
+        rho{i} = paramTemp(:, 1);
+        B{i} = paramTemp(:, 2);
         rho_yhat{i} = yhatTemp;  
         
     end  
