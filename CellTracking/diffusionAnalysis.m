@@ -14,7 +14,7 @@ okabeIto = [okabeIto, okabeIto];
 dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/CZI/';
 
-basenames = {'12082021_Exp1', '12082021_Exp2', '04052022_Exp2', '04052022_Exp1'};
+basenames = {'12082021_Exp1', '04242022_Exp2', '04052022_Exp2', '04052022_Exp1'};
 labels = {'Frame Rate = 2 s','Frame Rate = 3 s', 'Frame Rate = 10 s', 'Frame Rate = 20 s'};
 
 %% Load the data and normalize
@@ -181,7 +181,7 @@ end
 %% plot rho vs frame rate
 dx = [];
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:3    
+for i=1:4   
     x = frameRate{i}(end);
     dx = [dx x];
     y = rho{i}';
@@ -424,9 +424,12 @@ function [rho, B, rho_yhat] = rhoCalc(normTrace, param0)
         yhatTemp=nan(size(normintensity));
     
         %find the last time point of interest
-        di = diff(normintensity, 2, 2);
-        mdi = abs(mean(di, 1, 'omitnan'));
-        [~, fidx] = min(mdi);
+%         di = diff(normintensity, 2, 2);
+%         mdi = abs(mean(di, 1, 'omitnan'));
+%         [~, fidx] = min(mdi);
+        
+        mint = mean(normintensity, 1, 'omitnan');
+        fidx = find(mint >= 0.15, 1, 'last');
         
         %define exponential function    
         modelfun = @(param, x)(1-param(2)) * exp(-x*param(1)) + param(2);
