@@ -334,9 +334,17 @@ function [normTime, normTrace, normTrace2] = dataNormalize(times, adjTrace, lysi
         adjintensity = adjTrace{i};
         tme = times{i};
         
-        %interpolate values obtained during detergent perfusion
+        dt = diff(tme, 1, 2);
+        
         [nrow, ncol] = size(adjintensity);
+        
+        if dt(1)==dt(end)
+        %interpolate values obtained during detergent perfusion
         prelysis = lysis{i}(1,1)-1; %the frame
+        else 
+            idx = find(dt == dt(end), 1, 'first');
+            prelysis = idx;
+        end
         
         lval = lysis{i}(1,1):lysis{i}(1,2); %the lysis frames
         nval = setdiff(1:ncol, lval); %non-lysis frames
@@ -352,16 +360,18 @@ function [normTime, normTrace, normTrace2] = dataNormalize(times, adjTrace, lysi
         end
         
         %adjust the time vector
-        normTime{i,1} = tme(pval) - tme(prelysis);
+        %normTime{i,1} = tme(pval) - tme(prelysis);
+        normTime{i,1} = tme(prelysis:end) - tme(prelysis);
         
         %normalize the trace by the pre-lysis frame
-        normTrace{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
+        %normTrace{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
+        normTrace{i, 1} = adjintensity(:, prelysis:end) ./ adjintensity(:, prelysis);
         
         %subtract the final fluor value and then normalize by the pre-lysis
         %frame
         adjintensity = adjintensity -  min(adjintensity, [], 2);
-        normTrace2{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
-
+        %normTrace2{i, 1} = adjintensity(:, pval) ./ adjintensity(:, prelysis);
+        normTrace2{i, 1} = adjintensity(:, prelysis:end) ./ adjintensity(:, prelysis);
     end
     
 end
@@ -493,12 +503,30 @@ function [rho, rho_yhat] = rhoCalc(normTime, normTrace, rho0)
         rhoTemp=nan(nrow,1);    
         yhatTemp=nan(size(normintensity));
     
+        %define exponential function
+        %modelfun = @(param, x)param(1)*exp(-x*param(2));
+        
+        if dt(1)~=dt(end)
+            idx = find(dt == dt(end), 1, 'first');
+            xq = idx:ncol;
+            vq = setdiff(1:ncol, xq);
+            
+            %fit data to the function and evaluate
             for j=1:nrow
-                %modelfun = @(rho, B, x)(1-B)*exp(-x.*rho) + B;
-                modelfun = @(rho, x)(1-0.0326)*exp(-x.*rho) + 0.0326;
+                A = normintensity(j,idx);
+                modelfun = @(rho, x)A*exp(-x*rho);
+                rhoTemp(j, 1)=nlinfit(xq-(idx-1), normintensity(j,xq), modelfun, rho0);
+                yhatTemp(j, xq)=modelfun(rhoTemp(j), xq-(idx-1));
+                yhatTemp(j, vq) = NaN;
+            end
+        else
+            for j=1:nrow
+                B = min(normintensity(j,:));
+                modelfun = @(rho, x)exp(-x*rho) + B;
                 rhoTemp(j, :)=nlinfit(frames, normintensity(j,:), modelfun, rho0);
                 yhatTemp(j, :)=modelfun(rhoTemp(j, 1), frames);
-            end          
+            end       
+        end       
                  
         rho{i} = rhoTemp;
         rho_yhat{i} = yhatTemp;  
@@ -531,14 +559,13 @@ end
 
 function [correctedTrace]=photoCorrect(normTime, normTrace, rho)
         
-        correctedTrace = cell(height(normTrace), 4);
+         correctedTrace = cell(height(normTrace), 6);
         
         for h=1:height(normTrace)
             
             normintensity = normTrace{h};
             tme = normTime{h};
             
-        
         %pre-allocate variables
         %assume that the initial 'measured' fluorescence values and corrected
         %fluor. values will be equal. I prefer to pre-allocate with nan in case 
@@ -546,39 +573,61 @@ function [correctedTrace]=photoCorrect(normTime, normTrace, rho)
         Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
         Cnew(:, 1)=normintensity(:,1);
              
-        [nrow, ncol] = size(normintensity);
-        dCu=nan(nrow, ncol-1);
-        igamma=nan(nrow, ncol-1);
-        dCnew=nan(nrow, ncol-1);
+        dCB=nan(height(normintensity), length(tme)-1); %change in fluor. due to photobleaching
+        dCT=nan(height(normintensity), length(tme)-1); %total change in fluor.
+        dCP=nan(height(normintensity), length(tme)-1); %this is the dCP, or loss attributable to permeability
+
+        unb_frac=nan(size(normintensity)); %fraction of unbleached fluor. 
+        unb_frac(:, 1)=1;%all fluorophores are unbleached at the initial time point
+
+        Cbl_exp=nan(size(normintensity));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
+        Cbl_exp(:, 1)=0;
+        
+        %this formula comes from the slope and intercept calculated for the 1.2, 2,
+        %and 3 second tau vs frame rate controls 
+       %dC=@(C, beta, dt, b)(C/(beta*dt+b))*dt;
+       %dC=@(C, alpha, dt, b)((C*exp(-dt/(alpha*dt+b)))*(1/(alpha*dt+b))*dt);
+        %dC=@(C, beta, t, dt, b)(C/(beta*t+b))*dt;
+       %dC=@(C, omega, dt, b)(C*(phi*dt+b))*dt;
+       
+        %calculate dt (the dt between frames may vary in a single run).
+        %Note: this is also the frame rate
         
         %the correction
         for n=1:height(normintensity)
            
             for i=1:length(tme)-1
                 
-                dCu(n,i) = normintensity(n,i+1)-normintensity(n,i);
+                %dCB(n,i) = dC(normintensity(n,i), beta, tme(i), dt(i), intercept); %this is the amount of photobleaching that occured in our measured value
+   
+                %dCB(n,i) = dC(normintensity(n,i), phi, dt(i), intercept);
+                %rho = phi + intercept;
                 
-                %if dCu(n,i) > 0
-                    %continue
-                %else
-                    igamma(n,i) = Cnew(n,i)/normintensity(n,i);
-                    
-                    dCnew(n,i) = (igamma(n,i) * dCu(n,i)) + (rho * Cnew(n,i));
+                dCB(n,i) = normintensity(n,i) * rho;
+                
+                dCT(n,i) = normintensity(n, i+1) - normintensity(n, i); %this is the total fluor. loss for the measured value
 
-                    Cnew(n,i+1) = Cnew(n,i) + dCnew(n,i);
-                %end
+                dCP(n, i) = dCT(n,i) + dCB(n,i); %this is the amount of loss attributable to permeability
+
+                %dCP(n,i)=dCP(n,i)*unb_frac(n,i); %Correcting for the fact that a fraction of fluorophores are unbleached
+
+                Cnew(n,i+1)=Cnew(n,i)+dCP(n,i);
+
+                Cbl_exp(n,i+1)=Cbl_exp(n,i)+dCB(n,i)+dCP(n,i)*(1-unb_frac(n,i));%Accounting fo the change in concentration fo bleached fluorophores
+                
+                unb_frac(n,i+1)=(normintensity(n,i+1))/(normintensity(n,i+1)+Cbl_exp(n,i+1));%Calculate the new fraction of unbleached fluorophores
                 
             end  
             
         end
         
         correctedTrace{h, 1} = Cnew;
-        correctedTrace{h, 2} = dCu;
-        correctedTrace{h, 3} = igamma;
-        correctedTrace{h, 4} = dCnew;
-        
+        correctedTrace{h, 2} = dCB;
+        correctedTrace{h, 3} = dCT;
+        correctedTrace{h, 4} = dCP;
+        correctedTrace{h, 5} = Cbl_exp;
+        correctedTrace{h, 6} = unb_frac;
         end
-        
 end
 
 function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0)
