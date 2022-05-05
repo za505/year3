@@ -64,16 +64,16 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='04242022_Exp1';%Name of the image stack, used to save file.
+basename='04262022_Exp1';%Name of the image stack, used to save file.
 multiExp=1;
 multiScale=0;
 
 if multiExp==1
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_phase/' basename '_cell01'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 else
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '_colony1/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '_cell01/' basename '_phase/' basename '_cell01'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '_cell01/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 end
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
@@ -89,23 +89,24 @@ elseif multiScale==1
 end
 
 thresh=0;%For default, enter zero.
-IntThresh=100;%Threshold used to enhance contrast. Default:35000
+IntThresh=1000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=3;%Parameter used in edge detection, default=2
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width, default 0.2
 maxW=1.5;%Maximum cell width
 minA=100;%Minimum cell area. default 50
-maxA=20000; %maximum cell area. default 2000
+maxA=1000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
-vis=0;%Display cell tracking? 0=No, 1=Yes.
+vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 troubleshooting=1;
+splitFrame=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony1_BT'])
+    load([basename '_cell01_BT'])
     troubleshooting=0;
 else
 
@@ -192,7 +193,8 @@ for t=1:T
 
     %Find edges
     [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
-    %imshow(ed2),pause, close
+%     imshow(ed2),pause, close
+
     
     %Clean image
     cc=bwconncomp(ed2,8); %default 8
@@ -200,7 +202,7 @@ for t=1:T
     idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>IntThresh);
     %idx=find([stats.Area]>minA&[stats.MeanIntensity]>IntThresh);
     ed2=ismember(labelmatrix(cc),idx);
-    
+        
     %Close gaps in edges
     despurred=bwmorph(ed2,'spur');
     spurs=ed2-despurred;
@@ -210,7 +212,7 @@ for t=1:T
         ed2(spy(k),spx(k))=1;
     end
     ed2=bwmorph(ed2,'bridge'); 
-  
+            
     se=strel('disk',dr);
     ed2=imdilate(ed2,se);
     ed2=bwmorph(ed2,'thin',2);
@@ -221,21 +223,20 @@ for t=1:T
     ed3(end,:)=ones(1,imN);
     ed3(:,1)=ones(imM,1);
     ed3(:,end)=ones(imM,1);
-    
+              
     cc=bwconncomp(ed3,4);
     stats=regionprops(cc,imc,'Area','MeanIntensity');
 
     %idx=find([stats.Area]>minA&[stats.Area]<maxA&[stats.MeanIntensity]>3e4);
-    idx=find([stats.Area]>minA&[stats.Area]<maxA); %new edit, 12/24/2022
-    %idx=find([stats.Area]>minA&[stats.MeanIntensity]>3e4);
+    %idx=find([stats.Area]>minA&[stats.Area]<maxA); %new edit, 12/24/2022
+    idx=find([stats.Area]>minA&[stats.MeanIntensity]>2e4);
     ed4=ismember(labelmatrix(cc),idx);
-    %imshow(ed4), pause, close
-        
+
     %Find cell areas and centroids
     bw=bwmorph(ed4,'thicken');
     [P,bw]=bwboundaries(bw,4,'noholes');
     stats=regionprops(bw,'Area','Centroid','PixelIdxList');
-    
+
     L=bwlabel(bw);    
     labels(:,:,t)=L;
     labels2(:,:,t)=bw;
@@ -282,7 +283,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
     
-if vis==1 & (t >= T-5 | t <= 5)
+if vis==1 & (t >= T-5 | t <= 10)
    figure
    imshow(im)
    hold on
@@ -383,68 +384,80 @@ end
 %     time2(fdt+1:end)=time2(fdt+1:end)-dtime(fdt)+dtime(fdt-1);
 % end
 
-%Track cells frame to frame
-tracks=zeros(size(im));
-rcents=round(allcentroids);
-linind=sub2ind(size(im),rcents(:,2),rcents(:,1));
-tracks(linind)=1;
+if splitFrame==0
+    %Track cells frame to frame
+    tracks=zeros(size(im));
+    rcents=round(allcentroids);
+    linind=sub2ind(size(im),rcents(:,2),rcents(:,1));
+    tracks(linind)=1;
 
-nhood=[0,1,0;1,1,1;0,1,0];
-tracks=imdilate(tracks,strel('disk',cellLink));
-overlay1=imoverlay(im,tracks,[.3 1 .3]);
+    nhood=[0,1,0;1,1,1;0,1,0];
+    tracks=imdilate(tracks,strel('disk',cellLink));
+    overlay1=imoverlay(im,tracks,[.3 1 .3]);
 
-[tracksL,ncells]=bwlabel(tracks,8);
+    [tracksL,ncells]=bwlabel(tracks,8);
 
-lcell=zeros(ncells,T);
-wcell=zeros(ncells,T);
-acell=zeros(ncells,T);
-pcell=zeros(ncells,T);
-B=cell(ncells,T);
-pixels=cell(ncells,T);
-mlines=cell(ncells,T);
-lcents=length(allcentroids);
+    lcell=zeros(ncells,T);
+    wcell=zeros(ncells,T);
+    acell=zeros(ncells,T);
+    pcell=zeros(ncells,T);
+    B=cell(ncells,T);
+    pixels=cell(ncells,T);
+    mlines=cell(ncells,T);
+    lcents=length(allcentroids);
 
-for i=1:lcents
-    cellid=tracksL(linind(i));
-    lcell(cellid,tstamp(i))=l(cellnum(i),tstamp(i));
-    wcell(cellid,tstamp(i))=w(cellnum(i),tstamp(i));
-    acell(cellid,tstamp(i))=a(cellnum(i),tstamp(i));
-    B{cellid,tstamp(i)}=boun{cellnum(i),tstamp(i)};
-    pixels{cellid,tstamp(i)}=pxls{cellnum(i),tstamp(i)};
-    mlines{cellid,tstamp(i)}=mline{cellnum(i),tstamp(i)};
-    pcell(cellid,tstamp(i))=pole(cellnum(i),tstamp(i));
-end
-
-%Throw away cells with only one or two time points, or less time points than
-%we want in general
-%throw away cells that lyse pre-maturely
-delind=[];
-for i=1:ncells
-    if length(nonzeros(lcell(i,:)))<=3|sum(cellfun(@isempty, B(i,:)))/T>0.3|sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
-        delind=[delind;i];
+    for i=1:lcents
+        cellid=tracksL(linind(i));
+        lcell(cellid,tstamp(i))=l(cellnum(i),tstamp(i));
+        wcell(cellid,tstamp(i))=w(cellnum(i),tstamp(i));
+        acell(cellid,tstamp(i))=a(cellnum(i),tstamp(i));
+        B{cellid,tstamp(i)}=boun{cellnum(i),tstamp(i)};
+        pixels{cellid,tstamp(i)}=pxls{cellnum(i),tstamp(i)};
+        mlines{cellid,tstamp(i)}=mline{cellnum(i),tstamp(i)};
+        pcell(cellid,tstamp(i))=pole(cellnum(i),tstamp(i));
     end
+
+    %Throw away cells with only one or two time points, or less time points than
+    %we want in general
+    %throw away cells that lyse pre-maturely
+    delind=[];
+    for i=1:ncells
+        if length(nonzeros(lcell(i,:)))<=3|sum(cellfun(@isempty, B(i,:)))/T>0.3|sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
+            delind=[delind;i];
+        end
+    end
+
+    lcell(delind,:)=[];
+    wcell(delind,:)=[];
+    acell(delind,:)=[];
+    pcell(delind,:)=[];
+    B(delind,:)=[];
+    pixels(delind,:)=[];
+    mlines(delind,:)=[];
+    [ncells,~]=size(lcell);
+
+    % delind=[1, 2, 3, 4, 5, 6, 8, 12, 14];
+    % lcell(delind,:)=[];
+    % wcell(delind,:)=[];
+    % 
+    % 
+    % acell(delind,:)=[];
+    % pcell(delind,:)=[];
+    % B(delind,:)=[];
+    % pixels(delind,:)=[];
+    % mlines(delind,:)=[];
+    % [ncells,~]=size(lcell);
+else
+    lcell=l;
+    wcell=w;
+    acell=a;
+    B=boun;
+    pixels=pxls;
+    mlines=mline;
+    pcell=pole;
+    [ncells,~]=size(lcell);
+    lcents=length(allcentroids);
 end
-
-lcell(delind,:)=[];
-wcell(delind,:)=[];
-acell(delind,:)=[];
-pcell(delind,:)=[];
-B(delind,:)=[];
-pixels(delind,:)=[];
-mlines(delind,:)=[];
-[ncells,~]=size(lcell);
-
-% delind=[1, 2, 3, 4, 5, 6, 8, 12, 14];
-% lcell(delind,:)=[];
-% wcell(delind,:)=[];
-% 
-% 
-% acell(delind,:)=[];
-% pcell(delind,:)=[];
-% B(delind,:)=[];
-% pixels(delind,:)=[];
-% mlines(delind,:)=[];
-% [ncells,~]=size(lcell);
 
 lcell(lcell==0)=NaN;
 wcell(wcell==0)=NaN;
@@ -538,10 +551,10 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_colony1_BTlab'],'labels','labels2','-v7.3')
+save([basename '_cell01_BTlab'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_colony1_BT'])
+save([basename '_cell01_BT'])
 end
 
 %% Troubleshooting
@@ -613,8 +626,8 @@ end
 xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_colony1_lTraces.png'])
-saveas(gcf,[basename,'_colony1_lTraces.fig'])
+saveas(gcf,[basename,'_cell01_lTraces.png'])
+saveas(gcf,[basename,'_cell01_lTraces.fig'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
@@ -641,8 +654,8 @@ plot(tmid./60,vav,'-r')
 xlabel('Time (min)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_colony1_eTraces.png'])
-saveas(gcf, [basename,'_colony1_eTraces.fig'])
+saveas(gcf, [basename,'_cell01_eTraces.png'])
+saveas(gcf, [basename,'_cell01_eTraces.fig'])
 %  
 % figure(6), title('Elongation Rate vs. Time')
 % hold on
