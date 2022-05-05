@@ -14,8 +14,8 @@ okabeIto = [okabeIto, okabeIto];
 dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
 dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/CZI/';
 
-basenames = {'12082021_Exp1', '04242022_Exp2', '04052022_Exp2', '04052022_Exp1'};
-labels = {'Frame Rate = 2 s','Frame Rate = 3 s', 'Frame Rate = 10 s', 'Frame Rate = 20 s'};
+basenames = {'04242022_Exp2', '04052022_Exp2', '04052022_Exp1'};
+labels = {'Frame Rate = 3 s', 'Frame Rate = 10 s', 'Frame Rate = 20 s'};
 
 %% Load the data and normalize
 [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
@@ -34,9 +34,9 @@ param0 = [0, 0.01];
 [rhoCoef, rhoFit] = rhoLinear(frameRate, rho);
 
 %% plot the fit of alpha
-p = 0;
-n1 = 1;
-n2 = 4;
+% p = 0;
+% n1 = 1;
+% n2 = length(basenames);
 
 % figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 % for i=1:length(basenames)
@@ -54,6 +54,11 @@ n2 = 4;
 %     ylabel('Fluorescence (A.U.)')
 %     title([labels{i}])
 % end
+
+%% plot the fit of rho
+p = 0;
+n1 = 1;
+n2 = length(basenames);
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:length(basenames)
@@ -73,16 +78,16 @@ for i=1:length(basenames)
 end
 
 %% correct the control traces
+rho1= 0.03;
 [correctedTrace]=photoCorrect(normTime, normTrace, rho1);
-[correctedTrace2]=photoCorrect(normTime, normTrace2, rho1);
 
 %% plot the control traces
 p = 0;
-n1 = 1;
+n1 = length(basenames);
 n2 = 3;
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1 %:length(basenames)
+for i=1:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
@@ -93,8 +98,6 @@ for i=1 %:length(basenames)
     plot(x, y1, 'Color', okabeIto{i}), hold on
     plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
     ylim([0 Inf])    
-    xline(x(lysis{i}(1, 1)), '--k') %the time, not the frame
-    xline(x(lysis{i}(1, 2)), '--k') %the time, not the frame
     xlabel('Time (minutes)')
     ylabel('Fluorescence (A.U.)')
     title(['Raw ' labels{i}])
@@ -113,58 +116,7 @@ for i=1 %:length(basenames)
     p = p + 1;
     subplot(n1, n2, p)
     x = normTime{i};
-    y = correctedTrace{i};
-    [nr, nc] = size(y);
-    ysmooth = nan(size(y));
-    for j=1:nr
-        ysmooth(j, :) = movingaverage(y(j, :), 3);
-    end
-    
-    plot(x, ysmooth, 'Color', okabeIto{i})
-    ylim([0 5])    
-    xlabel('Time (minutes)')
-    ylabel('Normalized Fluorescence (A.U.)')
-    title(['Corrected ' labels{i}])
-end
-
-%% plot the controls traces 
-p = 0;
-n1 = 1;
-n2 = 3;
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1 %:length(basenames)
-    
-    p = p + 1;
-    subplot(n1, n2, p)
-    x = times{i};
-    y1 = cellTrace{i};
-    y2 = bgTrace{i};
-    
-    plot(x, y1, 'Color', okabeIto{i}), hold on
-    plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
-    ylim([0 Inf])    
-    xline(x(lysis{i}(1, 1)), '--k') %the time, not the frame
-    xline(x(lysis{i}(1, 2)), '--k') %the time, not the frame
-    xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
-    title(['Raw ' labels{i}])
-    
-    p = p + 1;
-    subplot(n1, n2, p)
-    x = normTime{i};
-    y = normTrace2{i};
-    
-    plot(x, y, 'Color', okabeIto{i})
-    ylim([0 Inf])    
-    xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
-    title(['Normalized ' labels{i}])
-    
-    p = p + 1;
-    subplot(n1, n2, p)
-    x = normTime{i};
-    y = correctedTrace2{i};
+    y = correctedTrace{i,1};
     [nr, nc] = size(y);
     ysmooth = nan(size(y));
     for j=1:nr
@@ -174,14 +126,14 @@ for i=1 %:length(basenames)
     plot(x, ysmooth, 'Color', okabeIto{i})
     ylim([0 1.5])    
     xlabel('Time (minutes)')
-    ylabel('Normalized Fluorescence (A.U.)')
+    ylabel('Fluorescence (A.U.)')
     title(['Corrected ' labels{i}])
 end
 
 %% plot rho vs frame rate
 dx = [];
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:4   
+for i=1:length(basenames)
     x = frameRate{i}(end);
     dx = [dx x];
     y = rho{i}';
@@ -193,22 +145,25 @@ for i=1:4
     errorbar(x, ybar, err, 'Color', 'black')
 end  
 plot([0, dx], rhoFit, '--k', 'LineWidth', 1.5)
-
-% dx = [];
-% figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-% for i=1:3    
-%     x = frameRate{i}(end);
-%     dx = [dx x];
-%     y = B{i}';
-%     ybar = mean(y, 2, 'omitnan');
-%     err = std(y, 0, 2, 'omitnan');
-%     
-%     scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
-%     scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
-%     errorbar(x, ybar, err, 'Color', 'black')
-% end  
-% plot([0, dx], rhoFit, '--k', 'LineWidth', 1.5)
-
+xlabel('Frame Rate (minutes)')
+ylabel('\rho')
+%% plot B as function of frame rate
+dx = [];
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(basenames)  
+    x = frameRate{i}(end);
+    dx = [dx x];
+    y = B{i}';
+    ybar = mean(y, 2, 'omitnan');
+    err = std(y, 0, 2, 'omitnan');
+    
+    scatter(repelem(x, length(y)), y, 'MarkerFaceColor', okabeIto{i}, 'MarkerEdgeColor', okabeIto{i}), hold on
+    scatter(x, ybar, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black')
+    errorbar(x, ybar, err, 'Color', 'black')
+end  
+xlim([0 0.4])
+xlabel('Frame Rate (minutes)')
+ylabel('B')
 %% Functions
 function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames)
 
