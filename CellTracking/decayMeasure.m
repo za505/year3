@@ -15,38 +15,72 @@ clear, close all
 %OUTPUT:
 %icell_intensity = cell x time matrix of fluoresc. intensities
 %bg_intensity = 1 x time matrix of mean background intensities
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='10302021_Exp1';%Name of the image stack, used to save file.
-% multiExp=1;
-% 
-% if multiExp==1
-%     dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
-%     savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
-%     channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
-% else
-%     dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '_colony3/' basename '_phase/' basename '_figures']; %Directory that the BT.mat files is saved in
-%     savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
-%     channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04112022_analysis/' basename '_colony3/' basename '_mNeonGreen/' basename '_aligned']}; %Directory that the image stack is saved in.
-% end
+basename='04262022_Exp1';%Name of the image stack, used to save file.
 
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/reanalysis/' basename '/' basename '_colony3/']; %Directory that the BT.mat files is saved in
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/reanalysis/' basename '/' basename '_colony3/']; %Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/reanalysis/' basename '/' basename '_colony3/' basename '_aligned']}; %Directory that the image stack is saved in.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_phase/' basename '_figures/']; %Directory that the BT.mat files is saved in
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
+savedir2=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/raw/' ]; %Directory to save the output .mat file to.
+channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_mNeonGreen/' basename '_cell01']}; %Directory that the image stack is saved in.
 
-%savedir2=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/03262022_analysis'];%Directory to save the output .mat file to.
-recrunch=2;
-replot=1;
+recrunch=0;
 troubleshoot=2;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-if recrunch==1
+if recrunch==2
     cd(savedir)
-    load([basename '_colony3_dm.mat'])
-    replot=0;
-    troubleshoot=2;
+    load([basename '_cell01_dm.mat'])
     
-elseif recrunch==0
+    cd(channels{1});
+        
+    imagename=fluo_directory{1}(1).name;
+    im=imread(imagename);
+    sz = size(im);
+    improxy = zeros(sz);
+    
+    for t=1:T
+        t
+        imagename=fluo_directory{1}(t).name;
+        im=imread(imagename);
+
+        for n=1:ncells
+            [xv,yv] = ind2sub(sz,pixels{n,t})
+            improxy(xv, yv)=1;
+        end
+        
+        figure
+        imshow(improxy, []), hold on
+       for k=1:ncells
+            if isempty(B{k,t})==0
+               plot(B{k,t}(:,1),B{k,t}(:,2),'-g')
+            else
+                continue
+            end
+       end
+          pause
+          close all
+    end  
+        
+elseif recrunch==1
+
+    cd(savedir)
+    load([basename '_cell01_dm.mat'])
+    
+    delind=[1, 2, 3, 4, 5, 6, 8, 10, 12, 13, 14, 16];
+    
+    if ~isempty(delind)
+        idx=setdiff(1:ncells, delind);
+        icell_intensity=icell_intensity(idx,:);
+        lcell=lcell(idx,:);
+        B=B(idx,:);
+        dl=dl(idx,:);
+        ncells=length(idx);
+        pixels=pixels(idx,:);
+    end
+    
+else 
     
     for i=1:length(channels)
         cd(channels{i}); 
@@ -55,12 +89,15 @@ elseif recrunch==0
     
     %go to directory where .mat files are stored
     cd(dirname)
-    load([basename '_colony3_BT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
+    load([basename '_cell01_LT'], 'nnB', 'T', 'ncells', 'time', 'nnpixels', 'nnlcell')
 
+    B = nnB;
+    lcell = nnlcell;
+    pixels = nnpixels;
+    
     %pre-allocate variables
-    icell_intensity=nan(ncells, T);
+    icell_intensity=nan(ncells*2, T);
     bg_intensity=nan(1,T);
-    %septa=zeros(ncells, 1);
     time=time./60;
     
     %find the final pre-lysis frame 
@@ -71,25 +108,40 @@ elseif recrunch==0
     for i=1:length(channels)
         
         cd(channels{i});
-        %midx=round(T/2);
         
         imagename=fluo_directory{i}(lidx).name;
         [p1, p2]=getBackground(imagename);
         
+     
         for t=1:T
             t
             imagename=fluo_directory{i}(t).name;
             im=imread(imagename);
             
             bg_intensity(1, t)=measureBackground(im, p1, p2);
-
+            
+            p = 0;
             for n=1:ncells
-                icell_intensity(n,t)=mean(im(pixels{n,t}));
+
+                pixLength = length(pixels{n,t});
+                pixHalf = round(pixLength/2);
+                c1 = pixels{n,t}(1:pixHalf);
+                c2 = pixels{n,t}(pixHalf+1:end);
+                %intensity_value = im(pixels{n,t});
+                %pixel_location = pixels{n,t};
+                %figure, hold on, plot(pixel_location, intensity_value, 'or', 'LineStyle', 'none'), yline(bg_intensity(1, t), '--k'), ylim([0, Inf]), pause, close
+                %icell_intensity(n,t)=mean(im(pixels{n,t}));
+                p = p + 1;
+                icell_intensity(p,t)=mean(im(c1));
+                
+                p = p + 1;
+                icell_intensity(p,t)=mean(im(c2));
             end
             
         end  
        
-    end    
+    end
+end
 
 %% Troubleshooting
 if troubleshoot==1
@@ -118,7 +170,7 @@ elseif troubleshoot==2
     cd(channels{1});
      for k=1:ncells
             k
-            imagename=fluo_directory{1}(lidx).name;
+            imagename=fluo_directory{1}(T).name;
             im=imread(imagename);
 
 
@@ -137,107 +189,33 @@ elseif troubleshoot==2
      end
 end
 
-elseif recrunch==2
-    cd(savedir)
-    load([basename '_colony3_dm.mat'])
-    %replot=0;
-    
-    delind=[5];
-    if ~isempty(delind)
-        idx=setdiff(1:ncells, delind);
-        icell_intensity=icell_intensity(idx,:);
-        lcell=lcell(idx,:);
-        B=B(idx,:);
-        dl=dl(idx,:);
-        ncells=length(idx);
-        pixels=pixels(idx,:);
-    end
-
-end
-% prompt = 'Which cells have septa? ';
-% idx = input(prompt)
-% septa(idx, 1) = 1; 
-
 %% Plot data
-if replot==1
-    
-    cd(savedir)
-    
-    %plot cellular fluorescence traces
-        figure(1), hold on
-    for i=1:height(icell_intensity)
-        %if septa(i,1)
-            %plot(time, icell_intensity(i,:), '-m')
-        %else
-            plot(time, icell_intensity(i,:), '-g')
-        %end
-    end
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Intensity vs Time')
-    %subtitle('blue = halved','Color','blue')
-    xlabel('Time (min)')
-    ylabel('Cellular Intensity (A.U.)')
-    saveas(gcf, [basename,'_colony3_fullIntensity_dm.fig'])
-    saveas(gcf, [basename,'_colony3_fullIntensity_dm.png'])
-
-    %plot background fluorescence traces
-    figure(2), hold on
-    plot(time, bg_intensity, '-b')
-    %xline(tpt, '--', {'Membrane Lysis'})
-    title('Intensity vs Time')
-    %subtitle('blue = halved','Color','blue')
-    xlabel('Time (min)')
-    ylabel('Background Intensity (A.U.)')
-    saveas(gcf, [basename,'_colony3_bgIntensity_dm.fig'])
-    saveas(gcf, [basename,'_colony3_bgIntensity_dm.png'])
-    
-%     figure(2), hold on
-%     for i=1:height(adj_intensity)
-%         plot(time, adj_intensity(i,:), '-g')
-%     end
-%     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Adjusted Intensity of phase vs Time')
-%     %subtitle('blue = halved','Color','blue')
-%     xlabel('Time (min)')
-%     ylabel('Cellular Intensity (A.U.)')
-%     saveas(gcf, [basename,'_adjIntensity_dm.fig'])
-%     saveas(gcf, [basename,'_adjIntensity_dm.png'])
-%     
-%     %plot to see single traces of phase cells
-%     figure(3), hold on
-%     for i=1:height(norm_intensity)
-%         plot(time, norm_intensity(i,:), '-g')
-%     end
-%     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Normalized Intensity of phase vs Time')
-%     %subtitle('blue = halved','Color','blue')
-%     xlabel('Time (min)')
-%     ylabel('Cellular Intensity (A.U.)')
-%     saveas(gcf, [basename,'_normIntensity_dm.fig'])
-%     saveas(gcf, [basename,'_normIntensity_dm.png'])
-% 
-%     figure(4), hold on
-%     for n=1:height(norm_intensity)
-%         plot(time, lcell(n, 1:end), '-g')
-%     end
-%     %xline(tpt, '--', {'Membrane Lysis'})
-%     title('Cell Length vs Time')
-%     %subtitle('blue = halved','Color','blue')
-%     xlabel('Time (min)')
-%     ylabel('Length (\mum)')
-%     saveas(gcf, [basename,'_LTintensity_dm.fig'])
-%     saveas(gcf, [basename,'_LTintensity_dm.png'])
-% 
-end
-
 cd(savedir)
-save([basename '_colony3_dm.mat'])
+    
+%plot cellular fluorescence traces
+figure(1), hold on
+plot(time, icell_intensity, '-g')
+title('Intensity vs Time')
+xlabel('Time (min)')
+ylabel('Cellular Intensity (A.U.)')
+ylim([0 Inf])
+saveas(gcf, [basename,'_cell01_fullIntensity_dm.fig'])
+saveas(gcf, [basename,'_cell01_fullIntensity_dm.png'])
+
+%plot background fluorescence traces
+figure(2), hold on
+plot(time, bg_intensity, '-b')
+title('Intensity vs Time')
+xlabel('Time (min)')
+ylabel('Background Intensity (A.U.)')
+ylim([0 Inf])
+saveas(gcf, [basename,'_cell01_bgIntensity_dm.fig'])
+saveas(gcf, [basename,'_cell01_bgIntensity_dm.png'])
+   
+save([basename '_cell01_dm.mat'])
 
 cd(savedir2)
-save([basename '_colony3_dm.mat'])
-
-% cd('/Users/zarina/Documents/MATLAB/MatlabReady/mNeonGreenDiffusion_analysis/02072022_analysis/MatFiles/')
-% save([basename '_i075fr003_dm.mat'])
+save([basename '_cell01_dm.mat'])
 
 %% Functions
  function [p1, p2]=getBackground(imagename)
@@ -264,7 +242,7 @@ save([basename '_colony3_dm.mat'])
          offset = abs(point1-point2);%And dimensions
          x = [p1(1) p1(1)+offset(1) p1(1)+offset(1) p1(1) p1(1)];
          y = [p1(2) p1(2) p1(2)+offset(2) p1(2)+offset(2) p1(2)];
-         plot(x,y)
+         plot(x,y);
          p1=round(p1);
          p2=round(p2);  
  end 
