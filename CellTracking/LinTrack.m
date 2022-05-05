@@ -6,13 +6,15 @@ clear
 close all
 
 %input%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-basename='07102021_Exp1';%Name of the image stack, used to save file.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/07102021_analysis/' basename '_colony1/' basename '_phase2/' basename '_figures'];%Directory to save the output .mat file to.
+basename='04242022_Exp1';%Name of the image stack, used to save file.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_figures/'];%Directory to save the output .mat file to.
+troubleshoot=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 cd(savedir)
-load([basename '_BTphase'],'T','im','lcents','cellnum','tstamp','l','lscale', 'B', 'time', 'pixels', 'a');
-load([basename '_BTlab'], 'labels');
-ppxi=90;
+load([basename '_cell02_BT.mat'], 'T','im','lcents','cellnum','tstamp','l','lscale', 'B', 'time', 'pixels', 'a');
+load([basename '_cell02_BTlab.mat'], 'labels');
+ppxi=10;
+
 %% Part 2: Lineage Tracking
 
 %view binary movie
@@ -196,7 +198,7 @@ end
 xlabel('Time (s)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_LinlTraces.png'])
+saveas(gcf,[basename,'_cell02_LinlTraces.png'])
 
 figure, title('Elongation Rate vs. Time')
 hold on
@@ -207,25 +209,25 @@ end
 xlabel('Time (s)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_LineTraces.png'])
+saveas(gcf, [basename,'_cell02_LineTraces.png'])
 
-%%Troubleshoot Check
-for t=flip(T:1)
-figure
-imshow(im)
-hold on
-for k=1:height(nnB)
-if isempty(nnB{k,t})==0
-plot(nnB{k,t}(:,1), nnB{k,t}(:,2),'-r')
-end
-end
-pause, close
-end
+%% Troubleshoot Check
+if troubleshoot==1
+    for t=flip(1:T)
+        figure, imshow(im), hold on
 
+        for k=1:height(nnB)
+            if isempty(nnB{k,t})==0
+                plot(nnB{k,t}(:,1), nnB{k,t}(:,2),'-r')
+            end
+        end
+        pause, close
+    end
+end
 %% Save data 
 clear labels
 
 cd(savedir)
-save([basename '_LT'])
+save([basename '_cell02_LT'])
 
 beep
