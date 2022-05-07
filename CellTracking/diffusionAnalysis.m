@@ -147,6 +147,7 @@ end
 plot([0, dx], rhoFit, '--k', 'LineWidth', 1.5)
 xlabel('Frame Rate (minutes)')
 ylabel('\rho')
+
 %% plot B as function of frame rate
 dx = [];
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
@@ -164,6 +165,273 @@ end
 xlim([0 0.4])
 xlabel('Frame Rate (minutes)')
 ylabel('B')
+
+%% the experiments
+clear, close all
+
+%color palette
+okabeIto = {[230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 114, 178], [213, 94, 0], [204, 121, 167], [0, 0, 0]};
+okabeIto = cellfun(@(x)(x./255), okabeIto, 'UniformOutput', false);
+okabeIto = [okabeIto, okabeIto];
+
+dirpath = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/aggregate/';
+dirsave = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/figures/CZI/';
+
+basenames = {'04242022_Exp1', '05062022_Exp1', '04252022_Exp1', '04262022_Exp1', '05052022_Exp2'};
+labels = {'Untreated', 'Untreated', 'PBS', 'Tunicamycin', 'Spent Media'};
+
+rho1 = 0.03;
+%imstart = [6; 11; 11];
+imstart = [7; 7; 12; 12; 7];
+[cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
+[normTime, normTrace] = dataNormalize(times, adjTrace, imstart);
+[correctedTrace]=photoCorrect(normTime, normTrace, rho1);
+
+%% plot to compare lengths
+p = 0;
+n1 = 1;
+n2 = length(basenames);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(basenames)
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = times{i};
+    y = lCell{i,1};
+    [nr, nc] = size(y);
+    ysmooth = nan(size(y));
+    for j=1:nr
+        ysmooth(j, :) = movingaverage(y(j, :), 3);
+    end
+    
+    plot(x, ysmooth, 'Color', okabeIto{i})  
+    xlabel('Time (minutes)')
+    ylabel('Length (\mum)')
+    ylim([0 Inf])
+    title([labels{i}])
+end
+
+%% calculate tau
+tau0 = 10;
+[tau, tau_yhat] = tauCalc(normTime, correctedTrace, tau0);
+
+%% plot the experimental traces
+p = 0;
+n1 = length(basenames);
+n2 = 3;
+
+n1 = 2;
+n2 = 3;
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:n1
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = times{i};
+    y1 = cellTrace{i};
+    y2 = bgTrace{i};
+    
+    plot(x, y1, 'Color', okabeIto{i}), hold on
+    plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Raw ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTime{i};
+    y = normTrace{i};
+    
+    plot(x, y, 'Color', okabeIto{i})
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Normalized ' labels{i}])
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTime{i};
+    y = correctedTrace{i,1};
+    [nr, nc] = size(y);
+    ysmooth = nan(size(y));
+    for j=1:nr
+        ysmooth(j, :) = movingaverage(y(j, :), 3);
+    end
+    
+    plot(x, ysmooth, 'Color', okabeIto{i})
+    ylim([0 1.1])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(['Corrected ' labels{i}])
+end
+
+%% Untreated vs Autolysis
+x1 = normTime{1}(1:40);
+y1 = correctedTrace{1,1}(:, 1:40);
+ybar1 = mean(y1, 1, 'omitnan');
+yerr1 = std(y1, 0, 1, 'omitnan');
+ysmooth1 = movingaverage(ybar1, 3);
+
+x2 = normTime{2}(1:40);
+y2 = correctedTrace{2,1}(:, 1:40);
+ybar2 = mean(y2, 1, 'omitnan');
+yerr2 = std(y2, 0, 1, 'omitnan');
+ysmooth2 = movingaverage(ybar2, 3);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
+errorbar(x2, ysmooth2, yerr2, 'Color', okabeIto{2}, 'LineWidth', 1.5)
+ylim([0 1.2])    
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+legend(labels(1:2))
+
+%% Untreated vs Tunicamycin
+x1 = normTime{1}(1:60);
+y1 = correctedTrace{1,1}(:, 1:60);
+ybar1 = mean(y1, 1, 'omitnan');
+yerr1 = std(y1, 0, 1, 'omitnan');
+ysmooth1 = movingaverage(ybar1, 3);
+
+x3 = normTime{3}(1:60);
+y3 = correctedTrace{3,1}(:, 1:60);
+ybar3 = mean(y3, 1, 'omitnan');
+yerr3 = std(y3, 0, 1, 'omitnan');
+ysmooth3 = movingaverage(ybar3, 3);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
+errorbar(x3, ysmooth3, yerr3, 'Color', okabeIto{3}, 'LineWidth', 1.5)
+ylim([0 1.2])    
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+legend(labels([1,3]))
+
+%% Untreated vs Spent Media
+x1 = normTime{1}(1:60);
+y1 = correctedTrace{1,1}(:, 1:60);
+ybar1 = mean(y1, 1, 'omitnan');
+yerr1 = std(y1, 0, 1, 'omitnan');
+ysmooth1 = movingaverage(ybar1, 3);
+
+x3 = normTime{4}(1:60);
+y3 = correctedTrace{4,1}(:, 1:60);
+ybar3 = mean(y3, 1, 'omitnan');
+yerr3 = std(y3, 0, 1, 'omitnan');
+ysmooth3 = movingaverage(ybar3, 3);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
+errorbar(x3, ysmooth3, yerr3, 'Color', okabeIto{4}, 'LineWidth', 1.5)
+ylim([0 1.2])    
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+legend(labels([1,4]))
+
+%% plot the fits to tau
+p = 0;
+n1 = 1;
+n2 = length(basenames);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+for i=1:length(basenames)
+    
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = normTime{i};
+    y1 = correctedTrace{i};
+    y2 = tau_yhat{i};
+    
+    plot(x, y1, 'Color', okabeIto{i}), hold on
+    plot(x, y2, '--k')
+    ylim([0 Inf])    
+    xlabel('Time (minutes)')
+    ylabel('Normalized Fluorescence (A.U.)')
+    title([labels{i}])
+end
+
+%% re-do correction
+imstart2 = [7, 7, 7, 7];
+[correctedTrace2, correctedTime]=fixNstitch(times, adjTrace, correctedTrace, rho1, imstart2);
+
+%% re-plot Untreated vs Autolysis
+cd(dirsave)
+x1 = correctedTime{1}(1:40);
+y1 = correctedTrace2{1,1}(:, 1:40);
+ybar1 = mean(y1, 1, 'omitnan');
+yerr1 = std(y1, 0, 1, 'omitnan');
+ysmooth1 = movingaverage(ybar1, 3);
+
+x2 = correctedTime{2}(1:40);
+y2 = correctedTrace2{2,1}(:,1:40);
+ybar2 = mean(y2, 1, 'omitnan');
+yerr2 = std(y2, 0, 1, 'omitnan');
+ysmooth2 = movingaverage(ybar2, 3);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
+errorbar(x2, ysmooth2, yerr2, 'Color', okabeIto{2}, 'LineWidth', 1.5)
+ylim([0 1.2])    
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+legend(labels(1:2))
+saveas(gcf, 'untreatedvsautolysis.png')
+saveas(gcf, 'untreatedvsautolysis.fig')
+
+%% re-plot Untreated vs Tunicamycin
+cd(dirsave)
+% % x1 = correctedTime{1}(1:60);
+% % y1 = correctedTrace2{1,1}(:, 1:60);
+% x1 = correctedTime{1};
+% y1 = correctedTrace2{1,1};
+ybar1 = mean(y1, 1, 'omitnan');
+yerr1 = std(y1, 0, 1, 'omitnan');
+ysmooth1 = movingaverage(ybar1, 3);
+
+% x3 = correctedTime{3};
+% y3 = correctedTrace2{3,1};
+x3 = correctedTime{3}(1:60);
+y3 = correctedTrace2{3,1}(:,1:60);
+ybar3 = mean(y3, 1, 'omitnan');
+yerr3 = std(y3, 0, 1, 'omitnan');
+ysmooth3 = movingaverage(ybar3, 3);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
+errorbar(x3, ysmooth3, yerr3, 'Color', okabeIto{3}, 'LineWidth', 1.5)
+ylim([0 1.2])    
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+legend(labels([1,3]))
+saveas(gcf, 'untreatedvstunicamycin.png')
+saveas(gcf, 'untreatedvstunicamycin.fig')
+
+%% re-plot untreated vs spent
+cd(dirsave)
+x1 = correctedTime{1}(1:60);
+y1 = correctedTrace2{1,1}(:, 1:60);
+ybar1 = mean(y1, 1, 'omitnan');
+yerr1 = std(y1, 0, 1, 'omitnan');
+ysmooth1 = movingaverage(ybar1, 3);
+
+x4 = correctedTime{4}(1:60);
+y4 = correctedTrace2{4,1}(:,1:60);
+ybar4 = mean(y4, 1, 'omitnan');
+yerr4 = std(y4, 0, 1, 'omitnan');
+ysmooth4 = movingaverage(ybar4, 3);
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
+errorbar(x4, ysmooth4, yerr4, 'Color', okabeIto{4}, 'LineWidth', 1.5)
+ylim([0 1.2])    
+xlabel('Time (minutes)')
+ylabel('Fluorescence (A.U.)')
+legend(labels([1,4]))
+saveas(gcf, 'untreatedvsspent.png')
+saveas(gcf, 'untreatedvsspent.fig')
+
 %% Functions
 function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames)
 
@@ -235,7 +503,7 @@ function [normTime, normTrace] = dataNormalize(times, adjTrace, imstart)
             imstart = find(dt == dt(end), 1, 'first');
             prelysis = imstart;
         else
-            prelysis = imstart;
+            prelysis = imstart(i);
             lval = [prelysis + 1 : prelysis + 4];
             nval = setdiff(1:ncol, lval); %non-lysis frames
             pval = setdiff(prelysis:ncol, lval);
@@ -501,6 +769,65 @@ function [correctedTrace]=photoCorrect(normTime, normTrace, rho)
         end
 end
 
+function [correctedTrace2, correctedTime]=fixNstitch(times, adjTrace, correctedTrace, rho, imstart)
+    
+    correctedTrace2 = cell(size(correctedTrace));
+    correctedTime = cell(size(times));
+    
+    for i = 1:height(adjTrace)
+        prelysis = 1:imstart(i)-1;
+        adjintensity = adjTrace{i};
+        tme = times{i}(prelysis);
+        
+        [nrow, ~] = size(adjintensity);
+        normintensity = adjintensity(:, prelysis) ./ adjintensity(:, 1);
+        %[~, ncol2] = size(correctedTrace{i});
+        
+        Cnew=nan(size(normintensity));%Corrected concentration of fluorophores
+        Cnew(:, 1)=normintensity(:,1);
+               
+        %the correction
+        for n=1:nrow
+           
+            for t=1:length(tme)-1
+                
+                dCB = normintensity(n,t) * rho;
+                
+                dCT = normintensity(n, t+1) - normintensity(n, t); %this is the total fluor. loss for the measured value
+
+                dCP = dCT + dCB; %this is the amount of loss attributable to permeability
+
+                Cnew(n,t+1)=Cnew(n,t)+dCP;
+
+            end  
+        end
+        
+%         %interpolate values where LB is not perfused/where a time lapse
+%         %occured
+%         tcol = length(prelysis) + ncol2;
+%         
+%         if tcol~=ncol
+%             postlysis = ncol-ncol2;
+%             xq = setdiff(1:ncol, prelysis);
+%             xq = setdiff(xq, postlysis+1:ncol);
+%             x = [tme(prelysis), times{i}(postlysis+1)];
+%             x = tme(prelysis);
+%             vq = nan(nrow, length(xq));
+%             for n = 1:nrow
+%                 y = [normintensity(n, prelysis), correctedTrace{i}(n, 1)];
+%                 y = normintensity(n, prelysis);
+%                 vq(n, :) = interp1(x, y, xq, 'linear', 'extrap');
+%             end
+%             correctedTrace2{i} = [Cnew, vq, correctedTrace{i}];
+%         else
+            correctedTrace2{i} = [Cnew, correctedTrace{i}];
+            [~, ncol] = size(correctedTrace2{i});
+            correctedTime{i} = times{i}(1:ncol);
+%         end
+        
+    end
+end
+
 function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0)
     
     tau = cell(height(correctedTrace), 1);
@@ -509,16 +836,28 @@ function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0)
     for i = 1:height(correctedTrace)
         x = times{i};
         y = correctedTrace{i};
-          
-        ybar = mean(y, 1, 'omitnan');
-        A = ybar(1);
-        B = ybar(end);
+        [nrow, ncol] = size(y);
+        tauTemp = nan(size(y));
+        yhatTemp = nan(size(y));
+        
+%         ybar = mean(y, 1, 'omitnan');
+%         A = ybar(1);
+%         B = ybar(end);
         
         %modelfun = @(tau, t) A * exp(-t./tau) + B;
-        modelfun = @(tau, t) A * exp(log(A/B)*(1-exp(t./tau)));
         
-        tau{i} = nlinfit(x, ybar, modelfun, tau0);
-        tau_yhat{i} = modelfun(tau{i}, x);
+        for j = 1:nrow
+            A = find(~isnan(y(j, :)), 1, 'first');
+            B = find(~isnan(y(j, :)), 1, 'last');
+            %modelfun = @(tau, t) (1-B) * exp(-t./tau) + B;
+            modelfun = @(tau, t) A * exp(log(A/B)*(1-exp(t./tau)));
+            %modelfun = @(tau, t) exp(-t./tau);
+            tauTemp(j,:) = nlinfit(x, y(j, :), modelfun, tau0);
+            yhatTemp(j, :) = modelfun(tauTemp(j, :), x);
+        end
+        
+        tau{i} = tauTemp;
+        tau_yhat{i} = yhatTemp;
     end
     
 end
