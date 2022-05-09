@@ -64,16 +64,16 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='04242022_Exp2';%Name of the image stack, used to save file.
+basename='05062022_Exp1';%Name of the image stack, used to save file.
 multiExp=1;
-multiScale=1;
+multiScale=0;
 
 if multiExp==1
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_erased'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_phase/' basename '_cell05'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 else
-    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '_colony1/' basename '_phase/' basename '_colony1'];%Directory that the image stack is saved in.
-    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '_colony1/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
+    dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_cell05/' basename '_phase/' basename '_cell05'];%Directory that the image stack is saved in.
+    savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_cell05/' basename '_phase/' basename '_figures'];%Directory to save the output .mat file to.
 end
 %metaname=['/Users/Rico/Documents/MATLAB/Matlab Ready/' basename '/meGFPta.txt'];%Name of meGFPta file.  Will only work if images were taken with micromanager.
 lscale=0.08;%%Microns per pixel.
@@ -89,24 +89,24 @@ elseif multiScale==1
 end
 
 thresh=0;%For default, enter zero.
-IntThresh=1000;%Threshold used to enhance contrast. Default:35000
+IntThresh=100;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=3;%Parameter used in edge detection, default=2
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width, default 0.2
 maxW=1.5;%Maximum cell width
 minA=100;%Minimum cell area. default 50
-maxA=2500; %maximum cell area. default 2000
+maxA=3500; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
 recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=0;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
 troubleshooting=1;
-splitFrame=0;
+splitFrame=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_colony1_BT'])
+    load([basename '_cell05_BT'])
     troubleshooting=0;
 else
 
@@ -195,7 +195,7 @@ for t=1:T
     [ed2,thresh2]=edge(imc,'canny',[],sm*sqrt(2));
 %     imshow(ed2),pause, close
 
-    
+
     %Clean image
     cc=bwconncomp(ed2,8); %default 8
     stats=regionprops(cc,imc,'Area','MeanIntensity');
@@ -283,7 +283,7 @@ for t=1:T
     tstamp=[tstamp;ones(nc(t),1)*t];
     cellnum=[cellnum;(1:nc(t))'];
     
-if vis==1 & (t >= T-5 | t <= 10)
+if vis==1 & (t >= T-5 | t <= 5)
    figure
    imshow(im)
    hold on
@@ -551,10 +551,10 @@ ew(ew==0)=NaN;
 tmid=(time(2:end)+time(1:end-1))/2;
 
 cd(savedir);
-save([basename '_colony1_BTlab'],'labels','labels2','-v7.3')
+save([basename '_cell05_BTlab'],'labels','labels2','-v7.3')
 clear labels
 clear labels2
-save([basename '_colony1_BT'])
+save([basename '_cell05_BT'])
 end
 
 %% Troubleshooting
@@ -626,8 +626,8 @@ end
 xlabel('Time (min)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_colony1_lTraces.png'])
-saveas(gcf,[basename,'_colony1_lTraces.fig'])
+saveas(gcf,[basename,'_cell05_lTraces.png'])
+saveas(gcf,[basename,'_cell05_lTraces.fig'])
 
 % figure(2), title('Cell Length Average vs. Time')
 % clf
@@ -654,8 +654,8 @@ plot(tmid./60,vav,'-r')
 xlabel('Time (min)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_colony1_eTraces.png'])
-saveas(gcf, [basename,'_colony1_eTraces.fig'])
+saveas(gcf, [basename,'_cell05_eTraces.png'])
+saveas(gcf, [basename,'_cell05_eTraces.fig'])
 %  
 % figure(6), title('Elongation Rate vs. Time')
 % hold on

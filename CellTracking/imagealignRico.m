@@ -21,29 +21,32 @@
 %dftregistration.m
 %imtranslate.m
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% for 05062022_Exp1_colony1
 clear
 close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='08272021_Exp1';
-dirname={['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_full']; ['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_mNeonGreen/' basename '_full']};
-regname=['/Users/zarina/Downloads/NYU/Year3_2021_Summer/08272021_analysis/' basename '_colony6/' basename '_phase/' basename '_crop']; 
+basename='05062022_Exp1';
+dirname={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_phase/' basename '_full']; ['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_mNeonGreen/' basename '_full']}; %['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04052022_analysis/' basename '/'   basename '_colony4/' basename '_TADA/' basename '_full'];};
+regname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_phase/' basename '_crop']; 
+%frame=[11,18]; %plasmolyzed frame that is aligned
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 workdir=pwd;
-ld=length(dirname);
+ld=length(dirname); %number of channels being aligned
 
 cd(regname)
 directory=dir('*.tif');
 path(regname,path)
-T=length(directory);
-tf=T*ld;
+T=length(directory); %number of frames in each image stack
+tf=T*ld; %number of total frames to be aligned
 
-imagename=directory(1).name;
+imagename=directory(1).name; %load the first frame in the register image stack
 RefIm=imread([regname '/' imagename]);
 
-count=0;
+count=0; %to keep track of how many frames have been aligned
 for i=1:ld
     
     cd(dirname{i})
@@ -65,7 +68,7 @@ for i=1:ld
         imagename=directory(t).name;
         TestIm=imread([regname '/' imagename]);
 
-        [output NewImFT]=dftregistration(fft2(RefIm),fft2(TestIm),10);
+        [output NewImFT]=dftregistration(fft2(RefIm),fft2(TestIm),10); %all subsequent images are aligned to the first one in the stack
         NewIm=abs(ifft2(NewImFT));
 
         shft(t+1,1)=output(3);
@@ -87,4 +90,5 @@ for i=1:ld
     end
 end
 
-cd(workdir);
+
+

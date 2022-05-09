@@ -42,32 +42,53 @@ close all
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='12162021_Exp1';%Name of the image stack, used to save file.
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_647/' basename '_postShock'];%Directory that the image stack is saved in.
-phasedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_aligned'];
-cytodir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_GFP/' basename '_aligned'];
-savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_647/' basename '_figures'];%Directory to save the output .mat file to.
+basename='12162021_Exp2';%Name of the image stack, used to save file.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony3/' basename '_647/' basename '_postShock'];%Directory that the image stack is saved in.
+%phasedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony3/' basename '_phase/' basename '_aligned'];
+checkdir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony3/' basename '_GFP/' basename '_aligned'];
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony3/' basename '_647/' basename '_figures'];%Directory to save the output .mat file to.
 lscale=0.08;%%Microns per pixel.
 multiScale=0;
 tscale=30;
 thresh=0;%For default, enter zero.
-IntThresh=35000;%Threshold used to enhance contrast. Default:35000
+IntThresh=20000;%Threshold used to enhance contrast. Default:35000
 dr=1;%Radius of dilation before watershed 
 sm=2;%Parameter used in edge detection
 minL=2;%Minimum cell length
 minW=0.2;%Minimum cell width, default 0.2
 maxW=1.5;%Maximum cell width
-minA=50;%Minimum cell area. default 50
+minA=100;%Minimum cell area. default 50
 maxA=2000; %maximum cell area. default 2000
 cellLink=4;%Number of frames to ignore missing cells when tracking frame to frame
-recrunch=0;%Display data from previously crunched data? 0=No, 1=Yes.
+recrunch=1;%Display data from previously crunched data? 0=No, 1=Yes.
 vis=1;%Display cell tracking? 0=No, 1=Yes.
 checkhist=0;%Display image histogram? 0=No, 1=Yes.
-troubleshooting=1;
+troubleshooting=4;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==1
     cd(savedir)
-    load([basename '_BTphase'])
+    load([basename '_colony3_postShock'])
+    t=1;
+    troubleshooting=4;
+    
+    %load GFP image
+    cd(checkdir);
+    directory3=dir('*.tif');
+    imagename=directory3(2).name;
+    im3=imread(imagename);
+    
+    if troubleshooting == 4
+    
+    figure
+    imshow(im3), hold on
+    for k=1:ncells
+        plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+    end
+       
+    pause
+    close all
+    
+    end
 else
 
 %Determine number of frames
@@ -300,9 +321,7 @@ for t=1:T
     end
 end
 
-%Throw away cells with only one or two time points, or less time points than
-%we want in general
-%throw away cells that lyse pre-maturely
+%update variables
 ncells=height(w); 
 lcell=l;
 wcell=w;
@@ -313,16 +332,78 @@ pixels=pxls;
 mlines=mline;
 [ncells,~]=size(lcell);
 
-%remove post analysis !!!
+%% remove cells that don't overlap in the corresponding GFP frame
+%troubleshooting
+if troubleshooting == 1
 
-delind=[];
-for i=1:ncells
-    %if length(nonzeros(lcell(i,:)))<=2|sum(cellfun(@isempty, B(i,:)))/T>0.1
-    if sum(acell(i,:)<minA)>20%remove cells that area too small or big, edit 12/24/21
-        delind=[delind;i];
+    %load phase image
+%     cd(phasedir);
+%     directory2=dir('*.tif');
+%     imagename=directory2(1).name;
+%     im2=imread(imagename);
+
+    %load GFP image
+    cd(checkdir);
+    directory3=dir('*.tif');
+    imagename=directory3(1).name;
+    im3=imread(imagename);
+
+    
+    for k=1:ncells
+       k
+       figure
+       %imshowpair(im, im3)
+       imshow(im3, [])
+       hold on
+
+       for t=1:T
+         if isempty(B{k,t})==0
+            plot(B{k,t}(:,1),B{k,t}(:,2),'-w', 'LineWidth', 3)
+         else
+             continue
+         end
+       end
+       
+      pause
+      close all
+    end
+elseif troubleshooting==2
+    
+    %load phase image
+%     cd(phasedir);
+%     directory2=dir('*.tif');
+%     imagename=directory2(2).name;
+%     im2=imread(imagename);
+
+    %load GFP image
+    cd(checkdir);
+    directory3=dir('*.tif');
+    imagename=directory3(2).name;
+    im3=imread(imagename);
+
+    
+    for k=1:ncells
+       k
+       figure
+       %imshowpair(im, im3)
+       imshow(im3, [])
+       hold on
+
+       for t=1:T
+         if isempty(B{k,t})==0
+            plot(B{k,t}(:,1),B{k,t}(:,2),'-w', 'LineWidth', 3)
+         else
+             continue
+         end
+       end
+       
+      pause
+      close all
     end
 end
 
+%throw away cells that do not overlap with the GFP frame
+delind=[5,9,10,12,13];
 lcell(delind,:)=[];
 wcell(delind,:)=[];
 acell(delind,:)=[];
@@ -372,20 +453,7 @@ save([basename '_BT'])
 end
 
 %% Troubleshooting
-if troubleshooting == 1
-
-    %load phase image
-    cd(phasedir);
-    directory2=dir('*.tif');
-    imagename=directory2(1).name;
-    im2=imread(imagename);
-
-    %load phase image
-    cd(cytodir);
-    directory3=dir('*.tif');
-    imagename=directory3(1).name;
-    im3=imread(imagename);
-
+if troubleshooting == 3
     
     for k=1:ncells
        k
@@ -395,42 +463,16 @@ if troubleshooting == 1
 
        for t=1:T
          if isempty(B{k,t})==0
-            plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
+            plot(B{k,t}(:,1),B{k,t}(:,2),'-r', 'LineWidth', 2)
          else
              continue
          end
        end
-       
-%        figure(2)
-%        imshow(im2, [])
-%        hold on
-% 
-%        for t=1:T
-%          if isempty(B{k,t})==0
-%             plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
-%          else
-%              continue
-%          end
-%        end
-%        
-%        figure(3)
-%        imshow(im3, [])
-%        hold on
-% 
-%        for t=1:T
-%          if isempty(B{k,t})==0
-%             plot(B{k,t}(:,1),B{k,t}(:,2),'-r')
-%          else
-%              continue
-%          end
-%        end
 
       pause
       close all
     end
 end
-
-
 %% save data
 cd(savedir);
-save([basename '_colony1_postShock'])
+save([basename '_colony3_postShock'])

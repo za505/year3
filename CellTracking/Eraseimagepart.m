@@ -20,12 +20,12 @@ close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='12162021_Exp1';
-dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_647/' basename '_preShock'];
-%mirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/12162021_analysis/' basename '/' basename '_colony1/' basename '_phase/' basename '_aligned'];
+basename='05062022_Exp1';
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_phase/' basename '_cell06'];
+%mirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/02042022_analysis/'  basename '_colony4/' basename '_phase/' basename '_aligned'];
 split=0; %there is a break in the movie
 %split1=13; %first frame for segment 2
-%split2=; %last frame for segment 2
+%split2=; %last frame for segment 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 curdir=cd;
 
@@ -34,12 +34,11 @@ directory=dir('*.tif');
 T=length(directory);
 path(dirname,path)
        
+%Pick the regions to erase     
+[rp1, rp2, count, im1]=pickRegion(dirname, directory, 6);
     
 for t=1:T
     t
-    
-    %Pick the regions to erase     
-    [rp1, rp2, count, im1]=pickRegion(dirname, directory, t);
     
     for n=1:count
         %Load image

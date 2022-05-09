@@ -6,13 +6,13 @@ clear
 close all
 
 %input%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-basename='04242022_Exp1';%Name of the image stack, used to save file.
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04242022_analysis/' basename '/' basename '_phase/' basename '_figures/'];%Directory to save the output .mat file to.
+basename='05062022_Exp1';%Name of the image stack, used to save file.
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/' basename '_phase/' basename '_figures/'];%Directory to save the output .mat file to.
 troubleshoot=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 cd(savedir)
-load([basename '_cell02_BT.mat'], 'T','im','lcents','cellnum','tstamp','l','lscale', 'B', 'time', 'pixels', 'a');
-load([basename '_cell02_BTlab.mat'], 'labels');
+load([basename '_cell06_BT.mat'], 'T','im','lcents','cellnum','tstamp','l','lscale', 'B', 'time', 'pixels', 'a');
+load([basename '_cell06_BTlab.mat'], 'labels');
 ppxi=10;
 
 %% Part 2: Lineage Tracking
@@ -198,7 +198,7 @@ end
 xlabel('Time (s)')
 ylabel('Length (\mum)')
 fig2pretty
-saveas(gcf,[basename,'_cell02_LinlTraces.png'])
+saveas(gcf,[basename,'_cell06_LinlTraces.png'])
 
 figure, title('Elongation Rate vs. Time')
 hold on
@@ -209,7 +209,7 @@ end
 xlabel('Time (s)')
 ylabel('Elongation Rate (s^{-1})')
 fig2pretty
-saveas(gcf, [basename,'_cell02_LineTraces.png'])
+saveas(gcf, [basename,'_cell06_LineTraces.png'])
 
 %% Troubleshoot Check
 if troubleshoot==1
@@ -228,6 +228,6 @@ end
 clear labels
 
 cd(savedir)
-save([basename '_cell02_LT'])
+save([basename '_cell06_LT'])
 
 beep

@@ -213,21 +213,16 @@ for i=1:length(basenames)
 end
 
 %% calculate effective elongation rate
-dt1=times{1,1}(2:end)-times{1,1}(1:end-1);
 dl1=(lCell{1,1}(:,2:end)-lCell{1,1}(:,1:end-1))./((lCell{1,1}(:,1:end-1)+lCell{1,1}(:,2:end))/2);
 v1=dl1./dt1;
-
-dt2=times{4,1}(2:end)-times{4,1}(1:end-1);
-dl2=(lCell{4,1}(:,2:end)-lCell{4,1}(:,1:end-1))./((lCell{4,1}(:,1:end-1)+lCell{4,1}(:,2:end))/2);
-v2=dl2./dt2;
 %% plot the experimental traces
 cd(dirsave)
 
 p = 0;
-n1 = 1 %length(basenames);
+n1 = length(basenames);
 n2 = 3;
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:n1
     
     p = p + 1;
@@ -270,10 +265,9 @@ for i=1:n1
     ylabel('Fluorescence (A.U.)')
     title(['Corrected ' labels{i}])
 end
-% saveas(gcf, 'experimentalTraces.png')
-% saveas(gcf, 'experimentalTraces.fig')
-saveas(gcf, 'untreatedOnly.png')
-saveas(gcf, 'untreatedOnly.fig')
+saveas(gcf, 'experimentalTraces.png')
+saveas(gcf, 'experimentalTraces.fig')
+
 %% Untreated vs Autolysis
 x1 = normTime{1}(1:40);
 y1 = correctedTrace{1,1}(:, 1:40);
@@ -438,7 +432,7 @@ ysmooth4 = movingaverage(ybar4, 3);
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
 errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
-errorbar(x4, ysmooth4, yerr4, 'Color', okabeIto{5}, 'LineWidth', 1.5)
+errorbar(x4, ysmooth4, yerr4, 'Color', okabeIto{4}, 'LineWidth', 1.5)
 ylim([0 1.2])    
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence (A.U.)')

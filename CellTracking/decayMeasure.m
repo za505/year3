@@ -18,20 +18,22 @@ clear, close all
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %USER INPUT
-basename='04262022_Exp1';%Name of the image stack, used to save file.
+basename='05062022_Exp1';%Name of the image stack, used to save file.
 
-dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_phase/' basename '_figures/']; %Directory that the BT.mat files is saved in
-savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
+dirname=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/'  basename '_phase/' basename '_figures/']; %Directory that the BT.mat files is saved in
+savedir=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/'  basename '_mNeonGreen/' basename '_figures']; %Directory to save the output .mat file to.
 savedir2=['/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/raw/' ]; %Directory to save the output .mat file to.
-channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/04262022_analysis/' basename '/' basename '_mNeonGreen/' basename '_cell01']}; %Directory that the image stack is saved in.
+channels={['/Users/zarina/Downloads/NYU/Year3_2022_Spring/05062022_analysis/'  basename '_mNeonGreen/' basename '_cell05']}; %Directory that the image stack is saved in.
 
 recrunch=0;
 troubleshoot=2;
+LinTrack=0;
+splitCell=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 if recrunch==2
     cd(savedir)
-    load([basename '_cell01_dm.mat'])
+    load([basename '_cell05_dm.mat'])
     
     cd(channels{1});
         
@@ -66,9 +68,9 @@ if recrunch==2
 elseif recrunch==1
 
     cd(savedir)
-    load([basename '_cell01_dm.mat'])
+    load([basename '_cell05_dm.mat'])
     
-    delind=[1, 2, 3, 4, 5, 6, 8, 10, 12, 13, 14, 16];
+    delind=[1,3];
     
     if ~isempty(delind)
         idx=setdiff(1:ncells, delind);
@@ -89,14 +91,22 @@ else
     
     %go to directory where .mat files are stored
     cd(dirname)
-    load([basename '_cell01_LT'], 'nnB', 'T', 'ncells', 'time', 'nnpixels', 'nnlcell')
-
-    B = nnB;
-    lcell = nnlcell;
-    pixels = nnpixels;
     
+    if LinTrack==1
+        load([basename '_cell05_LT'], 'nnB', 'T', 'ncells', 'time', 'nnpixels', 'nnlcell')
+        B = nnB;
+        lcell = nnlcell;
+        pixels = nnpixels;
+    else
+        load([basename '_cell05_BT'], 'B', 'T', 'ncells', 'time', 'pixels', 'lcell')
+    end
+        
     %pre-allocate variables
-    icell_intensity=nan(ncells*2, T);
+    if splitCell==1
+        icell_intensity=nan(ncells*2, T);
+    else
+        icell_intensity=nan(ncells, T);
+    end
     bg_intensity=nan(1,T);
     time=time./60;
     
@@ -120,22 +130,27 @@ else
             
             bg_intensity(1, t)=measureBackground(im, p1, p2);
             
-            p = 0;
-            for n=1:ncells
+            if splitCell==1
+                p = 0;
+                for n=1:ncells
 
-                pixLength = length(pixels{n,t});
-                pixHalf = round(pixLength/2);
-                c1 = pixels{n,t}(1:pixHalf);
-                c2 = pixels{n,t}(pixHalf+1:end);
+                    pixLength = length(pixels{n,t});
+                    pixHalf = round(pixLength/2);
+                    c1 = pixels{n,t}(1:pixHalf);
+                    c2 = pixels{n,t}(pixHalf+1:end);
+                    p = p + 1;
+                    icell_intensity(p,t)=mean(im(c1));      
+                    p = p + 1;
+                    icell_intensity(p,t)=mean(im(c2));
+                end
+            else
+               for n=1:ncells
+
                 %intensity_value = im(pixels{n,t});
                 %pixel_location = pixels{n,t};
                 %figure, hold on, plot(pixel_location, intensity_value, 'or', 'LineStyle', 'none'), yline(bg_intensity(1, t), '--k'), ylim([0, Inf]), pause, close
-                %icell_intensity(n,t)=mean(im(pixels{n,t}));
-                p = p + 1;
-                icell_intensity(p,t)=mean(im(c1));
-                
-                p = p + 1;
-                icell_intensity(p,t)=mean(im(c2));
+                icell_intensity(n,t)=mean(im(pixels{n,t}));
+               end
             end
             
         end  
@@ -148,7 +163,7 @@ if troubleshoot==1
     cd(channels{1}); 
      for t=1:T
             t
-            imagename=fluo_directory{1}(1).name;
+            imagename=fluo_directory{1}(t).name;
             im=imread(imagename);
 
 
@@ -199,8 +214,8 @@ title('Intensity vs Time')
 xlabel('Time (min)')
 ylabel('Cellular Intensity (A.U.)')
 ylim([0 Inf])
-saveas(gcf, [basename,'_cell01_fullIntensity_dm.fig'])
-saveas(gcf, [basename,'_cell01_fullIntensity_dm.png'])
+saveas(gcf, [basename,'_cell05_fullIntensity_dm.fig'])
+saveas(gcf, [basename,'_cell05_fullIntensity_dm.png'])
 
 %plot background fluorescence traces
 figure(2), hold on
@@ -209,13 +224,13 @@ title('Intensity vs Time')
 xlabel('Time (min)')
 ylabel('Background Intensity (A.U.)')
 ylim([0 Inf])
-saveas(gcf, [basename,'_cell01_bgIntensity_dm.fig'])
-saveas(gcf, [basename,'_cell01_bgIntensity_dm.png'])
+saveas(gcf, [basename,'_cell05_bgIntensity_dm.fig'])
+saveas(gcf, [basename,'_cell05_bgIntensity_dm.png'])
    
-save([basename '_cell01_dm.mat'])
+save([basename '_cell05_dm.mat'])
 
 cd(savedir2)
-save([basename '_cell01_dm.mat'])
+save([basename '_cell05_dm.mat'])
 
 %% Functions
  function [p1, p2]=getBackground(imagename)

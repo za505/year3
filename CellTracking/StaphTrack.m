@@ -41,13 +41,13 @@
 
 clear
 close all
-cd /Users/Rico/Documents/MATLAB/data
 
 tic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%User Input
-basename='041913_3_Pos2_1';
-dirname=['/Matlab Ready/' basename '/' basename '_a' ];
+basename='09162021_Exp1';
+dirname=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09162021_analysis/' basename '/' basename '_colony1/' basename '_mCherry/' basename '_aligned'];
+savedir=['/Users/zarina/Downloads/NYU/Year3_2021_Fall/09162021_analysis/' basename '/' basename '_colony1/' basename '_mCherry/' basename '_figures'];
 %metaname=['/Volumes/HD-PNTU3/Matlab Ready/' basename '/' basename '.txt'];
 hsize=4;
 sigma=2;
@@ -62,20 +62,15 @@ if recrunch==1
 else
 
 %determine number of frames
-curdir=cd;
 cd(dirname);
 directory=dir('*.tif');
 T=length(directory);
-
-cd(curdir);
-path(dirname,path)
 
 nc=zeros(1,T);
 allcentroids=[];
 cellnum=[];
 tstamp=[];
 
-figure
 %track cells
 for t=1:T
     t
@@ -85,25 +80,37 @@ for t=1:T
     im=imread(imagename);
     imraw=im;
     [imM,imN]=size(im);
-    %figure,imshow(im,[])
+    figure,imshow(im,[]), pause
+    message = 'loaded image'
     
     %smooth image with gaussian filter
     H=fspecial('gaussian',hsize,sigma);
     im=imfilter(im,H,'replicate');
-
+    figure,imshow(im,[]), pause
+    message = 'filtered the image'
+    
     im=imcomplement(im);
-    %figure,imshow(im,[]),pause
+    figure,imshow(im,[]),pause
+    message = 'complemented'
     
     %normalize image
     ppix=0.5;
     im=norm16bit(im,ppix);
     imraw=norm16bit(imraw,ppix);
+    figure,imshow(im,[]),pause
+    message = 'normalized the image'
     
     %identify cells
-    rm=imregionalmax(im);
+    im=imcomplement(im);
+    rm=imregionalmax(im, 8);
+    figure,imshow(rm,[]),pause
+    message = 'identify regional max'
+    
     se=strel('disk',1);
     rm=imdilate(rm,se); 
-    
+    figure,imshow(rm,[]),pause
+    message = 'identify cells'
+        
     %find septa
     iml=del2(double(im));
     H2=fspecial('gaussian',4,2);
@@ -142,6 +149,7 @@ for t=1:T
         [P(i),~]=bwboundaries(bwt,4,'noholes');
     end
     
+    imshow(bw2), pause
     stats=regionprops(bw2,'Area','Centroid','Orientation');
     stats2=regionprops(bw2,imraw,'MeanIntensity','PixelValues');
     
@@ -332,7 +340,9 @@ icell(icell==0)=NaN;
 
 end
 
-%plot data
+%% plot data
+cd(savedir)
+
 figure, title('Cell Volume vs. Time')
 hold on
 for i=1:ncells
@@ -354,5 +364,5 @@ xlabel('t (s)')
 ylabel('Mean Intensity (A.U.)')
 fig2pretty
 
-cd /Users/Rico/Documents/MATLAB
+%% save data
 save([basename '_ST'])

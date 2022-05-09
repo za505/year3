@@ -1,250 +1,321 @@
 %% Modeling Photobleach Correction
 %Authors: Enrique Rojas and Zarina Akbary
-%Date: 11/07/2021
+%Date: 04/06/2022
 %Purpose: to model the photobleach correction
 
 clear, close all
 
-% %Let's add some noise to our measured fluor. to see how robust the
-% %adjustment is
-% Cunb = Cunb + randn(1, length(Cunb));
-%% Inputs
+%% User input
+colorcode = {'#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7', '#000000'};
+savedir = '/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis/04072022_analysis';
+cd(savedir)
 
-colorcode={'#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'};
-%% Modeling Photobleach Correction
-%bounds: 0 <= gamma <= 1
-%        0 < dt
+%% Simulate Diffusion and Photobleaching (at a 1-minute frame rate)
+%define the time vector
+N=240; %the number of minutes in 4 hours
+dt=1;
+time=[0:N]*dt;
 
-%inputs: number of time points, dt, and gamma (permeability coefficient)
-%outputs: 
-% T = time vector
-% Cbl = concentration of bleached fluor.
-% Cunb = concentration of unbleached fluor. or measured fluor.
-% Ctot = total concentration of intracellular fluor.
-% M = modeled fluor concentration using the Newton Method, exp(-t*gamma)
-% beta = photobleaching coeff. calculated as a func of dt
-% F = modeled fluor concentration using a MATLAB function, exp(-t*gamma)
+%simulating the loss of fluorescence due solely to diffusion of
+%fluorophore,which is dependent on the permeability time constant tau. A is
+%the initial fluorescence value (normalized to 1), B is the final
+%fluorescence value (set to 0, for simplicity), and t is time.
+diffusion = @(t, A, B, tau)(A * exp(-t./tau) + B);
+diffusionDerv = @(t, A, B, tau)(-A/tau * exp(-t./tau));
 
-%inputs: N (number of time steps), dt, gamma
-%LB control, frame rate = 1 min
-[T1, Cbl1, Cunb1, Ctot1, M1, beta1, F1] = simRun(100, 1, 1);
+tau=[10, 50, 100, 200, 1000];
+labels = {'10', '50', '100', '200', '1000'};
 
-%LB control, frame rate = 30 s
-[T2, Cbl2, Cunb2, Ctot2, M2, beta2, F2] = simRun(100, 0.5, 0.1);
+%pre-allocate variables
+nrow = length(tau);
+C = nan(nrow, N+1);
 
-%LB control, frame rate = 15 s
-[T3, Cbl3, Cunb3, Ctot3, M3, beta3, F3] = simRun(100, 0.25, 0.05);
-
-%PBS incubation, frame rate = 1 min
-[T4, Cbl4, Cunb4, Ctot4, M4, beta4, F4] = simRun(100, 1, 0.03);
-
-%% how much does the 'actual' differ from C total? how much do the modeled values differ from each other?
-if check1==1
-    figure, hold on
-    plot(T1, M1, 'Color', colorcode{1}, 'LineStyle', '-') 
-    plot(T1, Ctot1, 'Color', colorcode{1}, 'LineStyle', '--') 
-    plot(T2, M2, 'Color', colorcode{2}, 'LineStyle', '-') 
-    plot(T2, Ctot2, 'Color', colorcode{2}, 'LineStyle', '--') 
-    plot(T3, M3, 'Color', colorcode{3}, 'LineStyle', '-') 
-    plot(T3, Ctot3, 'Color', colorcode{3}, 'LineStyle', '--') 
-    plot(T4, M4, 'Color', colorcode{4}, 'LineStyle', '-') 
-    plot(T4, Ctot4, 'Color', colorcode{4}, 'LineStyle', '--') 
-    title('how much does the actual (M) differ from C total?')
-% legend({'LB, frame rate = 1 min, actual', 'LB, frame rate = 1 min, measured', 'LB, frame rate = 30 s, actual', 'LB, frame rate = 30 s, measured', 'LB, frame rate = 15 s, actual', 'LB, frame rate = 15 s, measured', 'PBS, frame rate = 1 min, actual', 'PBS, frame rate = 1 min, measured'})
-end
-% Observation: they do not differ, which is what we expect
-
-%% how much does the 'actual' differ from the measured?
-if check2==1
-    figure, hold on
-    plot(T1, M1, 'Color', colorcode{1}, 'LineStyle', '-') 
-    plot(T1, Cunb1, 'Color', colorcode{1}, 'LineStyle', '--') 
-    plot(T2, M2, 'Color', colorcode{2}, 'LineStyle', '-') 
-    plot(T2, Cunb2, 'Color', colorcode{2}, 'LineStyle', '--') 
-    plot(T3, M3, 'Color', colorcode{3}, 'LineStyle', '-') 
-    plot(T3, Cunb3, 'Color', colorcode{3}, 'LineStyle', '--') 
-    plot(T4, M4, 'Color', colorcode{4}, 'LineStyle', '-') 
-    plot(T4, Cunb4, 'Color', colorcode{4}, 'LineStyle', '--') 
+%simulate diffusion
+for i=1:nrow
+    C(i, :) = diffusion(time, 1, 0, tau(i));
 end
 
-%Observation: For gamma = 0.8, the fluorphores leak out of the cell faster
-%than they can be bleached. In this case, gamma is greater than beta, which
-%may indicate why correction would be difficult, or perhaps even
-%unnecessary
+%plot this diffusion trace over time
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',20), hold on
+%subplot(1, 2, 1), hold on
+for i=1:nrow
+    plot(time, C(i, :), 'Color', colorcode{i}, 'LineWidth', 1.5)
+end
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+%ylim([0 Inf])
+lgd = legend(labels)
+title(lgd,'\tau')
+title('Diffusion Simulation')
+%saveas(gcf, 'simDiffusion.png')
 
-%% Can we obtain the 'actual' fluorescence value given only the measured values?
-[Cnew1, dCB1, dCU1, dCP1, tau1, gamma1] = simReverse(Cunb1, T1, 1);
-[Cnew2, dCB2, dCU2, dCP2, tau2, gamma2] = simReverse(Cunb2, T2, 0.5);
-[Cnew3, dCB3, dCU3, dCP3, tau3, gamma3] = simReverse(Cunb3, T3, 0.25);
-[Cnew4, dCB4, dCU4, dCP4, tau4, gamma4] = simReverse(Cunb4, T4, 1);
+% 'Add' Photobleaching the the Fluorescence Trace
+%pre-allocate a vector to store the value of unbleached fluor. (Cu)
+Cu = nan(nrow, N+1);
+dCu = nan(nrow,N);
+Cu(:,1)=1; %initialize the vector to 1, the normalized fluor. value
+fr = dt; %the frame rate
+beta = 33.5358; %the slope used to calculate alpha
+b =  -0.0204; %the y-intercept
 
-%% how close are the photocorrected values and the 'actual' fluor?
-if check3==1
-    figure, hold on
-    plot(T1, M1, 'Color', colorcode{1}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T1, Cnew1, 'Color', colorcode{1}, 'LineStyle', '-') 
-    plot(T2, M2, 'Color', colorcode{2}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T2, Cnew2, 'Color', colorcode{2}, 'LineStyle', '-') 
-    plot(T3, M3, 'Color', colorcode{3}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T3, Cnew3, 'Color', colorcode{3}, 'LineStyle', '-') 
-    plot(T4, M4, 'Color', colorcode{4}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T4, Cnew4, 'Color', colorcode{4}, 'LineStyle', '-') 
+%now 'add' photobleaching to the trace, using the Newton Method
+photobleaching = @(Cu, alpha) Cu/alpha;
+alpha = (beta * fr) + b; 
+
+for i=1:nrow
+    for j=1:N
+        dCb = photobleaching(Cu(i, j), alpha);
+        dCp = diffusionDerv(time(j), 1, 0, tau(i));
+        dCu(i, j) = (-dCb + dCp) * dt;
+        Cu(i, j+1) = Cu(i, j) + dCu(i, j);
+    end
 end
 
-%% Does F = exp(time*-gamma) equal M?
-if check4==1
-    figure, hold on
-    plot(T1, M1, 'Color', colorcode{1}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T1, F1, 'Color', colorcode{1}, 'LineStyle', '-') 
-    plot(T2, M2, 'Color', colorcode{2}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T2, F2, 'Color', colorcode{2}, 'LineStyle', '-') 
-    plot(T3, M3, 'Color', colorcode{3}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T3, F3, 'Color', colorcode{3}, 'LineStyle', '-') 
-    plot(T4, M4, 'Color', colorcode{4}, 'LineStyle', 'none', 'Marker', 'o') 
-    plot(T4, F4, 'Color', colorcode{4}, 'LineStyle', '-') 
-    title('how much do the modeled values differ from each other?')
+%the wrong way to simulate photobleaching
+% Cw=C;
+% for i=1:N
+%     dCb = photobleaching(C(i), alpha);
+%     Cw(i+1)=C(i)-dCb;
+% end
+
+%plot the 'true' and photobleached fluor. traces
+subplot(1, 2, 2), hold on
+for i=1:nrow
+    plot(time, C(i, :), 'Color', colorcode{i}, 'LineWidth', 1.5)
+    plot(time, Cu(i, :), '--', 'Color', colorcode{i}, 'LineWidth', 1.5)
+end
+%plot(time, Cw, '--', 'Color', colorcode{8}, 'LineWidth', 1.5)
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+title('Photobleaching Simulation (1-minute Frame Rate)')
+%ylim([0 Inf])
+%saveas(gcf, 'simPhotobleaching.png')
+
+% 'Add' Photobleaching the the Fluorescence Trace at a 5-minute frame rate
+%pre-allocate a vector to store the value of unbleached fluor. (Cu)
+Cu = nan(nrow, N+1);
+dCu = nan(nrow,N);
+Cu(:,1)=1; %initialize the vector to 1, the normalized fluor. value
+fr = 5; %the frame rate
+beta = 33.5358; %the slope used to calculate alpha
+b =  -0.0204; %the y-intercept
+
+%now 'add' photobleaching to the trace, using the Newton Method
+photobleaching = @(Cu, alpha) Cu/alpha;
+alpha = (beta * fr) + b; 
+
+for i=1:nrow
+    for j=1:N
+        dCb = photobleaching(Cu(i, j), alpha);
+        dCp = diffusionDerv(time(j), 1, 0, tau(i));
+        dCu(i, j) = (-dCb + dCp) * dt;
+        Cu(i, j+1) = Cu(i, j) + dCu(i, j);
+    end
 end
 
-%% Functions
-function [T, Cbl, Cunb, Ctot, M, beta, F] = simRun(N, dt, gamma)
+%plot this diffusion trace over time
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',20)
+subplot(1, 2, 1), hold on
+for i=1:nrow
+    plot(time, C(i, :), 'Color', colorcode{i}, 'LineWidth', 1.5)
+end
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+%ylim([0 Inf])
+lgd = legend(labels)
+title(lgd,'\tau')
+title('Diffusion Simulation')
 
-% N = number of minutes
-% dt = increment in minutes, frame rate 
-% gamma = permeability coefficient
+%plot the 'true' and photobleached fluor. traces
+subplot(1, 2, 2), hold on
+for i=1:nrow
+    plot(time, C(i, :), 'Color', colorcode{i}, 'LineWidth', 1.5)
+    plot(time, Cu(i, :), '--', 'Color', colorcode{i}, 'LineWidth', 1.5)
+end
+%plot(time, Cw, '--', 'Color', colorcode{8}, 'LineWidth', 1.5)
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+title('Photobleaching Simulation (5-minute Frame Rate)')
+%ylim([0 Inf])
+%saveas(gcf, 'simPhotobleaching.png')
+%% Regenerate the Original Trace Using the Current Correction Method
+photobleached = @(Cu, dt, beta, b)(Cu/(beta*dt+b))*dt; %what portion of the unbleached trace is getting bleached?
 
-T = [0:dt:N]; %time vector in minutes
-%tau = (16.0806)*dt + 0.4234;
-tau = (30)*dt;
-beta = 1/tau;
+%pre-allocate vectors
+Cnew = nan(1, N+1); %the corrected trace
+unbFrac = nan(1, N+1); %the fractiono of unbleached fluor.
+Cbl = nan(1, N+1); %the amount of bleached fluor.
 
-%I hypothesize that measured fluorescence decreases according to the following
-%equation: dC/dt = -beta * C + gamma * C, where C is the measured
-%fluorescence, beta is the rate of photobleaching, and gamma is the
-%permeability coefficient. However, the true decrease in fluorophore
-%concentration only varies by gamma. 
-
-%pre-allocte 'measured' fluorescence variables
-%assume that our initial measured fluorescence is equal to the initial 'no diffusion' fluorescence
-
-Cbl=nan(size(T));%Normalized concentration of bleached fluorophores
-Cunb=nan(size(T));%Normalized concentration of unbleached fluorophores
-Ctot=nan(size(T));%Normalized concentration of total fluorophores
-Cunb(1)=1;%Initial concentration of unbleached fluorophores is 1
-Cbl(1)=0;%Initial concentration of unbleached fluorophores is 0
-Ctot(1)=1;
-
-%using the following Newton Method, I expect to generate an exponential
-%decay curve
-for i=1:length(T)-1
-    dCunb= -beta * Cunb(i) - gamma * Cunb(i);
-    dCbl= beta * Cunb(i) - gamma * Cbl(i);
-    
-    dCunb=dCunb*dt;
-    dCbl=dCbl*dt;
-    
-    Cunb(i+1)=Cunb(i)+dCunb;
-    Cbl(i+1)=Cbl(i)+dCbl;
-
-    Ctot(i+1)=Cunb(i+1)+Cbl(i+1);
+Cnew(1) = Cu(1);
+unbFrac(1) = 1;
+Cbl(1) = 0;
    
-end
+for i=1:N
 
-%what about what the traces look like with only gamma? (aka corrected for
-%photobleaching)
-M = zeros(size(T));
-M(1)=1;
+    %dt = time(i+1) - time(i);
+    dCB = photobleached(Cu(i), dt, beta, b); %this is the amount of photobleaching that occured in the bleached trace
+    dCT = Cu(i+1) - Cu(i); %this is the total fluor. loss for the bleached trace
+    dCP = dCT + dCB; %this is the amount of loss attributable to permeability
+    dCP = dCP * unbFrac(i); %Correcting for the fact that a fraction of fluorophores are unbleached
+    Cnew(i+1) = Cnew(i) + dCP;
+    Cbl(i+1) = Cbl(i) + dCB + dCP * (1-unbFrac(i)); %Accounting fo the change in concentration fo bleached fluorophores
+    unbFrac(i+1)=(Cu(i+1))/(Cu(i+1)+Cbl(i+1)); %Calculate the new fraction of unbleached fluorophores
 
-%using the following Newton Method, we expect to generate exponential
-%decay. This is what we expect to see after correcting for photobleaching,
-%when there is only the effect of the permeability coeffecient 
-for i=1:length(T)-1
-    m = - gamma * M(i); 
-    dM = m*dt; 
-    M(i+1) = M(i) + dM;
-end
+end    
 
-%can I get the same fluor. values as M using the equation C =
-%exp(time.*-gamma)?
-modelExp=@(gamma,time)exp(time.*-gamma);
-F = modelExp(gamma, T);
+figure, hold on
+plot(time, C, 'Color', colorcode{5}, 'LineWidth', 1.5)
+plot(time, Cu, 'Color', colorcode{2}, 'LineWidth', 1.5)
+plot(time, Cnew, 'LineStyle', '--', 'Color', colorcode{7}, 'LineWidth', 1.5)
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+ylim([0 Inf])
+saveas(gcf, 'simCurrentCorrection.png')
 
-end
+%% Regenerate the Original Trace Using the Previous Correction Method
+%pre-allocate vectors
+Cnew = nan(1, N+1); %the corrected trace
+unbFrac = nan(1, N+1); %the fractiono of unbleached fluor.
+Cbl = nan(1, N+1); %the amount of bleached fluor.
 
-function [Cnew, dCB, dCU, dCP, tau, gamma] = simReverse(Cunb, T, dt)
+Cnew(1) = Cu(1);
+unbFrac(1) = 1;
+Cbl(1) = 0;
 
-    %first, let's fit the measured fluor. values to an exponential to calculate
-    %tau
+for i=1:N
 
-    modelfun1=@(tau,x)exp(-x./tau);
-    tau0=1;
+    %dt = time(i+1) - time(i);
+    dCB = photobleached(Cu(i), dt, beta, 0); %this is the amount of photobleaching that occured in the bleached trace
+    dCT = Cu(i+1) - Cu(i); %this is the total fluor. loss for the bleached trace
+    dCP = dCT + dCB; %this is the amount of loss attributable to permeability
+    Cnew(i+1) = Cnew(i) + dCP;
+    Cbl(i+1) = Cbl(i) + dCB + dCP * (1-unbFrac(i)); %Accounting fo the change in concentration fo bleached fluorophores
+    unbFrac(i+1)=(Cu(i+1))/(Cu(i+1)+Cbl(i+1)); %Calculate the new fraction of unbleached fluorophores
 
-    tau=nlinfit(T, Cunb, modelfun1, tau0);
+end 
 
+figure, hold on
+plot(time, C, 'Color', colorcode{5}, 'LineWidth', 1.5)
+plot(time, Cu, 'Color', colorcode{2}, 'LineWidth', 1.5)
+plot(time, Cnew, 'LineStyle', '--', 'Color', colorcode{7}, 'LineWidth', 1.5)
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+ylim([0 Inf])
+saveas(gcf, 'simOriginalCorrection.png')
 
-%can I work in the reverse direction and get M using alpha (the slope of tau vs frame rate)?
-%alpha=1/beta/dt; %the proportion of photobleaching
-beta = 1/((16.0806)*dt + 0.4234);
-alpha=1/beta/dt;
+%% Try Modifying the Current Method to Regenerate the Trace
+photobleached = @(Cu, dt, beta, b)(Cu/(beta*dt+b))*dt; %what portion of the unbleached trace is getting bleached?
 
-%assume that the initial 'measured' fluorescence values and corrected
-%fluor. values will be equal
-Cnew=nan(size(T));%Corrected concentration of fluorophores
-Cnew(:, 1)=Cunb(:, 1);
+%pre-allocate vectors
+Cnew = nan(1, N+1); %the corrected trace
+unbFrac = nan(1, N+1); %the fractiono of unbleached fluor.
+Cbl = nan(1, N+1); %the amount of bleached fluor.
 
-%this is the dCP, or loss attributable to permeability
-dCB=nan(height(Cunb), length(T)-1);
-dCU=nan(height(Cunb), length(T)-1);
-dCP=nan(height(Cunb), length(T)-1);
-
-unb_frac=zeros(size(T));
-unb_frac(:,1)=1;%Fraction of fluorophores that are unbleached
-
-Cbl_exp=nan(size(T));%Calculated (from experiment and photobleaching constant) concentration of bleached flurophores
-Cbl_exp(:,1)=0;
-
-if tau>=1
-%this correction should work regardless of the frame rate
-for i=1:length(T)-1
+Cnew(1) = Cu(1);
+unbFrac(1) = 1;
+Cbl(1) = 0;
    
-    dCB(i) = Cunb(i)/alpha; %this is the amount of photobleaching that occured in our measured value
-    dCU(i) = Cunb(i+1) - Cunb(i); %this is the total fluor. loss for the measured value
-    dCP(i) = dCU(i) + dCB(i); %this is the amount of loss attributable to permeability
+for i=1:N
     
-    
-    dCP(i)=dCP(i)/unb_frac(i);%Correcting for the fact that a fraction of fluorophores are unbleached
-    
-    Cnew(i+1)=Cnew(i)+dCP(i);
-    
-    Cbl_exp(i+1)=Cbl_exp(i)+dCB(i)+dCP(i)*(1-unb_frac(i));%Accounting fo the change in concentration fo bleached fluorophores
-     
-    unb_frac(i+1)=(Cunb(i+1))/(Cunb(i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
-    
+    if unbFrac(i)==1
+        dCB = photobleached(Cu(i), dt, beta, b); %this is the amount of photobleaching that occured in the bleached trace
+        dCT = Cu(i+1) - Cu(i); %this is the total fluor. loss for the bleached trace
+        dCP = dCT + dCB; %this is the amount of loss attributable to permeability
+        Cbl(i+1) = Cbl(i) + dCB; %Accounting fo the change in concentration fo bleached fluorophores
+        Cnew(i+1) = Cnew(i) + dCP;
+        unbFrac(i+1)=(Cu(i+1))/(Cu(i+1)+Cbl(i+1)); %Calculate the new fraction of unbleached fluorophores
+    elseif unbFrac(i)==0
+        dCB = photobleached(Cu(i), dt, beta, b); 
+        dCT = Cu(i+1) - Cu(i); 
+        dCP = dCT + dCB; 
+        Cbl(i+1) = Cbl(i) + dCB + dCP; 
+        Cnew(i+1) = Cnew(i) + dCP;
+        unbFrac(i+1)=(Cu(i+1))/(Cu(i+1)+Cbl(i+1)); 
+    else
+        dCB = photobleached(Cu(i), dt, beta, b); 
+        dCT = Cu(i+1) - Cu(i); 
+        dCP = dCT + dCB; 
+        Cbl(i+1) = Cbl(i) + dCB + (dCP / (1-unbFrac(i))); 
+        dCP = dCP / unbFrac(i); %Correcting for the fact that a fraction of fluorophores are unbleached
+        Cnew(i+1) = Cnew(i) + dCP;
+        unbFrac(i+1)=(Cu(i+1))/(Cu(i+1)+Cbl(i+1));         
+    end
+end    
+
+figure, hold on
+plot(time, C, 'Color', colorcode{5}, 'LineWidth', 1.5)
+plot(time, Cu, 'Color', colorcode{7}, 'LineWidth', 1.5)
+plot(time, Cnew, 'LineStyle', '--', 'Color', colorcode{8}, 'LineWidth', 1.5)
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+ylim([0 Inf])
+pause 
+
+%% Now, start with a photobleached trace and then add permeability. Does the correction method still work? 
+%define the time vector
+N=3600;
+dt=0.0167;
+time=[0:N]*dt;
+lysis = 7; %when diffusion starts
+idx = sum(time<=lysis);
+
+%define new 'true' trace
+C = nan(1, N+1);
+C(time<=lysis) = 1;
+C(time>lysis) = diffusion(time(2:end-idx+1), 1, 0, tau);
+ 
+%define new measured trace
+Cu = nan(1, N+1);
+Cu(1)=1;
+%Cu(time<=7) = 1;
+
+for i=1:N
+    if i <= idx
+        dCb = photobleaching(Cu(i), alpha);
+        dCu(i) = -dCb * dt;
+        Cu(i+1) = Cu(i) + dCu(i);
+    else
+        dCb = photobleaching(Cu(i), alpha);
+        dCp = diffusionDerv(time(i-idx+1), 1, 0, tau)
+        dCu(i) = (-dCb + dCp) * dt;
+        Cu(i+1) = Cu(i) + dCu(i);        
+    end        
 end
 
-elseif tau<1
-    
-    %this correction should work regardless of the frame rate
-for i=1:length(T)-1
+%pre-allocate vectors
+Cnew = nan(1, N+1); %the corrected trace
+unbFrac = nan(1, N+1); %the fractiono of unbleached fluor.
+Cbl = nan(1, N+1); %the amount of bleached fluor.
+
+Cnew(1) = Cu(1);
+unbFrac(1) = 1;
+Cbl(1) = 0;
    
-    dCB(i) = ((Cunb(i)+Cunb(i+1))/2)/alpha; %this is the amount of photobleaching that occured in our measured value
-    dCU(i) = Cunb(i+1) - Cunb(i); %this is the total fluor. loss for the measured value
-    dCP(i) = dCU(i) + dCB(i); %this is the amount of loss attributable to permeability
-    
-    
-    dCP(i)=dCP(i)/unb_frac(i);%Correcting for the fact that a fraction of fluorophores are unbleached
-    
-    Cnew(i+1)=Cnew(i)+dCP(i);
-    
-    Cbl_exp(i+1)=Cbl_exp(i)+dCB(i)+dCP(i)*(1-unb_frac(i));%Accounting fo the change in concentration fo bleached fluorophores
-     
-    unb_frac(i+1)=(Cunb(i+1))/(Cunb(i+1)+Cbl_exp(i+1));%Calculate the new fraction of unbleached fluorophores
-    
-end
+for i=2:N
 
-end
+    if i<=idx
+        dCB = photobleached(Cu(i-1), dt, beta, b); %this is the amount of photobleaching that occured in the bleached trace
+        Cnew(i) = Cu(i) + dCB;
+        Cbl(i) = Cbl(i) + dCB; %Accounting fo the change in concentration fo bleached fluorophores
+        unbFrac(i)=(Cu(i))/(Cu(i)+Cbl(i)); %Calculate the new fraction of unbleached fluorophores
+    elseif i>idx 
+        dCB = photobleached(Cu(i-1), dt, beta, b);
+        dCT = Cu(i) - Cu(i-1); %this is the total fluor. loss for the bleached trace
+        dCP = dCT + dCB; %this is the amount of loss attributable to permeability
+        dCP = dCP * unbFrac(i); %Correcting for the fact that a fraction of fluorophores are unbleached
+        Cnew(i+1) = Cnew(i) + dCP;
+        Cbl(i+1) = Cbl(i) + dCB + dCP * (1-unbFrac(i)); %Accounting fo the change in concentration fo bleached fluorophores
+        unbFrac(i+1)=(Cu(i+1))/(Cu(i+1)+Cbl(i+1)); %Calculate the new fraction of unbleached fluorophores
+    end
+end 
 
-    modelfun=@(gamma,x)exp(-x.*gamma);
-    gamma0=1;
-    gamma=nlinfit(T, Cnew, modelfun, gamma0);
+%plot the 'true' and photobleached fluor. traces
+figure, hold on
+plot(time, C, 'Color', colorcode{5}, 'LineWidth', 1.5)
+plot(time, Cu, 'Color', colorcode{7}, 'LineWidth', 1.5)
+plot(time, Cnew, '--', 'Color', colorcode{7}, 'LineWidth', 1.5)
+xlabel('Time (minutes)')
+ylabel('Normalized Fluorescence')
+ylim([0 Inf])
 
-end
+

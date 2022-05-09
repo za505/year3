@@ -5,8 +5,10 @@
 clear, close all
 
 %directory guide
-%untreated, 1 minute frame rate, 100% intensity = '10232021_Exp1' & '10262021_Exp1' 
-%untreated, 1 minute frame rate, 20% intensity = '02212022_Exp2' 
+%untreated, 1 minute frame rate, 100% intensity = '10232021_Exp1' &
+%'10262021_Exp1' & '04042022_Exp1'
+%untreated, 2 minute frame rate, 100% intensity = '04052022_Exp3'
+%untreated, 1 minute frame rate, 20% intensity = '02212022_Exp2'
 %untreated, 5 minute frame rate, 100% intensity = '02122022_Exp1' 
 %untreated, 10 minute frame rate, 100% intensity = '02122022_Exp2'
 %untreated, 20 minute frame rate, 100% intensity = '02092022_Exp1'
@@ -23,10 +25,12 @@ clear, close all
 %LB + 1 ug/mL vancomycin, 1 minute frame rate, 100% intensity = '01262022_Exp1'
 %spent LB, 10 minute frame rate, 100% intensity = '02122022_Exp3' & '02192022_Exp1'
 %spent LB, 1 minute frame rate, 100% intensity = '03012022_Exp1'
-
+  
 %untreated, 1.2 s frame rate, 100% intensity = '11202021_Exp1' 
 %untreated, 2 s frame rate, 100% intensity = '12082021_Exp1'
 %untreated, 3 s frame rate, 100% intensity = '12082021_Exp2'
+%untreated, 10 s frame rate, 100% intensity = '04052022_Exp2'
+%untreated, 20 s frame rate, 100% intensity = '04052022_Exp1'
 
 %untreated, 1.76 s frame rate, 20% intensity = '02192022_Exp2' 
 %untreated, 2.3 s frame rate, 20% intensity = '02192022_Exp3'
@@ -75,7 +79,7 @@ transparency = 0.3; %this is the alpha argument for the ciplot function
 
 %location and names of of the *.mat files 
 dirsave='/Users/zarina/Downloads/NYU/Year3_2022_Spring/mNeonGreen_analysis';
-basenames={'10232021_Exp1', '10262021_Exp1', '02212022_Exp2', '02122022_Exp1','02122022_Exp2', '02092022_Exp1', '02212022_Exp1', '11192021_Exp2', '12082021_Exp3', '11192021_Exp1', '11302021_Exp1', '10232021_Exp2', '10262021_Exp2', '01142022_Exp1', '01172022_Exp1', '01172022_Exp2', '01242022_Exp1', '01262022_Exp1', '02122022_Exp3', '02192022_Exp1', '03012022_Exp1', '11202021_Exp1', '12082021_Exp1', '12082021_Exp2', '02192022_Exp2', '02192022_Exp3', '02192022_Exp4'};
+basenames={'10232021_Exp1', '10262021_Exp1', '04042022_Exp1', '04052022_Exp3', '02212022_Exp2', '02122022_Exp1','02122022_Exp2', '02092022_Exp1', '02212022_Exp1', '11192021_Exp2', '12082021_Exp3', '11192021_Exp1', '11302021_Exp1', '10232021_Exp2', '10262021_Exp2', '01142022_Exp1', '01172022_Exp1', '01172022_Exp2', '01242022_Exp1', '01262022_Exp1', '02122022_Exp3', '02192022_Exp1', '03012022_Exp1', '11202021_Exp1', '12082021_Exp1', '12082021_Exp2', '04052022_Exp1', '04052022_Exp2', '02192022_Exp2', '02192022_Exp3', '02192022_Exp4'};
 
 %% compare the controls traces
 %each row is a different frame rate (1, 2, and 3 second), each column is a
@@ -91,10 +95,10 @@ idx2=1;
 for i=1:length(basenames)
     basename=basenames{i};
     
-    cidx1 = [length(basenames)-5:length(basenames)-3];
-    cidx2 = [length(basenames)-2:length(basenames)];
+    control20 = {'02192022_Exp2', '02192022_Exp3', '02192022_Exp4'}; 
+    control100 = {'11202021_Exp1', '12082021_Exp1', '12082021_Exp2', '04052022_Exp1', '04052022_Exp2'};
     
-    if ismember(i, cidx1)
+    if sum(strcmp(basename,control100))==1
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         controls_100{idx1, 1}=time;
@@ -114,7 +118,7 @@ for i=1:length(basenames)
         
         idx1=idx1+1;
         
-    elseif ismember(i, cidx2)
+    elseif sum(strcmp(basename,control20))==1
         
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
@@ -147,13 +151,16 @@ end
 untreated_100 = cell(5, 8);
 untreated_20 = cell(2, 8);
 
+untreated100 = {'10232021_Exp1', '10262021_Exp1', '04042022_Exp1', '04052022_Exp3','02122022_Exp1', '02122022_Exp2', '02092022_Exp1'};
+untreated20 = {'02212022_Exp2', '02212022_Exp1'};
+
 idx1=1;
 idx2=1;
 
 for i=1:length(basenames)
     basename=basenames{i};
     
-     if ismember(i, [1,2,4,5,6])
+     if sum(strcmp(basename,untreated100))==1
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         untreated_100{idx1, 1}=time;
@@ -172,7 +179,7 @@ for i=1:length(basenames)
         
         idx1=idx1+1;
         
-    elseif ismember(i, [3,7])
+    elseif sum(strcmp(basename,untreated20))==1
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         untreated_20{idx2, 1}=time;
@@ -201,12 +208,14 @@ end
 
 PBS_100 = cell(7, 8);
 
+pbs100 = {'11192021_Exp2', '12082021_Exp3', '11192021_Exp1', '11302021_Exp1', '10232021_Exp2', '10262021_Exp2', '01142022_Exp1'};
+
 idx1=1;
 
 for i=1:length(basenames)
     basename=basenames{i};
     
-     if ismember(i, [8:14])
+     if sum(strcmp(basename, pbs100))==1
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         PBS_100{idx1, 1}=time;
@@ -231,13 +240,14 @@ end
 %each row is a different treatment in LB (100% intensity)
 
 treated_100 = cell(6, 8);
+treated100 = {'01172022_Exp1', '01172022_Exp2', '01242022_Exp1', '01262022_Exp1', '02122022_Exp3', '02192022_Exp1', '03012022_Exp1'};
 
 idx1=1;
 
 for i=1:length(basenames)
     basename=basenames{i};
     
-     if ismember(i, [15:21])
+     if sum(strcmp(basename, treated100))==1
         cd([dirsave '/normalizedFiles'])
         load([basename '_norm.mat'])
         treated_100{idx1, 1}=time;
@@ -295,8 +305,8 @@ hleg=legend([p1(1), p2(1), p3(1), p4, p5, p6], labels)
 title(hleg,'Settings')
 %hleg.NumColumns=2;
 
-saveas(gcf, 'controlsRaw.png')
-saveas(gcf, 'controlsRaw.fig')
+% saveas(gcf, 'controlsRaw.png')
+% saveas(gcf, 'controlsRaw.fig')
 
 labels={'100% 1 s', '100% 2 s', '100% 3 s', '20% 1 s', '20% 2 s', '20% 3 s'};
 
@@ -313,8 +323,8 @@ xlabel('Time (minutes)')
 hleg=legend([p1, p2, p3, p4, p5, p6], labels)
 %hleg.NumColumns=2;
 title(hleg,'Settings')
-saveas(gcf, 'controlsNorm.png')
-saveas(gcf, 'controlsNorm.fig')
+% saveas(gcf, 'controlsNorm.png')
+% saveas(gcf, 'controlsNorm.fig')
 
 
 pt=8;
@@ -337,8 +347,8 @@ xlabel('Time (minutes)')
 hleg=legend([p1, p2, p3, p4, p5, p6], labels, 'Location', 'east')
 title(hleg,'Settings')
 %hleg.NumColumns=2;
-saveas(gcf, 'controlsCorrected_zoom.png')
-saveas(gcf, 'controlsCorrected_zoom.fig')
+% saveas(gcf, 'controlsCorrected_zoom.png')
+% saveas(gcf, 'controlsCorrected_zoom.fig')
 
 pt=8;
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
@@ -360,8 +370,8 @@ xlabel('Time (minutes)')
 hleg=legend([p1, p2, p3, p4, p5, p6], labels, 'Location', 'east')
 title(hleg,'Settings')
 %hleg.NumColumns=2;
-saveas(gcf, 'controlsCorrected_pan.png')
-saveas(gcf, 'controlsCorrected_pan.fig')
+% saveas(gcf, 'controlsCorrected_pan.png')
+% saveas(gcf, 'controlsCorrected_pan.fig')
 
 %% generate plots for untreated LB
 cd([dirsave '/03262022_analysis']);
@@ -387,8 +397,8 @@ ylabel('Fluorescence (A.U.)')
 xlabel('Time (minutes)')
 hleg=legend([p1(1), p2(1), p3(1), p4(1), p5(1)], labels)
 title(hleg,'Frame Rate')
-saveas(gcf, 'untreatedRaw.png')
-saveas(gcf, 'untreatedRaw.fig')
+% saveas(gcf, 'untreatedRaw.png')
+% saveas(gcf, 'untreatedRaw.fig')
 % 
 % figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize',24), hold on
 % %meanPlot(untreated_100{2,2}, [untreated_100{1, 5}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)
@@ -439,8 +449,8 @@ title(hleg,'Frame Rate')
 % % saveas(gcf, 'correctedUntreated.png')
 % % saveas(gcf, 'correctedUntreated.fig')
 % 
-saveas(gcf, 'untreatedNorm&Corrected.png')
-saveas(gcf, 'untreatedNorm&Corrected.fig')
+% saveas(gcf, 'untreatedNorm&Corrected.png')
+% saveas(gcf, 'untreatedNorm&Corrected.fig')
 
 % figure, hold on
 % meanPlot(untreated_100{2,2}, [untreated_100{1, 7}(:, 1:94); untreated_100{2, 7}], colorcode{1}, colorcode2{1}, transparency)

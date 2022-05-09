@@ -6,13 +6,16 @@ clear, close all
 
 %% User Input
 ponA2_exp = {'12162021_Exp1', '12162021_Exp3', '12172021_Exp1', '12182021_Exp1'}; %, '12172021_Exp1', '12182021_Exp1'};
-WT_exp = {'12162021_Exp2', '12162021_Exp4', '12172021_Exp2', '12182021_Exp2'}; %, '12172021_Exp2', '12182021_Exp2'};
+WT_exp = {'12162021_Exp2', '12162021_Exp4', '12182021_Exp2', '12182021_Exp2'}; %, '12172021_Exp2', '12182021_Exp2'};
 maindir=['/Users/zarina/Documents/MATLAB/MatlabReady/Msmegmatis_analysis/03102022/rawFiles'];
 
 %% Analysis: Do dPonA2 GFP cells plasmolyze more/in different regions than WT GFP cells?
 %pre-allocate variables
 ponA2_dir = [];
 WT_dir = [];
+
+ponA2_postA=[];
+WT_postA=[];
 
 ponA2_plasRegion=[];
 ponA2_plasTotal=[];
@@ -35,7 +38,7 @@ for i=1:length(ponA2_exp)
     ponA2_postCount = {};
 
     for j=1:height(dirtemp)
-        load(dirtemp(j).name, 'preCount', 'postCount');
+        load(ponA2_dir(j).name, 'preCount', 'postCount');
         ponA2_preCount = [ponA2_preCount; preCount];
         ponA2_postCount = [ponA2_postCount; postCount];
     end
@@ -53,7 +56,7 @@ for i=1:length(WT_exp)
     WT_postCount = {};
 
     for j=1:height(dirtemp)
-        load(dirtemp(j).name, 'preCount', 'postCount');
+        load(WT_dir(i).name, 'preCount', 'postCount');
         WT_preCount = [WT_preCount; preCount];
         WT_postCount = [WT_postCount; postCount];
     end
@@ -78,7 +81,6 @@ err2=std(WT_plasRegion./WT_cellTotal,0, 1);
 errorbar(b(1).XEndPoints, b(1).YData, err1, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
 errorbar(b(2).XEndPoints, b(2).YData, err2, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
 legend({'ponA2', 'WT'})
-ylim([0 Inf])
 ylabel('Plasmolysis Probability/Cell', 'FontSize', 15)
 xticklabels({'Polar', '', 'Subpolar', '', 'Midcell'})
 xlabel('Region', 'FontSize', 15)
@@ -100,42 +102,40 @@ xticklabels({''})
 xlabel('Strain', 'FontSize', 15)
 % saveas(gcf, 'plasProbCell.png')
 % saveas(gcf, 'plasProbCell.fig')
-% 
-% A=ponA2_plasTotal./ponA2_cellTotal;
-% B=WT_plasTotal./WT_cellTotal;
-% C=[A,B];
-% 
-% b(1).YData=A;
-% b(2).YData=B;
-% 
-% err1=std(ponA2_plasRegion./ponA2_cellTotal,0, 1);
-% err2=std(WT_plasRegion./WT_cellTotal,0, 1);
-% errorbar(b(1).XEndPoints, b(1).YData, err1, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
-% errorbar(b(2).XEndPoints, b(2).YData, err2, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
-% 
-% ylabel('# plasmolysis bays/cell', 'FontSize', 15)
-% xlabel('')
-% %legend({'ponA2', 'WT'})
-% xticklabels({'', 'ponA2', '', 'WT'})
-% % saveas(gcf, 'plasPer.png')
-% % saveas(gcf, 'plasPer.fig')
-% 
-% A=ponA2_plasTotal;
-% B=WT_plasTotal;
-% C=[A,B];
-% 
-% b(1,1).YData=A;
-% b(1,2).YData=B;
-% ylabel('Total Incidence of Plasmolysis', 'FontSize', 15)
-% xlabel('')
-% %legend({'ponA2', 'WT'})
-% xticklabels({'', 'ponA2', '', 'WT'})
-% % saveas(gcf, 'plasTotal.png')
+
+A=ponA2_plasTotal./ponA2_cellTotal;
+B=WT_plasTotal./WT_cellTotal;
+C=[A,B];
+
+b(1).YData=A;
+b(2).YData=B;
+
+err1=std(ponA2_plasRegion./ponA2_cellTotal,0, 1);
+err2=std(WT_plasRegion./WT_cellTotal,0, 1);
+errorbar(b(1).XEndPoints, b(1).YData, err1, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
+errorbar(b(2).XEndPoints, b(2).YData, err2, 'LineStyle', 'none', 'LineWidth', 1, 'Color', 'k')
+
+ylabel('# plasmolysis bays/cell', 'FontSize', 15)
+xlabel('')
+%legend({'ponA2', 'WT'})
+xticklabels({'', 'ponA2', '', 'WT'})
+% saveas(gcf, 'plasPer.png')
+% saveas(gcf, 'plasPer.fig')
+
+A=ponA2_plasTotal;
+B=WT_plasTotal;
+C=[A,B];
+
+b(1,1).YData=A;
+b(1,2).YData=B;
+ylabel('Total Incidence of Plasmolysis', 'FontSize', 15)
+xlabel('')
+%legend({'ponA2', 'WT'})
+xticklabels({'', 'ponA2', '', 'WT'})
+% saveas(gcf, 'plasTotal.png')
 % saveas(gcf, 'plasTotal.fig')
 % 
-
-cd(maindir)
-save('03112022_plasAggregate')
+% save(['01272022_msmegAnalysis'])
 
 %% Functions
 function [plasm_region, plasm_total, cell_total]=plasRegion(plasCount)
