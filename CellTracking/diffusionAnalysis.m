@@ -60,7 +60,7 @@ p = 0;
 n1 = 1;
 n2 = length(basenames);
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
 for i=1:length(basenames)
     
     p = p + 1;
@@ -84,23 +84,23 @@ rho1= 0.03;
 %% plot the control traces
 p = 0;
 n1 = length(basenames);
-n2 = 3;
+n2 = 2; %3;
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:length(basenames)
     
-    p = p + 1;
-    subplot(n1, n2, p)
-    x = times{i};
-    y1 = cellTrace{i};
-    y2 = bgTrace{i};
-    
-    plot(x, y1, 'Color', okabeIto{i}), hold on
-    plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
-    ylim([0 Inf])    
-    xlabel('Time (minutes)')
-    ylabel('Fluorescence (A.U.)')
-    title(['Raw ' labels{i}])
+%     p = p + 1;
+%     subplot(n1, n2, p)
+%     x = times{i};
+%     y1 = cellTrace{i};
+%     y2 = bgTrace{i};
+%     
+%     plot(x, y1, 'Color', okabeIto{i}), hold on
+%     plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
+%     ylim([0 Inf])    
+%     xlabel('Time (minutes)')
+%     ylabel('Fluorescence (A.U.)')
+%     title(['Raw ' labels{i}])
     
     p = p + 1;
     subplot(n1, n2, p)
@@ -132,7 +132,7 @@ end
 
 %% plot rho vs frame rate
 dx = [];
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
 for i=1:length(basenames)
     x = frameRate{i}(end);
     dx = [dx x];
@@ -182,7 +182,9 @@ labels = {'Untreated', 'PBS', 'Tunicamycin', 'Spent Media'};
 
 rho1 = 0.03;
 %imstart = [6; 11; 11];
-imstart = [7; 12; 12; 7];
+%imstart = [7; 12; 12; 7];
+%imstart = [5; 9; 10; 5];
+imstart = [6; 11; 11; 5];
 [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames);
 [normTime, normTrace] = dataNormalize(times, adjTrace, imstart);
 [correctedTrace]=photoCorrect(normTime, normTrace, rho1);
@@ -190,10 +192,10 @@ imstart = [7; 12; 12; 7];
 %% plot to compare lengths
 p = 0;
 n1 = 1;
-n2 = length(basenames);
+n2 = 2; %length(basenames);
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-for i=1:length(basenames)
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
+for i=[2,3] %1:length(basenames)
     
     p = p + 1;
     subplot(n1, n2, p)
@@ -220,21 +222,57 @@ v1=dl1./dt1;
 dt2=times{4,1}(2:end)-times{4,1}(1:end-1);
 dl2=(lCell{4,1}(:,2:end)-lCell{4,1}(:,1:end-1))./((lCell{4,1}(:,1:end-1)+lCell{4,1}(:,2:end))/2);
 v2=dl2./dt2;
+
+ef = cell(size(lCell));
+
+for i = 1:length(basenames)
+    dl = diff(lCell{i}, 1, 2);
+    dt = diff(times{i}./60, 1, 2);
+    ef{i} = (dl./dt) ./ lCell{i}(:, 1:end-1);
+end
+
+figure, hold on
+for i = 1:length(basenames)
+    mef = mean(ef{i}, 1, 'omitnan');
+    sef = movingaverage(mef, 3);
+    plot(times{i}(1:end-1), sef, 'Color', okabeIto{i})
+      %plot(times{i}(1:20), ef{i}(:, 1:20), 'Color', okabeIto{i})
+end
+xline(7, '--k')
+xline(12, '--k')
+
+[nrow1, ~] = size(lCell{1});
+[nrow2, ~] = size(lCell{2});
+[nrow3, ~] = size(lCell{3});
+[nrow4, ~] = size(lCell{4});
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
+plot([repelem(1, nrow1),repelem(3, nrow2), repelem(4, nrow3)], [ef{1}(:, 4)', ef{2}(:, 4)', ef{3}(:, 4)'], 'o', 'MarkerFaceColor', okabeIto{1}, 'MarkerEdgeColor', okabeIto{8}, 'MarkerSize', 20)
+plot(repelem(2, nrow4), ef{4}(:, 5)', 'o', 'MarkerFaceColor', okabeIto{4}, 'MarkerEdgeColor', okabeIto{8}, 'MarkerSize', 20)
+plot(repelem(3, nrow2), ef{2}(:, 6)', 'o', 'MarkerFaceColor', okabeIto{2}, 'MarkerEdgeColor', okabeIto{8}, 'MarkerSize', 20)
+plot(repelem(4, nrow3), ef{3}(:, 8)', 'o', 'MarkerFaceColor', okabeIto{3}, 'MarkerEdgeColor', okabeIto{8}, 'MarkerSize', 20)
+xlim([0 5])
+xticks([0 1 2 3 4 5])
+xticklabels({' ', 'untreated', 'spent media', 'PBS', 'tunicamcyin', ' '})
+ylabel('Effective Elongation Rate (h^{-1})')
+xlabel('Treatment')
+legend({'steady-state LB', 'steady-state spent media', 'PBS shift', 'tunicamycin shift'})
 %% plot the experimental traces
 cd(dirsave)
 
 p = 0;
-n1 = 1 %length(basenames);
+n1 = length(basenames);
 n2 = 3;
+lim = 60;
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
 for i=1:n1
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = times{i};
-    y1 = cellTrace{i};
-    y2 = bgTrace{i};
+    x = times{i}(1:lim);
+    y1 = cellTrace{i}(:, 1:lim);
+    y2 = bgTrace{i}(:, 1:lim);
     
     plot(x, y1, 'Color', okabeIto{i}), hold on
     plot(x, y2, 'LineStyle', '--', 'Color', okabeIto{i})
@@ -245,35 +283,36 @@ for i=1:n1
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = normTime{i};
-    y = normTrace{i};
+    x = normTime{i}(1:lim);
+    y = normTrace{i}(:, 1:lim);
     
     plot(x, y, 'Color', okabeIto{i})
-    ylim([0 Inf])    
+    ylim([0 1.2])    
     xlabel('Time (minutes)')
     ylabel('Fluorescence (A.U.)')
     title(['Normalized ' labels{i}])
     
     p = p + 1;
     subplot(n1, n2, p)
-    x = normTime{i};
-    y = correctedTrace{i,1};
+    x = normTime{i}(1:lim);
+    y = correctedTrace{i,1}(:, 1:lim);
     [nr, nc] = size(y);
     ysmooth = nan(size(y));
     for j=1:nr
         ysmooth(j, :) = movingaverage(y(j, :), 3);
     end
     
-    plot(x, ysmooth, 'Color', okabeIto{i})
-    ylim([0 1.1])    
+    %plot(x, ysmooth, 'Color', okabeIto{i})
+    plot(x, y, 'Color', okabeIto{i})
+    ylim([0 1.5])    
     xlabel('Time (minutes)')
     ylabel('Fluorescence (A.U.)')
     title(['Corrected ' labels{i}])
 end
 % saveas(gcf, 'experimentalTraces.png')
 % saveas(gcf, 'experimentalTraces.fig')
-saveas(gcf, 'untreatedOnly.png')
-saveas(gcf, 'untreatedOnly.fig')
+% saveas(gcf, 'untreatedOnly.png')
+% saveas(gcf, 'untreatedOnly.fig')
 %% Untreated vs Autolysis
 x1 = normTime{1}(1:40);
 y1 = correctedTrace{1,1}(:, 1:40);
@@ -339,7 +378,9 @@ legend(labels([1,4]))
 
 %% calculate tau
 tau0 = 1;
-[tau, tau_yhat] = tauCalc(normTime, correctedTrace, tau0);
+lim = 60;
+
+[tau, tau_yhat] = tauCalc(normTime, correctedTrace, tau0, lim);
 
 %% plot the fits to tau
 cd(dirsave)
@@ -348,12 +389,12 @@ p = 0;
 n1 = 1;
 n2 = length(basenames);
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
 for i=1:n2    
     p = p + 1;
     subplot(n1, n2, p)
-    x = normTime{i};
-    y1 = correctedTrace{i};
+    x = normTime{i}(1:lim);
+    y1 = correctedTrace{i}(:, 1:lim);
     y2 = tau_yhat{i};
 
     plot(x, y1, 'Color', okabeIto{i}), hold on
@@ -367,8 +408,7 @@ saveas(gcf, 'tauFits.png')
 saveas(gcf, 'tauFits.fig')
 
 %% re-do correction
-imstart2 = [7, 7, 7, 7];
-[correctedTrace2, correctedTime]=fixNstitch(times, adjTrace, correctedTrace, rho1, imstart2);
+[correctedTrace2, correctedTime]=fixNstitch(times, adjTrace, correctedTrace, rho1, imstart);
 
 %% re-plot Untreated vs Autolysis
 cd(dirsave)
@@ -449,7 +489,7 @@ saveas(gcf, 'untreatedvsspent.fig')
 %% plot the distribution of tau
 cd(dirsave)
 
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
 for i=1:length(basenames)
     x = [0:80];
     y = pdf('Normal', x, mean(tau{i}, 'omitnan'), std(tau{i}, 'omitnan'));
@@ -461,6 +501,31 @@ xlabel(['\tau (minutes)'])
 ylabel('Probability')
 saveas(gcf, 'tauPDF.png')
 saveas(gcf, 'tauPDF.fig')
+
+%% plot corrected experimental traces
+p = 0;
+n1 = 2;
+n2 = 2;
+
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
+for i=1:length(basenames)
+
+    p = p + 1;
+    subplot(n1, n2, p)
+    x = correctedTime{i}(1:60);
+    y = correctedTrace2{i,1}(:, 1:60);
+    [nr, nc] = size(y);
+    ysmooth = nan(size(y));
+    for j=1:nr
+        ysmooth(j, :) = movingaverage(y(j, :), 3);
+    end
+    
+    plot(x, ysmooth, 'Color', okabeIto{i})
+    ylim([0 1.1])    
+    xlabel('Time (minutes)')
+    ylabel('Fluorescence (A.U.)')
+    title(labels{i})
+end
 
 %% Functions
 function [cellTrace, bgTrace, adjTrace, times, lCell, frameRate] = loadData(dirpath, basenames)
@@ -858,14 +923,19 @@ function [correctedTrace2, correctedTime]=fixNstitch(times, adjTrace, correctedT
     end
 end
 
-function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0)
+function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0, lim)
     
     tau = cell(height(correctedTrace), 1);
     tau_yhat = cell(height(correctedTrace), 1);
     
     for i = 1:height(correctedTrace)
-        x = times{i};
-        y = correctedTrace{i};
+        if nargin > 3
+            x = times{i}(1:lim);
+            y = correctedTrace{i}(:, 1:lim);
+        else
+            x = times{i};
+            y = correctedTrace{i};
+        end
         [nrow, ncol] = size(y);
         tauTemp = nan(nrow, 1);
         yhatTemp = nan(size(y));
@@ -880,13 +950,18 @@ function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0)
             %aidx = find(~isnan(y(j, :)), 1, 'first');
             %A = y(j, aidx);
             %bidx = find(~isnan(y(j, :)), 1, 'last');
+            [~, aidx] = max(y(j, :));
+            A = y(j, aidx);
             [~, bidx] = min(y(j, :));
             B = y(j, bidx);
-            modelfun = @(tau, t) (1-B) * exp(-t./tau) + B;
+            modelfun = @(tau, t) (A-B) * exp(-t./tau) + B;
             %modelfun = @(tau, t) A * exp(log(A/B)*(1-exp(t./tau)));
             %modelfun = @(tau, t) exp(-t./tau);
-            tauTemp(j) = nlinfit(x, y(j, :), modelfun, tau0);
-            yhatTemp(j, :) = modelfun(tauTemp(j, :), x);
+            tauTemp(j) = nlinfit(x(aidx:bidx)-x(aidx), y(j, aidx:bidx), modelfun, tau0);
+            yhatTemp(j, aidx:bidx) = modelfun(tauTemp(j, :), x(aidx:bidx)-x(aidx));
+            if aidx~=1
+                yhatTemp(j, 1:aidx-1) = NaN;
+            end
         end
         
         tau{i} = tauTemp;
