@@ -408,59 +408,56 @@ saveas(gcf, 'tauFits.png')
 saveas(gcf, 'tauFits.fig')
 
 %% re-do correction
-[correctedTrace2, correctedTime]=fixNstitch(times, adjTrace, correctedTrace, rho1, imstart);
+imstart2 = [5; 5; 5; 5];
+[correctedTrace2, correctedTime]=fixNstitch(times, adjTrace, correctedTrace, rho1, imstart2);
 
-%% re-plot Untreated vs Autolysis
+%% re-plot corrected experimental traces
 cd(dirsave)
-x1 = correctedTime{1}(1:40);
-y1 = correctedTrace2{1,1}(:, 1:40);
-ybar1 = mean(y1, 1, 'omitnan');
-yerr1 = std(y1, 0, 1, 'omitnan');
-ysmooth1 = movingaverage(ybar1, 3);
-
-x2 = correctedTime{2}(1:40);
-y2 = correctedTrace2{2,1}(:,1:40);
-ybar2 = mean(y2, 1, 'omitnan');
-yerr2 = std(y2, 0, 1, 'omitnan');
-ysmooth2 = movingaverage(ybar2, 3);
 
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
-errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
-errorbar(x2, ysmooth2, yerr2, 'Color', okabeIto{2}, 'LineWidth', 1.5)
+for i=1:length(basenames)
+    x = correctedTime{i}(1:40);
+    y = correctedTrace2{i,1}(:,1:40);
+    if i==3
+        idx = setdiff(1:height(y), [2,6]);
+        y = y(idx, :);
+    end
+    ybar = mean(y, 1, 'omitnan');
+    yerr = std(y, 0, 1, 'omitnan');
+    ysmooth = movingaverage(ybar, 3);
+    errorbar(x, ysmooth, yerr, 'Color', okabeIto{i}, 'LineWidth', 1.5)
+end
 ylim([0 1.2])    
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence (A.U.)')
-legend(labels(1:2))
-saveas(gcf, 'untreatedvsautolysis.png')
-saveas(gcf, 'untreatedvsautolysis.fig')
+legend(labels)
+% saveas(gcf, 'untreatedvsautolysis.png')
+% saveas(gcf, 'untreatedvsautolysis.fig')
 
-%% re-plot Untreated vs Tunicamycin
+%% calculate max flux 
+[maxFlux] = fluxCalc(correctedTrace);
+
+%% plot the max flux
 cd(dirsave)
-x1 = correctedTime{1}(1:60);
-y1 = correctedTrace2{1,1}(:, 1:60);
-% x1 = correctedTime{1};
-% y1 = correctedTrace2{1,1};
-ybar1 = mean(y1, 1, 'omitnan');
-yerr1 = std(y1, 0, 1, 'omitnan');
-ysmooth1 = movingaverage(ybar1, 3);
 
-% x3 = correctedTime{3};
-% y3 = correctedTrace2{3,1};
-x3 = correctedTime{3}(1:60);
-y3 = correctedTrace2{3,1}(:,1:60);
-ybar3 = mean(y3, 1, 'omitnan');
-yerr3 = std(y3, 0, 1, 'omitnan');
-ysmooth3 = movingaverage(ybar3, 3);
-
-figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 15), hold on
-errorbar(x1, ysmooth1, yerr1, 'Color', okabeIto{1}, 'LineWidth', 1.5)
-errorbar(x3, ysmooth3, yerr3, 'Color', okabeIto{3}, 'LineWidth', 1.5)
-ylim([0 1.2])    
-xlabel('Time (minutes)')
-ylabel('Normalized Fluorescence (A.U.)')
-legend(labels([1,3]))
-saveas(gcf, 'untreatedvstunicamycin.png')
-saveas(gcf, 'untreatedvstunicamycin.fig')
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
+for i=1:length(basenames)
+    x = i;
+    y = maxFlux{i,1}(:, 1);
+    if i==3
+       idx = setdiff(1:height(y), [2,6]);
+       y = y(idx, :);
+    end
+    ybar = abs(mean(y, 1, 'omitnan'));
+    yerr = std(y, 0, 1, 'omitnan');
+    bar(x, ybar, 'FaceColor', okabeIto{i}, 'EdgeColor', okabeIto{i})
+    errorbar(x, ybar, yerr, 'Color', okabeIto{i}, 'LineWidth', 1.5, 'LineStyle', 'none')
+end 
+xlabel('Treatment')
+xticks(1:4)
+xticklabels(labels)
+ylabel('Maximum Flux')
+legend(labels)
 
 %% re-plot untreated vs spent
 cd(dirsave)
@@ -967,5 +964,23 @@ function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0, lim)
         tau{i} = tauTemp;
         tau_yhat{i} = yhatTemp;
     end
+    
+end
+
+function [maxFlux] = fluxCalc(correctedTrace)
+    
+    %pre-allocate variables
+    maxFlux = cell(height(correctedTrace), 1);
+
+    for i=1:height(correctedTrace)
+        
+        y = correctedTrace{i};
+        y = movingaverage(y, 3);
+        dy = diff(y, 1, 2);
+        [minv, mini] = min(dy, [], 2, 'omitnan');
+
+        maxFlux{i, 1} = [minv, mini];
+        
+    end  
     
 end
