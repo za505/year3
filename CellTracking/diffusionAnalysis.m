@@ -257,6 +257,7 @@ xticklabels({' ', 'untreated', 'spent media', 'PBS', 'tunicamcyin', ' '})
 ylabel('Effective Elongation Rate (h^{-1})')
 xlabel('Treatment')
 legend({'steady-state LB', 'steady-state spent media', 'PBS shift', 'tunicamycin shift'})
+
 %% plot the experimental traces
 cd(dirsave)
 
@@ -313,6 +314,7 @@ end
 % saveas(gcf, 'experimentalTraces.fig')
 % saveas(gcf, 'untreatedOnly.png')
 % saveas(gcf, 'untreatedOnly.fig')
+
 %% Untreated vs Autolysis
 x1 = normTime{1}(1:40);
 y1 = correctedTrace{1,1}(:, 1:40);
@@ -414,28 +416,82 @@ imstart2 = [5; 5; 5; 5];
 %% re-plot corrected experimental traces
 cd(dirsave)
 
+Fmax = nan(height(correctedTrace2), 1);
+foldingTrace = cell(height(correctedTrace2), 1);
+flux = cell(height(correctedTrace2), 1);
+
+j=0;
 figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
-for i=1:length(basenames)
+for i=[1, 3, 4]
+    i
     x = correctedTime{i}(1:40);
-    y = correctedTrace2{i,1}(:,1:40);
+    y = correctedTrace2{i,1}(:, 1:40);
     if i==3
         idx = setdiff(1:height(y), [2,6]);
         y = y(idx, :);
     end
     ybar = mean(y, 1, 'omitnan');
-    yerr = std(y, 0, 1, 'omitnan');
-    ysmooth = movingaverage(ybar, 3);
-    errorbar(x, ysmooth, yerr, 'Color', okabeIto{i}, 'LineWidth', 1.5)
+    yerr = std(y, 0, 1, 'omitnan')/sqrt(height(correctedTrace2{i,1}));
+    %ysmooth = movingaverage(ybar, 3);
+    %errorbar(x, ysmooth, yerr, 'Color', okabeIto{i}, 'LineWidth', 1.5)
+    Fmax(i) = max(ybar);
+    modelfun = @(t, tau)(Fmax(i)-1)*(1-exp(-t./tau)) + 1;
+    %tau = nlinfit(normTime{i}(1:40), correctedTrace{i}(1:40), modelfun, 3)
+    if i==1
+        tau=4.5;
+    elseif i==2
+        tau=5.5;
+    else
+        tau=3;
+    end
+        foldingTrace{i} = modelfun(normTime{i}, tau);
+    
+    ysub = (ybar(:, 5:40) - foldingTrace{i}(:, 1:36)) + 1;
+    ycomb = [ybar(:, 1:4), ysub];
+    errorbar(x, ycomb, yerr, 'Color', okabeIto{i}, 'LineWidth', 1.5)
+    %errorbar(x, ybar, yerr, 'Color', okabeIto{i}, 'LineWidth', 1.5)
+    %plot(correctedTime{i}(5:40), foldingTrace{i}(:, 1:36), 'Color', okabeIto{i}, 'LineStyle', '--')
+
 end
 ylim([0 1.2])    
 xlabel('Time (minutes)')
 ylabel('Normalized Fluorescence (A.U.)')
-legend(labels)
+legend(labels([1, 3, 4]))
 % saveas(gcf, 'untreatedvsautolysis.png')
 % saveas(gcf, 'untreatedvsautolysis.fig')
 
+%% plot the derivative
+cd(dirsave)
+
+j=0;
+figure('Units', 'normalized', 'outerposition', [0 0 1 1], 'DefaultAxesFontSize', 30), hold on
+for i=[1, 3, 4]
+    i
+    j=j+1;
+    x = correctedTime{i}(1:40);
+    y = correctedTrace2{i,1}(:, 1:40);
+    if i==3
+        idx = setdiff(1:height(y), [2,6]);
+        y = y(idx, :);
+    end
+    dy = diff(y, 1, 2);
+    dt = diff(x, 1, 2);
+    df = dy./dt;
+    ybar = mean(df(:, 16:end), 2, 'omitnan');
+    yerr = std(ybar, 1, 'omitnan'); %/sqrt(height(correctedTrace2{i,1}));
+    ybar = mean(ybar, 'omitnan');
+    
+    bar(j, abs(ybar), 'FaceColor', okabeIto{i}, 'EdgeColor', okabeIto{i})
+    errorbar(j, abs(ybar), yerr, 'Color', okabeIto{i}, 'LineStyle', 'none')
+    %errorbar(x(1:end-1), ybar, yerr, 'Color', okabeIto{i}, 'LineWidth', 1.5)
+    %plot(x(1:end-1), y,'Color', okabeIto{i}, 'LineWidth', 1.5)
+end  
+xlabel('Treatment')
+ylabel('Fluorescence Derivative')
+legend(labels([1, 3, 4]))
+
 %% calculate max flux 
-[maxFlux] = fluxCalc(correctedTrace);
+[maxFlux, Fmax, foldingTrace] = fluxCalc(normTime([1, 3, 4],1), correctedTrace([1, 3, 4],1));
 
 %% plot the max flux
 cd(dirsave)
@@ -457,7 +513,7 @@ xlabel('Treatment')
 xticks(1:4)
 xticklabels(labels)
 ylabel('Maximum Flux')
-legend(labels)
+legend({'Untreated', '', 'PBS', '', 'Tunicamycin', '', 'Spent Media', ''})
 
 %% re-plot untreated vs spent
 cd(dirsave)
@@ -967,20 +1023,34 @@ function [tau, tau_yhat] = tauCalc(times, correctedTrace, tau0, lim)
     
 end
 
-function [maxFlux] = fluxCalc(correctedTrace)
+function [maxFlux, Fmax, foldingTrace] = fluxCalc(times, correctedTrace)
     
     %pre-allocate variables
     maxFlux = cell(height(correctedTrace), 1);
+    Fmax = nan(height(correctedTrace), 1);
+    foldingTrace = cell(height(correctedTrace), 1);
 
     for i=1:height(correctedTrace)
-        
+        t = times{i};
         y = correctedTrace{i};
+        if i==2
+            idx = setdiff(height(y), [2,6]);
+            y = correctedTrace{i}(idx, :);
+        end
+        ybar = mean(y, 1, 'omitnan');
+        ybar = movingaverage(ybar, 3);
+        %figure,plot(ybar),pause
+        Fmax(i) = max(ybar);
         y = movingaverage(y, 3);
         dy = diff(y, 1, 2);
         [minv, mini] = min(dy, [], 2, 'omitnan');
 
         maxFlux{i, 1} = [minv, mini];
         
+        modelfun = @(t, tau)(Fmax(i)-1)*(1-exp(-t./tau)) + 1;
+        %tau = nlinfit(t, ybar, modelfun, 3);
+        foldingTrace{i} = modelfun(t, 3);
+
     end  
     
 end
